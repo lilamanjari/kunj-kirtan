@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import { useAudioPlayer } from "@/lib/audio/AudioPlayerContext";
+import RecentlyAddedItem from "@/lib/components/RecentlyAddedItem";
 import type { KirtanSummary } from "@/types/kirtan";
 
 type LeadResponse = {
@@ -19,6 +21,7 @@ const FILTERS = [
 
 export default function LeadPage() {
   const { slug } = useParams<{ slug: string }>();
+  const { isActive, isPlaying, isLoading, toggle } = useAudioPlayer();
 
   const [data, setData] = useState<LeadResponse | null>(null);
   const [filter, setFilter] = useState<"ALL" | "MM" | "BHJ">("ALL");
@@ -89,24 +92,16 @@ export default function LeadPage() {
               No kirtans found for this filter.
             </p>
           ) : (
-            <ul className="mt-3 space-y-2">
+            <ul className="mt-3 space-y-3">
               {visible.map((k) => (
-                <li
+                <RecentlyAddedItem
                   key={k.id}
-                  className="rounded-xl bg-white px-4 py-3 shadow-sm transition hover:bg-stone-50"
-                >
-                  <p className="text-sm font-medium truncate">
-                    {k.title ?? "Maha Mantra"}
-                  </p>
-
-                  <p className="mt-0.5 text-xs text-stone-500 truncate">
-                    {k.sanga ? `Recorded in ${k.sanga}` : "Location unknown"}
-                  </p>
-
-                  <div className="mt-1 text-[11px] uppercase tracking-wide text-stone-400">
-                    {k.type === "MM" ? "Maha Mantra" : "Bhajan"}
-                  </div>
-                </li>
+                  kirtan={k}
+                  isActive={isActive(k)}
+                  isPlaying={isPlaying()}
+                  isLoading={isLoading()}
+                  onToggle={() => toggle(k)}
+                />
               ))}
             </ul>
           )}
