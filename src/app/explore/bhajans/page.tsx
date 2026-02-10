@@ -10,6 +10,7 @@ type BhajanItem = KirtanSummary;
 export default function BhajansPage() {
   const [bhajans, setBhajans] = useState<BhajanItem[]>([]);
   const [search, setSearch] = useState("");
+  const [hasFetchedOnce, setHasFetchedOnce] = useState(false);
 
   const { toggle, isActive, isPlaying, isLoading } = useAudioPlayer();
 
@@ -20,7 +21,10 @@ export default function BhajansPage() {
 
     fetch(url)
       .then((res) => res.json())
-      .then((data) => setBhajans(data.bhajans ?? []));
+      .then((data) => {
+        setBhajans(data.bhajans ?? []);
+        setHasFetchedOnce(true);
+      });
   }, [search]);
 
   return (
@@ -37,18 +41,24 @@ export default function BhajansPage() {
         />
 
         <ul className="space-y-3">
-          {bhajans.map((b) => {
-            return (
-              <RecentlyAddedItem
-                key={b.id}
-                kirtan={b}
-                isActive={isActive(b)}
-                isPlaying={isPlaying()}
-                isLoading={isLoading()}
-                onToggle={() => toggle(b)}
-              />
-            );
-          })}
+          {bhajans.length === 0 && hasFetchedOnce ? (
+            <li className="rounded-xl border border-dashed border-stone-200 bg-white px-4 py-6 text-center text-sm text-stone-500">
+              No Bhajans match your search.
+            </li>
+          ) : (
+            bhajans.map((b) => {
+              return (
+                <RecentlyAddedItem
+                  key={b.id}
+                  kirtan={b}
+                  isActive={isActive(b)}
+                  isPlaying={isPlaying()}
+                  isLoading={isLoading()}
+                  onToggle={() => toggle(b)}
+                />
+              );
+            })
+          )}
         </ul>
       </main>
     </div>
