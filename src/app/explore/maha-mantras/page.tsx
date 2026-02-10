@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAudioPlayer } from "@/lib/audio/AudioPlayerContext";
 import type { KirtanSummary } from "@/types/kirtan";
 import RecentlyAddedItem from "@/lib/components/RecentlyAddedItem";
@@ -8,19 +8,95 @@ import RecentlyAddedItem from "@/lib/components/RecentlyAddedItem";
 export default function MahaMantrasPage() {
   const [mantras, setMantras] = useState<KirtanSummary[]>([]);
   const [search, setSearch] = useState("");
+  const [searchInput, setSearchInput] = useState("");
+  const [suggestions, setSuggestions] = useState<string[]>([]);
   const [durationFilter, setDurationFilter] = useState("ALL");
+  const [hasMore, setHasMore] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [hasFetchedOnce, setHasFetchedOnce] = useState(false);
+  const [nextCursor, setNextCursor] = useState<{
+    created_at: string;
+    id: string;
+  } | null>(null);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
+  const searchAbortRef = useRef<AbortController | null>(null);
+  const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const suggestDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { toggle, isActive, isPlaying, isLoading } = useAudioPlayer();
 
+  function resetPagination() {
+    setMantras([]);
+    setNextCursor(null);
+    setHasMore(true);
+  }
+
+  function handleSearchInputChange(value: string) {
+    setSearchInput(value);
+    setShowSuggestions(true);
+
+    if (searchDebounceRef.current) {
+      clearTimeout(searchDebounceRef.current);
+    }
+
+    searchDebounceRef.current = setTimeout(() => {
+      setSearch(value.trim());
+      resetPagination();
+    }, 250);
+
+    if (suggestDebounceRef.current) {
+      clearTimeout(suggestDebounceRef.current);
+    }
+
+    const query = value.trim();
+    if (query.length < 2) {
+      if (searchAbortRef.current) {
+        searchAbortRef.current.abort();
+      }
+      setSuggestions([]);
+      return;
+    }
+
+    suggestDebounceRef.current = setTimeout(() => {
+      if (searchAbortRef.current) {
+        searchAbortRef.current.abort();
+      }
+
+      const controller = new AbortController();
+      searchAbortRef.current = controller;
+
+      fetch(`/api/explore/leads/suggest?q=${encodeURIComponent(query)}`, {
+        signal: controller.signal,
+      })
+        .then((res) => res.json())
+        .then((data) => setSuggestions(data.suggestions ?? []))
+        .catch((err) => {
+          if (err.name !== "AbortError") {
+            setSuggestions([]);
+          }
+        });
+    }, 150);
+  }
+
   useEffect(() => {
-    const url = search
-      ? `/api/explore/maha-mantras?search=${encodeURIComponent(search)}`
-      : `/api/explore/maha-mantras`;
+    const params = new URLSearchParams();
+    if (search) params.set("search", search);
+    if (durationFilter) params.set("duration", durationFilter);
+    params.set("limit", "20");
+
+    const url = `/api/explore/maha-mantras?${params.toString()}`;
 
     fetch(url)
       .then((res) => res.json())
-      .then((data) => setMantras(data.mantras ?? []));
-  }, [search]);
+      .then((data) => {
+        setMantras(data.mantras ?? []);
+        setHasMore(Boolean(data.has_more));
+        setNextCursor(data.next_cursor ?? null);
+        setHasFetchedOnce(true);
+      });
+  }, [search, durationFilter]);
 
   const durationRanges: Record<
     string,
@@ -33,32 +109,82 @@ export default function MahaMantrasPage() {
     OVER_30: { label: "Over 30 min", min: 30 * 60, max: null },
   };
 
-  const visibleMantras = mantras.filter((m) => {
-    if (durationFilter === "ALL") return true;
+  const visibleMantras = mantras;
 
-    const duration = m.duration_seconds;
-    if (typeof duration !== "number" || !Number.isFinite(duration)) return false;
+  useEffect(() => {
+    if (!hasMore || isLoadingMore) return;
+    const node = loadMoreRef.current;
+    if (!node) return;
 
-    const range = durationRanges[durationFilter];
-    if (!range) return true;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (!entries[0].isIntersecting) return;
+        if (!nextCursor) return;
 
-    if (range.min !== null && duration < range.min) return false;
-    if (range.max !== null && duration > range.max) return false;
-    return true;
-  });
+        setIsLoadingMore(true);
+
+        const params = new URLSearchParams();
+        if (search) params.set("search", search);
+        if (durationFilter) params.set("duration", durationFilter);
+        params.set("limit", "20");
+        params.set("cursor_created_at", nextCursor.created_at);
+        params.set("cursor_id", nextCursor.id);
+
+        fetch(`/api/explore/maha-mantras?${params.toString()}`)
+          .then((res) => res.json())
+          .then((data) => {
+            setMantras((prev) => [...prev, ...(data.mantras ?? [])]);
+            setHasMore(Boolean(data.has_more));
+            setNextCursor(data.next_cursor ?? null);
+          })
+          .finally(() => setIsLoadingMore(false));
+      },
+      { rootMargin: "200px" },
+    );
+
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [hasMore, isLoadingMore, nextCursor, search, durationFilter]);
 
   return (
     <div className="min-h-screen bg-stone-50 text-stone-900">
       <main className="mx-auto max-w-md px-5 py-6 space-y-6">
         <h1 className="text-xl font-medium">Maha Mantras</h1>
 
-        <input
-          type="text"
-          placeholder="Search by lead singer…"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="w-full rounded-xl border border-stone-200 bg-white px-4 py-2 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-stone-300"
-        />
+        <div className="relative">
+          <input
+            type="text"
+            placeholder="Search by lead singer…"
+            value={searchInput}
+            onChange={(e) => handleSearchInputChange(e.target.value)}
+            onBlur={() => {
+              setTimeout(() => setShowSuggestions(false), 150);
+            }}
+            onFocus={() => setShowSuggestions(true)}
+            className="w-full rounded-xl border border-stone-200 bg-white px-4 py-2 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-stone-300"
+          />
+
+          {showSuggestions && suggestions.length > 0 ? (
+            <div className="absolute z-10 mt-1 w-full overflow-hidden rounded-xl border border-stone-200 bg-white shadow-lg">
+              {suggestions.map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => {
+                    setSearchInput(s);
+                    setSearch(s);
+                    resetPagination();
+                    setShowSuggestions(false);
+                  }}
+                  className="block w-full px-4 py-2 text-left text-sm hover:bg-stone-50"
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+          ) : null}
+        </div>
 
         <div className="space-y-2">
           <p className="text-xs uppercase tracking-wide text-stone-500">
@@ -66,7 +192,10 @@ export default function MahaMantrasPage() {
           </p>
           <select
             value={durationFilter}
-            onChange={(e) => setDurationFilter(e.target.value)}
+            onChange={(e) => {
+              setDurationFilter(e.target.value);
+              resetPagination();
+            }}
             className="w-full rounded-xl border border-stone-200 bg-white px-4 py-2 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-stone-300"
           >
             {Object.entries(durationRanges).map(([key, range]) => (
@@ -78,19 +207,38 @@ export default function MahaMantrasPage() {
         </div>
 
         <ul className="space-y-3">
-          {visibleMantras.map((m) => {
-            return (
-              <RecentlyAddedItem
-                key={m.id}
-                kirtan={m}
-                isActive={isActive(m)}
-                isPlaying={isPlaying()}
-                isLoading={isLoading()}
-                onToggle={() => toggle(m)}
-              />
-            );
-          })}
+          {visibleMantras.length === 0 && hasFetchedOnce ? (
+            <li className="rounded-xl border border-dashed border-stone-200 bg-white px-4 py-6 text-center text-sm text-stone-500">
+              No Maha Mantras match your filters.
+            </li>
+          ) : (
+            visibleMantras.map((m) => {
+              return (
+                <RecentlyAddedItem
+                  key={m.id}
+                  kirtan={m}
+                  isActive={isActive(m)}
+                  isPlaying={isPlaying()}
+                  isLoading={isLoading()}
+                  onToggle={() => toggle(m)}
+                />
+              );
+            })
+          )}
         </ul>
+
+        {hasMore ? (
+          <div
+            ref={loadMoreRef}
+            className="py-4 text-center text-xs text-stone-500"
+          >
+            {isLoadingMore ? (
+              <span className="mx-auto block h-4 w-4 animate-spin rounded-full border-2 border-stone-300 border-t-stone-600" />
+            ) : (
+              ""
+            )}
+          </div>
+        ) : null}
       </main>
     </div>
   );

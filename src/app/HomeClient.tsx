@@ -10,6 +10,11 @@ export default function HomeClient({ data }: { data: HomeData }) {
   const { isPlaying, isLoading, isActive, toggle } = useAudioPlayer();
 
   const primaryAction = data.primary_action;
+  const entryPointLinks: Record<string, string> = {
+    MM: "/explore/maha-mantras",
+    BHJ: "/explore/bhajans",
+    LEADS: "/explore/leads",
+  };
 
   return (
     <div className="min-h-screen bg-stone-50 text-stone-900">
@@ -40,14 +45,31 @@ export default function HomeClient({ data }: { data: HomeData }) {
           </h2>
 
           <div className="mt-3 grid grid-cols-2 gap-3">
-            {data.entry_points?.map((e) => (
-              <button
-                key={e.id}
-                className="rounded-xl border border-stone-200 bg-white py-3 text-sm font-medium shadow-sm hover:bg-stone-50 transition"
-              >
-                {e.label}
-              </button>
-            ))}
+            {data.entry_points?.map((e) => {
+              const href = entryPointLinks[e.id];
+
+              if (href) {
+                return (
+                  <Link
+                    key={e.id}
+                    href={href}
+                    className="rounded-xl border border-stone-200 bg-white py-3 text-center text-sm font-medium shadow-sm hover:bg-stone-50 transition"
+                  >
+                    {e.label}
+                  </Link>
+                );
+              }
+
+              return (
+                <button
+                  key={e.id}
+                  disabled
+                  className="rounded-xl border border-stone-200 bg-white py-3 text-sm font-medium text-stone-400 shadow-sm"
+                >
+                  {e.label}
+                </button>
+              );
+            })}
           </div>
         </section>
 

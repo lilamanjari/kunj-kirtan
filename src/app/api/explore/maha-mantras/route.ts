@@ -5,17 +5,57 @@ import type { KirtanSummary } from "@/types/kirtan";
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const search = searchParams.get("search");
+  const durationKey = searchParams.get("duration");
+  const limitParam = Number(searchParams.get("limit") ?? "20");
+  const cursorCreatedAt = searchParams.get("cursor_created_at");
+  const cursorId = searchParams.get("cursor_id");
+
+  const limit =
+    Number.isFinite(limitParam) && limitParam > 0
+      ? Math.min(50, limitParam)
+      : 20;
+
+  const durationRanges: Record<
+    string,
+    { min: number | null; max: number | null }
+  > = {
+    UNDER_10: { min: null, max: 10 * 60 },
+    BETWEEN_10_20: { min: 10 * 60, max: 20 * 60 },
+    BETWEEN_20_30: { min: 20 * 60, max: 30 * 60 },
+    OVER_30: { min: 30 * 60, max: null },
+  };
 
   let query = supabase
     .from("playable_kirtans")
     .select(
-      "id, audio_url, type, title, lead_singer, recorded_date, sanga, duration_seconds",
+      "id, audio_url, type, title, lead_singer, recorded_date, sanga, duration_seconds, created_at",
     )
     .eq("type", "MM")
-    .order("recorded_date", { ascending: false });
+    .order("created_at", { ascending: false })
+    .order("recorded_date", { ascending: false })
+    .order("id", { ascending: false })
+    .limit(limit + 1);
 
   if (search) {
     query = query.ilike("lead_singer", `%${search}%`);
+  }
+
+  if (durationKey && durationKey !== "ALL") {
+    const range = durationRanges[durationKey];
+    if (range) {
+      if (range.min !== null) {
+        query = query.gte("duration_seconds", range.min);
+      }
+      if (range.max !== null) {
+        query = query.lte("duration_seconds", range.max);
+      }
+    }
+  }
+
+  if (cursorCreatedAt && cursorId) {
+    query = query.or(
+      `created_at.lt.${cursorCreatedAt},and(created_at.eq.${cursorCreatedAt},id.lt.${cursorId})`,
+    );
   }
 
   const { data, error } = await query;
@@ -24,7 +64,11 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  const mantras: KirtanSummary[] = (data ?? []).map((k) => ({
+  const rows = data ?? [];
+  const hasMore = rows.length > limit;
+  const page = hasMore ? rows.slice(0, limit) : rows;
+
+  const mantras: KirtanSummary[] = page.map((k) => ({
     id: k.id,
     audio_url: k.audio_url,
     type: "MM",
@@ -35,5 +79,13 @@ export async function GET(req: Request) {
     duration_seconds: k.duration_seconds,
   }));
 
-  return NextResponse.json({ mantras });
+  const last = page[page.length - 1];
+
+  return NextResponse.json({
+    mantras,
+    has_more: hasMore,
+    next_cursor: last
+      ? { created_at: last.created_at, id: last.id }
+      : null,
+  });
 }
