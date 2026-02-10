@@ -43,6 +43,7 @@ export async function GET() {
     lead_singer: featuredKirtanData?.lead_singer,
     recorded_date: "22. Nov 2025",
     sanga: featuredKirtanData?.sanga,
+    duration_seconds: featuredKirtanData?.duration_seconds,
   };
 
   /* 2. Recently added */
@@ -69,6 +70,7 @@ export async function GET() {
       lead_singer: k.lead_singer,
       recorded_date: k.recorded_date,
       sanga: k.sanga,
+      duration_seconds: k.duration_seconds,
     })) ?? [];
 
   const recentlyAddedNoDuplicates = recentlyAddedKirtans.filter(

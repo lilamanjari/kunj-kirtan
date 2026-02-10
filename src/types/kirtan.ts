@@ -8,4 +8,5 @@ export type KirtanSummary = {
   lead_singer: string | null;
   recorded_date: string;
   sanga: string;
+  duration_seconds?: number | null;
 };

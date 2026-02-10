@@ -17,6 +17,26 @@ function formatDate(dateStr: string) {
   });
 }
 
+function formatDuration(seconds?: number | null) {
+  if (seconds === null || seconds === undefined || !Number.isFinite(seconds)) {
+    return "";
+  }
+
+  const total = Math.max(0, Math.round(seconds));
+  const hrs = Math.floor(total / 3600);
+  const mins = Math.floor((total % 3600) / 60);
+  const secs = total % 60;
+
+  if (hrs > 0) {
+    return `${hrs}:${String(mins).padStart(2, "0")}:${String(secs).padStart(
+      2,
+      "0",
+    )}`;
+  }
+
+  return `${mins}:${String(secs).padStart(2, "0")}`;
+}
+
 export default function RecentlyAddedItem({
   kirtan,
   isActive,
@@ -24,6 +44,8 @@ export default function RecentlyAddedItem({
   isLoading,
   onToggle,
 }: RecentlyAddedItemProps) {
+  const durationLabel = formatDuration(kirtan.duration_seconds);
+
   return (
     <li
       onClick={onToggle}
@@ -48,6 +70,7 @@ export default function RecentlyAddedItem({
         </p>
         <p className="truncate text-xs text-stone-500">
           {formatDate(kirtan.recorded_date)}
+          {durationLabel ? ` • ${durationLabel}` : ""}
         </p>
       </div>
 

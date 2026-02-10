@@ -30,6 +30,7 @@ export async function GET(req: Request) {
     lead_singer: k.lead_singer,
     recorded_date: k.recorded_date,
     sanga: k.sanga,
+    duration_seconds: k.duration_seconds,
   }));
 
   return NextResponse.json({
