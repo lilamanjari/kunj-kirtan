@@ -2,9 +2,21 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { GET } from "./route";
 
 type MockResult = { data: unknown; error: null | { message: string } };
+type MockBuilder = {
+  select: ReturnType<typeof vi.fn>;
+  eq: ReturnType<typeof vi.fn>;
+  in: ReturnType<typeof vi.fn>;
+  limit: ReturnType<typeof vi.fn>;
+  order: ReturnType<typeof vi.fn>;
+  maybeSingle: ReturnType<typeof vi.fn>;
+  then: (
+    onFulfilled: (value: MockResult) => unknown,
+    onRejected?: (reason: unknown) => unknown,
+  ) => Promise<unknown>;
+};
 
-let builder: ReturnType<typeof createMockBuilder>;
-const fromMock = vi.fn(() => builder);
+let builder: MockBuilder;
+const fromMock = vi.fn((..._args: unknown[]) => builder);
 
 vi.mock("@/lib/supabase", () => ({
   supabase: {
@@ -12,8 +24,8 @@ vi.mock("@/lib/supabase", () => ({
   },
 }));
 
-function createMockBuilder(result: MockResult) {
-  const self: any = {};
+function createMockBuilder(result: MockResult): MockBuilder {
+  const self = {} as MockBuilder;
   const chain = () => self;
 
   self.select = vi.fn(chain);
@@ -22,7 +34,7 @@ function createMockBuilder(result: MockResult) {
   self.limit = vi.fn(chain);
   self.order = vi.fn(chain);
   self.maybeSingle = vi.fn(chain);
-  self.then = (onFulfilled: any, onRejected: any) =>
+  self.then = (onFulfilled, onRejected) =>
     Promise.resolve(result).then(onFulfilled, onRejected);
 
   return self;

@@ -2,9 +2,23 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { GET } from "./route";
 
 type MockResult = { data: unknown; error: null | { message: string } };
+type MockBuilder = {
+  select: ReturnType<typeof vi.fn>;
+  eq: ReturnType<typeof vi.fn>;
+  order: ReturnType<typeof vi.fn>;
+  limit: ReturnType<typeof vi.fn>;
+  ilike: ReturnType<typeof vi.fn>;
+  gte: ReturnType<typeof vi.fn>;
+  lte: ReturnType<typeof vi.fn>;
+  or: ReturnType<typeof vi.fn>;
+  then: (
+    onFulfilled: (value: MockResult) => unknown,
+    onRejected?: (reason: unknown) => unknown,
+  ) => Promise<unknown>;
+};
 
-let builder: ReturnType<typeof createMockBuilder>;
-const fromMock = vi.fn(() => builder);
+let builder: MockBuilder;
+const fromMock = vi.fn((..._args: unknown[]) => builder);
 
 vi.mock("@/lib/supabase", () => ({
   supabase: {
@@ -12,8 +26,8 @@ vi.mock("@/lib/supabase", () => ({
   },
 }));
 
-function createMockBuilder(result: MockResult) {
-  const self: any = {};
+function createMockBuilder(result: MockResult): MockBuilder {
+  const self = {} as MockBuilder;
   const chain = () => self;
 
   self.select = vi.fn(chain);
@@ -24,7 +38,7 @@ function createMockBuilder(result: MockResult) {
   self.gte = vi.fn(chain);
   self.lte = vi.fn(chain);
   self.or = vi.fn(chain);
-  self.then = (onFulfilled: any, onRejected: any) =>
+  self.then = (onFulfilled, onRejected) =>
     Promise.resolve(result).then(onFulfilled, onRejected);
 
   return self;
@@ -113,6 +127,20 @@ describe("GET /api/explore/maha-mantras", () => {
     expect(builder.or).toHaveBeenCalledWith(
       "created_at.lt.2025-02-02T00:00:00Z,and(created_at.eq.2025-02-02T00:00:00Z,id.lt.abc)",
     );
+  });
+
+  it("applies search and duration filters together", async () => {
+    builder = createMockBuilder({ data: [], error: null });
+
+    await GET(
+      new Request(
+        "http://localhost/api/explore/maha-mantras?search=radha&duration=BETWEEN_10_20",
+      ),
+    );
+
+    expect(builder.ilike).toHaveBeenCalledWith("lead_singer", "%radha%");
+    expect(builder.gte).toHaveBeenCalledWith("duration_seconds", 600);
+    expect(builder.lte).toHaveBeenCalledWith("duration_seconds", 1200);
   });
 
   it("returns error payload when supabase fails", async () => {
