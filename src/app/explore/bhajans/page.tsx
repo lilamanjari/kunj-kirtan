@@ -11,6 +11,7 @@ export default function BhajansPage() {
   const [bhajans, setBhajans] = useState<BhajanItem[]>([]);
   const [search, setSearch] = useState("");
   const [hasFetchedOnce, setHasFetchedOnce] = useState(false);
+  const [isLoadingList, setIsLoadingList] = useState(true);
 
   const { toggle, isActive, isPlaying, isLoading } = useAudioPlayer();
 
@@ -24,7 +25,8 @@ export default function BhajansPage() {
       .then((data) => {
         setBhajans(data.bhajans ?? []);
         setHasFetchedOnce(true);
-      });
+      })
+      .finally(() => setIsLoadingList(false));
   }, [search]);
 
   return (
@@ -36,12 +38,20 @@ export default function BhajansPage() {
           type="text"
           placeholder="Search bhajans…"
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => {
+            setIsLoadingList(true);
+            setSearch(e.target.value);
+          }}
           className="w-full rounded-xl border border-stone-200 bg-white px-4 py-2 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-stone-300"
         />
 
         <ul className="space-y-3">
-          {bhajans.length === 0 && hasFetchedOnce ? (
+          {isLoadingList ? (
+            <li className="rounded-xl border border-dashed border-stone-200 bg-white px-4 py-6 text-center text-sm text-stone-500">
+              <span className="mx-auto mb-2 block h-4 w-4 animate-spin rounded-full border-2 border-stone-300 border-t-stone-600" />
+              Loading bhajans…
+            </li>
+          ) : bhajans.length === 0 && hasFetchedOnce ? (
             <li className="rounded-xl border border-dashed border-stone-200 bg-white px-4 py-6 text-center text-sm text-stone-500">
               No Bhajans match your search.
             </li>

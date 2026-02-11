@@ -75,7 +75,9 @@ export default function RecentlyAddedItem({
       </div>
 
       <div className="ml-4 flex h-6 w-6 items-center justify-center">
-        {isActive && isPlaying ? (
+        {isActive && isLoading ? (
+          <span className="block h-4 w-4 animate-spin rounded-full border-2 border-stone-300 border-t-stone-600" />
+        ) : isActive && isPlaying ? (
           <Equalizer />
         ) : (
           <span
