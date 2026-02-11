@@ -15,7 +15,8 @@ export default function AudioPlayerBar() {
   if (!current) return null;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 border-t border-stone-200 bg-white/95 backdrop-blur">
+    <div className="fixed bottom-0 left-0 right-0 border-t border-rose-100 bg-white/95 backdrop-blur">
+      <div className="h-0.5 w-full bg-gradient-to-r from-transparent via-rose-300/70 to-transparent" />
       <div className="mx-auto max-w-md px-4 py-3">
         <div className="flex items-center gap-3">
           <button onClick={() => seek(-15)}>
@@ -53,7 +54,7 @@ export default function AudioPlayerBar() {
           step={0.001}
           value={progress}
           onChange={(e) => seek(Number(e.target.value))}
-          className="w-full"
+          className="w-full accent-emerald-500"
         />
       </div>
     </div>

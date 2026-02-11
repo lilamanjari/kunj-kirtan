@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useAudioPlayer } from "@/lib/audio/AudioPlayerContext";
 import type { KirtanSummary } from "@/types/kirtan";
-import RecentlyAddedItem from "@/lib/components/RecentlyAddedItem";
+import KirtanListItem from "@/lib/components/KirtanListItem";
 
 type BhajanItem = KirtanSummary;
 
@@ -43,7 +43,7 @@ export default function BhajansPage() {
             setIsLoadingList(true);
             setSearch(e.target.value);
           }}
-          className="w-full rounded-xl border border-stone-200 bg-white px-4 py-2 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-stone-300"
+          className="w-full rounded-xl border border-stone-200 bg-white px-4 py-2 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-rose-300 focus:border-rose-300"
         />
 
         <ul className="space-y-3">
@@ -65,7 +65,7 @@ export default function BhajansPage() {
           ) : (
             bhajans.map((b) => {
               return (
-                <RecentlyAddedItem
+                <KirtanListItem
                   key={b.id}
                   kirtan={b}
                   isActive={isActive(b)}

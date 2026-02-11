@@ -3,7 +3,7 @@
 import { useAudioPlayer } from "@/lib/audio/AudioPlayerContext";
 import type { HomeData } from "@/types/home";
 import FeaturedKirtanCard from "@/lib/components/FeaturedKirtanCard";
-import RecentlyAddedItem from "@/lib/components/RecentlyAddedItem";
+import KirtanListItem from "@/lib/components/KirtanListItem";
 import Link from "next/link";
 
 export default function HomeClient({ data }: { data: HomeData }) {
@@ -82,7 +82,7 @@ export default function HomeClient({ data }: { data: HomeData }) {
           <ul className="mt-3 space-y-3">
             {data.recently_added?.map((k) => {
               return (
-                <RecentlyAddedItem
+                <KirtanListItem
                   key={k.id}
                   kirtan={k}
                   isActive={isActive(k)}

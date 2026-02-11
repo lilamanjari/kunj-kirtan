@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { useAudioPlayer } from "@/lib/audio/AudioPlayerContext";
-import RecentlyAddedItem from "@/lib/components/RecentlyAddedItem";
+import KirtanListItem from "@/lib/components/KirtanListItem";
 import type { KirtanSummary } from "@/types/kirtan";
 
 type LeadResponse = {
@@ -106,7 +106,7 @@ export default function LeadPage() {
           ) : (
             <ul className="mt-3 space-y-3">
               {visible.map((k) => (
-                <RecentlyAddedItem
+                <KirtanListItem
                   key={k.id}
                   kirtan={k}
                   isActive={isActive(k)}

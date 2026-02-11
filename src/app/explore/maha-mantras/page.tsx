@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useAudioPlayer } from "@/lib/audio/AudioPlayerContext";
 import type { KirtanSummary } from "@/types/kirtan";
-import RecentlyAddedItem from "@/lib/components/RecentlyAddedItem";
+import KirtanListItem from "@/lib/components/KirtanListItem";
 
 export default function MahaMantrasPage() {
   const [mantras, setMantras] = useState<KirtanSummary[]>([]);
@@ -165,7 +165,7 @@ export default function MahaMantrasPage() {
               setTimeout(() => setShowSuggestions(false), 150);
             }}
             onFocus={() => setShowSuggestions(true)}
-            className="w-full rounded-xl border border-stone-200 bg-white px-4 py-2 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-stone-300"
+            className="w-full rounded-xl border border-stone-200 bg-white px-4 py-2 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-rose-300 focus:border-rose-300"
           />
 
           {showSuggestions && suggestions.length > 0 ? (
@@ -202,7 +202,7 @@ export default function MahaMantrasPage() {
               setIsLoadingList(true);
               resetPagination();
             }}
-            className="w-full rounded-xl border border-stone-200 bg-white px-4 py-2 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-stone-300"
+            className="w-full rounded-xl border border-stone-200 bg-white px-4 py-2 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-rose-300 focus:border-rose-300"
           >
             {Object.entries(durationRanges).map(([key, range]) => (
               <option key={key} value={key}>
@@ -231,7 +231,7 @@ export default function MahaMantrasPage() {
           ) : (
             visibleMantras.map((m) => {
               return (
-                <RecentlyAddedItem
+                <KirtanListItem
                   key={m.id}
                   kirtan={m}
                   isActive={isActive(m)}

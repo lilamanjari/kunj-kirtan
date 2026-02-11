@@ -18,8 +18,9 @@ export default function LeadsPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-stone-50 text-stone-900">
-      <main className="mx-auto max-w-md px-5 py-6 space-y-6">
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top,_#ffe4ef_0%,_#fff6fa_45%,_#f8fafc_100%)] text-stone-900">
+      <main className="relative mx-auto max-w-md px-5 py-6 space-y-6">
+        <div className="pointer-events-none absolute -top-10 left-6 h-28 w-28 rounded-full bg-rose-300/40 blur-3xl" />
         {/* Header */}
         <header className="space-y-1">
           <h1 className="text-xl font-medium">Lead singers</h1>
@@ -30,7 +31,16 @@ export default function LeadsPage() {
 
         {/* Loading state */}
         {loading && (
-          <div className="text-sm text-stone-500">Loading lead singers…</div>
+          <div className="rounded-xl border border-dashed border-stone-200 bg-white px-4 py-6">
+            <div className="space-y-3">
+              {Array.from({ length: 6 }).map((_, idx) => (
+                <div
+                  key={`lead-list-loading-${idx}`}
+                  className="h-10 rounded-lg bg-stone-100 animate-pulse"
+                />
+              ))}
+            </div>
+          </div>
         )}
 
         {/* Lead list */}
@@ -43,8 +53,8 @@ export default function LeadsPage() {
                   className="
                     flex items-center justify-between px-4 py-3
                     transition
-                    hover:bg-stone-50
-                    active:bg-stone-100
+                    hover:bg-rose-50
+                    active:bg-rose-100
                   "
                 >
                   <span className="text-sm font-medium text-stone-800">

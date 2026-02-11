@@ -1,7 +1,7 @@
 import Equalizer from "@/lib/components/Equalizer";
 import { KirtanSummary } from "@/types/kirtan";
 
-type RecentlyAddedItemProps = {
+type KirtanListItemProps = {
   kirtan: KirtanSummary;
   isActive: boolean;
   isPlaying: boolean;
@@ -37,13 +37,13 @@ function formatDuration(seconds?: number | null) {
   return `${mins}:${String(secs).padStart(2, "0")}`;
 }
 
-export default function RecentlyAddedItem({
+export default function KirtanListItem({
   kirtan,
   isActive,
   isPlaying,
   isLoading,
   onToggle,
-}: RecentlyAddedItemProps) {
+}: KirtanListItemProps) {
   const durationLabel = formatDuration(kirtan.duration_seconds);
 
   return (
@@ -60,14 +60,21 @@ export default function RecentlyAddedItem({
         ${isActive && !isPlaying ? "opacity-90" : ""}
       `}
     >
-      <div className="min-w-0">
+      <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-medium">
           {kirtan.title ?? "Maha Mantra"}
         </p>
-        <p className="truncate text-xs text-stone-500">
-          {kirtan.lead_singer}{" "}
-          {kirtan.sanga ? `in ${kirtan.sanga}` : "Unknown location"}
-        </p>
+        <div className="flex items-center gap-2">
+          <p className="truncate text-xs text-stone-500">
+            {kirtan.lead_singer}{" "}
+            {kirtan.sanga ? `in ${kirtan.sanga}` : "Unknown location"}
+          </p>
+          {isActive && isPlaying ? (
+            <span className="shrink-0 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-700">
+              Now playing
+            </span>
+          ) : null}
+        </div>
         <p className="truncate text-xs text-stone-500">
           {formatDate(kirtan.recorded_date)}
           {durationLabel ? ` • ${durationLabel}` : ""}
