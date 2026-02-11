@@ -18,9 +18,29 @@ export default function HomeClient({ data }: { data: HomeData }) {
   };
 
   return (
-    <div className="min-h-screen bg-stone-50 text-stone-900">
-      <main className="mx-auto max-w-md px-5 py-6 space-y-8">
-        <h1 className="text-xl font-medium">Kunj Kirtan</h1>
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top,_#ffe4ef_0%,_#fff6fa_45%,_#f8fafc_100%)] text-stone-900">
+      <main className="relative mx-auto max-w-md px-5 py-6 space-y-8">
+        <div className="pointer-events-none absolute -top-10 left-6 h-28 w-28 rounded-full bg-rose-300/40 blur-3xl" />
+
+        <header className="relative space-y-2">
+          <div className="pointer-events-none absolute -right-2 top-0 flex items-center gap-1 text-rose-300/70">
+            <span className="block h-1.5 w-1.5 rounded-full bg-rose-300/70" />
+            <span className="block h-1 w-1 rounded-full bg-rose-300/60" />
+            <span className="block h-0.5 w-0.5 rounded-full bg-rose-300/50" />
+          </div>
+          <p className="text-xs uppercase tracking-[0.3em] text-rose-400">
+            Daily kirtan
+          </p>
+          <div className="inline-flex flex-col">
+            <h1 className="font-script text-3xl font-semibold leading-tight text-stone-900">
+              Kunj Kirtan
+            </h1>
+            <span className="mt-1 h-0.5 w-24 rounded-full bg-emerald-400/80" />
+          </div>
+          <p className="text-sm text-stone-500">
+            Sacred sounds, lovingly curated.
+          </p>
+        </header>
         {primaryAction && (
           <FeaturedKirtanCard
             kirtan={primaryAction.kirtan}
@@ -54,7 +74,7 @@ export default function HomeClient({ data }: { data: HomeData }) {
                   <Link
                     key={e.id}
                     href={href}
-                    className="rounded-xl border border-stone-200 bg-white py-3 text-center text-sm font-medium shadow-sm hover:bg-stone-50 transition"
+                    className="rounded-xl border border-rose-100 bg-white/80 py-3 text-center text-sm font-medium shadow-sm hover:bg-rose-50/60 transition"
                   >
                     {e.label}
                   </Link>

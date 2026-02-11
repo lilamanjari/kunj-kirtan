@@ -11,6 +11,34 @@ type FeaturedKirtanCardProps = {
   onToggle: () => void;
 };
 
+function formatDate(dateStr: string) {
+  return new Date(dateStr).toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+function formatDuration(seconds?: number | null) {
+  if (seconds === null || seconds === undefined || !Number.isFinite(seconds)) {
+    return "";
+  }
+
+  const total = Math.max(0, Math.round(seconds));
+  const hrs = Math.floor(total / 3600);
+  const mins = Math.floor((total % 3600) / 60);
+  const secs = total % 60;
+
+  if (hrs > 0) {
+    return `${hrs}:${String(mins).padStart(2, "0")}:${String(secs).padStart(
+      2,
+      "0",
+    )}`;
+  }
+
+  return `${mins}:${String(secs).padStart(2, "0")}`;
+}
+
 export default function FeaturedKirtanCard({
   kirtan,
   isActive,
@@ -41,6 +69,13 @@ export default function FeaturedKirtanCard({
           {isActive && isPlaying && <Equalizer />}
         </div>
       </div>
+
+      <p className="mt-1 text-xs text-stone-400">
+        {formatDate(kirtan.recorded_date)}
+        {formatDuration(kirtan.duration_seconds)
+          ? ` • ${formatDuration(kirtan.duration_seconds)}`
+          : ""}
+      </p>
 
       {/* Action button */}
       <button
