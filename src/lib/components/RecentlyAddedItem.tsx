@@ -53,8 +53,8 @@ export default function RecentlyAddedItem({
         flex cursor-pointer items-center justify-between rounded-xl px-4 py-3 shadow-sm transition
         ${
           isActive
-            ? "bg-gradient-to-r from-green-50 to-green-100"
-            : "bg-white hover:bg-stone-50"
+            ? "bg-gradient-to-r from-rose-50 via-pink-50 to-rose-100"
+            : "bg-white hover:bg-rose-50/40"
         }
         ${isActive && isPlaying ? "animate-breathe" : ""}
         ${isActive && !isPlaying ? "opacity-90" : ""}
@@ -82,7 +82,7 @@ export default function RecentlyAddedItem({
         ) : (
           <span
             className={`text-sm transition ${
-              isActive ? "text-green-700" : "text-stone-600"
+              isActive ? "text-rose-600" : "text-stone-600"
             }`}
           >
             ▶

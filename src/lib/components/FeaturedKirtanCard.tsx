@@ -22,8 +22,8 @@ export default function FeaturedKirtanCard({
     <section
       className={`
         relative rounded-3xl p-6 shadow-lg transition
-        bg-gradient-to-br from-stone-900 to-stone-800 text-white
-        ${isActive ? "ring-2 ring-green-400/40" : ""}
+        bg-gradient-to-br from-stone-900 via-stone-900 to-rose-950 text-white
+        ${isActive ? "ring-2 ring-rose-400/50" : ""}
         ${isPlaying ? "animate-breathe" : ""}
       `}
     >
@@ -48,8 +48,8 @@ export default function FeaturedKirtanCard({
         onClick={onToggle}
         className={`
           mt-6 w-full rounded-xl py-3 font-medium transition
-          bg-gradient-to-r from-green-600 to-green-500
-          hover:from-green-500 hover:to-green-400
+          bg-gradient-to-r from-emerald-600 to-emerald-500
+          hover:from-emerald-500 hover:to-emerald-400
           disabled:opacity-40 disabled:pointer-events-none
         `}
       >

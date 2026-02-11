@@ -49,8 +49,9 @@ export default function OccasionDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-stone-50 text-stone-900">
-      <main className="mx-auto max-w-md px-5 py-6 space-y-8">
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top,_#ffe4ef_0%,_#fff6fa_45%,_#f8fafc_100%)] text-stone-900">
+      <main className="relative mx-auto max-w-md px-5 py-6 space-y-8">
+        <div className="pointer-events-none absolute -top-10 left-6 h-28 w-28 rounded-full bg-rose-300/40 blur-3xl" />
         <header className="space-y-1">
           <p className="text-xs uppercase tracking-wide text-stone-500">
             Occasion
