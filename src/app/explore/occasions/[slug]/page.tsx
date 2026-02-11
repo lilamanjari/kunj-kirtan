@@ -6,28 +6,23 @@ import { useAudioPlayer } from "@/lib/audio/AudioPlayerContext";
 import RecentlyAddedItem from "@/lib/components/RecentlyAddedItem";
 import type { KirtanSummary } from "@/types/kirtan";
 
-type LeadResponse = {
-  lead: {
-    display_name: string;
+type OccasionResponse = {
+  tag: {
+    id: string;
+    name: string;
+    slug: string;
   };
   kirtans: KirtanSummary[];
 };
 
-const FILTERS = [
-  { key: "ALL", label: "All" },
-  { key: "MM", label: "Maha Mantra" },
-  { key: "BHJ", label: "Bhajan" },
-] as const;
-
-export default function LeadPage() {
+export default function OccasionDetailPage() {
   const { slug } = useParams<{ slug: string }>();
   const { isActive, isPlaying, isLoading, toggle } = useAudioPlayer();
 
-  const [data, setData] = useState<LeadResponse | null>(null);
-  const [filter, setFilter] = useState<"ALL" | "MM" | "BHJ">("ALL");
+  const [data, setData] = useState<OccasionResponse | null>(null);
 
   useEffect(() => {
-    fetch(`/api/explore/leads/${slug}`)
+    fetch(`/api/explore/occasions/${slug}`)
       .then((res) => res.json())
       .then(setData);
   }, [slug]);
@@ -43,7 +38,7 @@ export default function LeadPage() {
           <div className="space-y-3">
             {Array.from({ length: 4 }).map((_, idx) => (
               <div
-                key={`lead-loading-${idx}`}
+                key={`occasion-loading-${idx}`}
                 className="h-12 rounded-lg bg-stone-100 animate-pulse"
               />
             ))}
@@ -53,58 +48,28 @@ export default function LeadPage() {
     );
   }
 
-  const visible =
-    data.kirtans?.filter((k) =>
-      filter === "ALL" ? true : k.type === filter,
-    ) ?? [];
-
   return (
     <div className="min-h-screen bg-stone-50 text-stone-900">
       <main className="mx-auto max-w-md px-5 py-6 space-y-8">
-        {/* Header */}
         <header className="space-y-1">
           <p className="text-xs uppercase tracking-wide text-stone-500">
-            Lead singer
+            Occasion
           </p>
-          <h1 className="text-2xl font-semibold">{data.lead.display_name}</h1>
+          <h1 className="text-2xl font-semibold">{data.tag.name}</h1>
         </header>
 
-        {/* Filters */}
-        <div className="flex gap-2">
-          {FILTERS.map((f) => {
-            const active = filter === f.key;
-            return (
-              <button
-                key={f.key}
-                onClick={() => setFilter(f.key)}
-                className={`
-                  rounded-full px-4 py-1.5 text-xs font-medium transition
-                  ${
-                    active
-                      ? "bg-stone-900 text-white"
-                      : "bg-white text-stone-600 border border-stone-200 hover:bg-stone-100"
-                  }
-                `}
-              >
-                {f.label}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Kirtan list */}
         <section>
           <h2 className="text-xs uppercase tracking-wide text-stone-500">
             Kirtans
           </h2>
 
-          {visible.length === 0 ? (
+          {data.kirtans.length === 0 ? (
             <p className="mt-4 text-sm text-stone-500">
-              No kirtans found for this filter.
+              No kirtans found for this occasion.
             </p>
           ) : (
             <ul className="mt-3 space-y-3">
-              {visible.map((k) => (
+              {data.kirtans.map((k) => (
                 <RecentlyAddedItem
                   key={k.id}
                   kirtan={k}

@@ -14,6 +14,7 @@ export default function MahaMantrasPage() {
   const [hasMore, setHasMore] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasFetchedOnce, setHasFetchedOnce] = useState(false);
+  const [isLoadingList, setIsLoadingList] = useState(true);
   const [nextCursor, setNextCursor] = useState<{
     created_at: string;
     id: string;
@@ -36,6 +37,7 @@ export default function MahaMantrasPage() {
   function handleSearchInputChange(value: string) {
     setSearchInput(value);
     setShowSuggestions(true);
+    setIsLoadingList(true);
 
     if (searchDebounceRef.current) {
       clearTimeout(searchDebounceRef.current);
@@ -95,7 +97,8 @@ export default function MahaMantrasPage() {
         setHasMore(Boolean(data.has_more));
         setNextCursor(data.next_cursor ?? null);
         setHasFetchedOnce(true);
-      });
+      })
+      .finally(() => setIsLoadingList(false));
   }, [search, durationFilter]);
 
   const durationRanges: Record<
@@ -174,6 +177,7 @@ export default function MahaMantrasPage() {
                   onClick={() => {
                     setSearchInput(s);
                     setSearch(s);
+                    setIsLoadingList(true);
                     resetPagination();
                     setShowSuggestions(false);
                   }}
@@ -194,6 +198,7 @@ export default function MahaMantrasPage() {
             value={durationFilter}
             onChange={(e) => {
               setDurationFilter(e.target.value);
+              setIsLoadingList(true);
               resetPagination();
             }}
             className="w-full rounded-xl border border-stone-200 bg-white px-4 py-2 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-stone-300"
@@ -207,7 +212,18 @@ export default function MahaMantrasPage() {
         </div>
 
         <ul className="space-y-3">
-          {visibleMantras.length === 0 && hasFetchedOnce ? (
+          {isLoadingList ? (
+            <li className="rounded-xl border border-dashed border-stone-200 bg-white px-4 py-6">
+              <div className="space-y-3">
+                {Array.from({ length: 4 }).map((_, idx) => (
+                  <div
+                    key={`mm-loading-${idx}`}
+                    className="h-12 rounded-lg bg-stone-100 animate-pulse"
+                  />
+                ))}
+              </div>
+            </li>
+          ) : visibleMantras.length === 0 && hasFetchedOnce ? (
             <li className="rounded-xl border border-dashed border-stone-200 bg-white px-4 py-6 text-center text-sm text-stone-500">
               No Maha Mantras match your filters.
             </li>
@@ -239,6 +255,8 @@ export default function MahaMantrasPage() {
             )}
           </div>
         ) : null}
+
+        <div className="pointer-events-none fixed bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-stone-50 to-transparent" />
       </main>
     </div>
   );

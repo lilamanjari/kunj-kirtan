@@ -14,6 +14,7 @@ export default function HomeClient({ data }: { data: HomeData }) {
     MM: "/explore/maha-mantras",
     BHJ: "/explore/bhajans",
     LEADS: "/explore/leads",
+    OCCASIONS: "/explore/occasions",
   };
 
   return (

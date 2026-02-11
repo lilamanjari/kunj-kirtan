@@ -47,9 +47,15 @@ export default function BhajansPage() {
 
         <ul className="space-y-3">
           {isLoadingList ? (
-            <li className="rounded-xl border border-dashed border-stone-200 bg-white px-4 py-6 text-center text-sm text-stone-500">
-              <span className="mx-auto mb-2 block h-4 w-4 animate-spin rounded-full border-2 border-stone-300 border-t-stone-600" />
-              Loading bhajans…
+            <li className="rounded-xl border border-dashed border-stone-200 bg-white px-4 py-6">
+              <div className="space-y-3">
+                {Array.from({ length: 4 }).map((_, idx) => (
+                  <div
+                    key={`bhj-loading-${idx}`}
+                    className="h-12 rounded-lg bg-stone-100 animate-pulse"
+                  />
+                ))}
+              </div>
             </li>
           ) : bhajans.length === 0 && hasFetchedOnce ? (
             <li className="rounded-xl border border-dashed border-stone-200 bg-white px-4 py-6 text-center text-sm text-stone-500">
