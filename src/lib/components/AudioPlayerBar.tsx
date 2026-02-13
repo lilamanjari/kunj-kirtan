@@ -15,11 +15,14 @@ export default function AudioPlayerBar() {
   if (!current) return null;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 border-t border-rose-100 bg-white/95 backdrop-blur">
+    <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-rose-100 bg-white/95 text-stone-900 backdrop-blur">
       <div className="h-0.5 w-full bg-gradient-to-r from-transparent via-rose-300/70 to-transparent" />
       <div className="mx-auto max-w-md px-4 py-3">
         <div className="flex items-center gap-3">
-          <button onClick={() => seek(-15)}>
+          <button
+            onClick={() => seek(-15)}
+            className="text-stone-900 active:opacity-80"
+          >
             <SFIcon
               icon={sf15ArrowTriangleheadCounterclockwise}
               className="w-8 h-8"
@@ -29,6 +32,7 @@ export default function AudioPlayerBar() {
             onClick={() =>
               isPlaying() && current ? pause() : current && play(current)
             }
+            className="text-stone-900 active:opacity-80"
           >
             {isPlaying() ? (
               <SFIcon icon={sfPauseFill} className="w-6 h-6" />
@@ -36,7 +40,10 @@ export default function AudioPlayerBar() {
               <SFIcon icon={sfPlayFill} className="w-6 h-6 ml-1" />
             )}
           </button>
-          <button onClick={() => seek(15)}>
+          <button
+            onClick={() => seek(15)}
+            className="text-stone-900 active:opacity-80"
+          >
             <SFIcon icon={sf15ArrowTriangleheadClockwise} className="w-8 h-8" />
           </button>
           <div className="ml-2 flex-1 min-w-0">
