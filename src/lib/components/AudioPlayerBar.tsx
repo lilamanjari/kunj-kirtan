@@ -61,7 +61,8 @@ export default function AudioPlayerBar() {
           step={0.001}
           value={progress}
           onChange={(e) => seek(Number(e.target.value))}
-          className="w-full accent-emerald-500"
+          style={{ accentColor: "#10b981" }}
+          className="w-full accent-emerald-500 text-emerald-500"
         />
       </div>
     </div>

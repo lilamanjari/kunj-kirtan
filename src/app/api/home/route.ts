@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 import type { KirtanSummary } from "@/types/kirtan";
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   /* 1. Rare gem */
 
@@ -15,19 +17,22 @@ export async function GET() {
   }
 
   const rareGemKirtanIds = rareGemKirtans?.map((r) => r.kirtan_id) ?? [];
-  const { data: featuredKirtanData, error: featuredKirtanError } =
-    await supabase
+  let featuredKirtanData = null;
+  if (rareGemKirtanIds.length > 0) {
+    const randomIndex = Math.floor(Math.random() * rareGemKirtanIds.length);
+    const randomId = rareGemKirtanIds[randomIndex];
+
+    const { data, error } = await supabase
       .from("playable_kirtans")
       .select("*")
-      .in("id", rareGemKirtanIds)
-      .limit(1)
+      .eq("id", randomId)
       .maybeSingle();
 
-  if (featuredKirtanError) {
-    return NextResponse.json(
-      { error: featuredKirtanError.message },
-      { status: 500 },
-    );
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    featuredKirtanData = data;
   }
 
   console.log("featuredKirtan raw:", featuredKirtanData);
