@@ -45,10 +45,18 @@ function useAudioPlayerInternal() {
     if (!audio || !playback.current) return;
 
     if ("mediaSession" in navigator) {
+      const origin = window.location.origin;
       navigator.mediaSession.metadata = new MediaMetadata({
         title: playback.current.title || "Kunj Kirtan",
         artist: playback.current.lead_singer ?? "Kunj Kirtan",
         album: "Kunj Kirtan",
+        artwork: [
+          {
+            src: `${origin}/kirtan-icon.svg`,
+            sizes: "512x512",
+            type: "image/svg+xml",
+          },
+        ],
       });
     }
 
