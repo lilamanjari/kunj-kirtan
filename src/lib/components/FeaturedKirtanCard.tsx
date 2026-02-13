@@ -1,4 +1,5 @@
 import Equalizer from "@/lib/components/Equalizer";
+import { formatDateShort } from "@/lib/utils/date";
 import { KirtanSummary } from "@/types/kirtan";
 import { SFIcon } from "@bradleyhodges/sfsymbols-react";
 import { sfPauseFill, sfPlayFill } from "@bradleyhodges/sfsymbols";
@@ -10,14 +11,6 @@ type FeaturedKirtanCardProps = {
   isLoading: boolean;
   onToggle: () => void;
 };
-
-function formatDate(dateStr: string) {
-  return new Date(dateStr).toLocaleDateString("en-GB", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-}
 
 function formatDuration(seconds?: number | null) {
   if (seconds === null || seconds === undefined || !Number.isFinite(seconds)) {
@@ -71,7 +64,7 @@ export default function FeaturedKirtanCard({
       </div>
 
       <p className="mt-1 text-xs text-stone-400">
-        {formatDate(kirtan.recorded_date)}
+        {formatDateShort(kirtan.recorded_date)}
         {formatDuration(kirtan.duration_seconds)
           ? ` • ${formatDuration(kirtan.duration_seconds)}`
           : ""}

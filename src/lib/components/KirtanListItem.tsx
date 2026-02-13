@@ -1,4 +1,5 @@
 import Equalizer from "@/lib/components/Equalizer";
+import { formatDateLong } from "@/lib/utils/date";
 import { KirtanSummary } from "@/types/kirtan";
 
 type KirtanListItemProps = {
@@ -8,14 +9,6 @@ type KirtanListItemProps = {
   isLoading: boolean;
   onToggle: () => void;
 };
-
-function formatDate(dateStr: string) {
-  return new Date(dateStr).toLocaleDateString("en-GB", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
-}
 
 function formatDuration(seconds?: number | null) {
   if (seconds === null || seconds === undefined || !Number.isFinite(seconds)) {
@@ -76,7 +69,7 @@ export default function KirtanListItem({
           ) : null}
         </div>
         <p className="truncate text-xs text-stone-500">
-          {formatDate(kirtan.recorded_date)}
+          {formatDateLong(kirtan.recorded_date)}
           {durationLabel ? ` • ${durationLabel}` : ""}
         </p>
       </div>
