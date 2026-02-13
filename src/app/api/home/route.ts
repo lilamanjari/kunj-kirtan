@@ -41,7 +41,7 @@ export async function GET() {
         ? "Maha Mantra"
         : featuredKirtanData?.title,
     lead_singer: featuredKirtanData?.lead_singer,
-    recorded_date: "22. Nov 2025",
+    recorded_date: featuredKirtanData?.recorded_date,
     sanga: featuredKirtanData?.sanga,
     duration_seconds: featuredKirtanData?.duration_seconds,
   };
