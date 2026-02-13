@@ -26,3 +26,15 @@ Drive → Sheet (READY) → Apps Script → Storage → DB → View
 
 - Home API returns KirtanSummary
 - Audio player consumes Supabase public URLs
+
+### v1 Status (February 11, 2026)
+
+- Explore pages: Maha Mantras, Bhajans, Lead Singers, Occasions
+- Duration support in UI and API responses
+- Infinite scroll on Maha Mantras with server-side filters
+- Autocomplete for lead singer search
+- Audio player bar with progress + active item states
+
+Known gaps:
+- Occasions query is multi-step (no view yet)
+- Test runner defaults to watch mode (use run mode for CI)

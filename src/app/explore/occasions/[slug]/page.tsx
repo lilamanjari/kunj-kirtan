@@ -56,7 +56,9 @@ export default function OccasionDetailPage() {
           <p className="text-xs uppercase tracking-wide text-stone-500">
             Occasion
           </p>
-          <h1 className="text-2xl font-semibold">{data.tag.name}</h1>
+          <h1 className="text-2xl font-semibold font-script">
+            {data.tag.name}
+          </h1>
         </header>
 
         <section>

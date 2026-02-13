@@ -23,7 +23,7 @@ export default function LeadsPage() {
         <div className="pointer-events-none absolute -top-10 left-6 h-28 w-28 rounded-full bg-rose-300/40 blur-3xl" />
         {/* Header */}
         <header className="space-y-1">
-          <h1 className="text-xl font-medium">Lead singers</h1>
+          <h1 className="text-2xl font-semibold font-script">Lead singers</h1>
           <p className="text-sm text-stone-500">
             Explore kirtans by the voices that carry them
           </p>

@@ -15,7 +15,7 @@ type MockBuilder = {
 };
 
 let builder: MockBuilder;
-const fromMock = vi.fn((..._args: unknown[]) => builder);
+const fromMock = vi.fn(() => builder);
 
 vi.mock("@/lib/supabase", () => ({
   supabase: {

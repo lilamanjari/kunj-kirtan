@@ -67,7 +67,9 @@ export default function LeadPage() {
           <p className="text-xs uppercase tracking-wide text-stone-500">
             Lead singer
           </p>
-          <h1 className="text-2xl font-semibold">{data.lead.display_name}</h1>
+          <h1 className="text-2xl font-semibold font-script">
+            {data.lead.display_name}
+          </h1>
         </header>
 
         {/* Filters */}

@@ -76,7 +76,7 @@ export default function HomeClient({ data }: { data: HomeData }) {
                     href={href}
                     className="rounded-xl border border-rose-100 bg-white/80 py-3 text-center text-sm font-medium shadow-sm hover:bg-rose-50/60 transition"
                   >
-                    {e.label}
+                    {e.id === "MM" ? "Maha Mantra" : e.label}
                   </Link>
                 );
               }

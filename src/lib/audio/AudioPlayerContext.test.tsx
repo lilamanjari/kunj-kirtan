@@ -2,12 +2,9 @@
  * @vitest-environment jsdom
  */
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { render, act } from "@testing-library/react";
+import { renderHook, act } from "@testing-library/react";
 import React from "react";
-import {
-  AudioPlayerProvider,
-  useAudioPlayer,
-} from "@/lib/audio/AudioPlayerContext";
+import { AudioPlayerProvider, useAudioPlayer } from "@/lib/audio/AudioPlayerContext";
 import type { KirtanSummary } from "@/types/kirtan";
 
 class MockAudio {
@@ -45,19 +42,6 @@ const sampleKirtan = (id: string): KirtanSummary => ({
   duration_seconds: 120,
 });
 
-function getApiRef() {
-  const apiRef: { current: ReturnType<typeof useAudioPlayer> | null } = {
-    current: null,
-  };
-
-  function Consumer() {
-    apiRef.current = useAudioPlayer();
-    return null;
-  }
-
-  return { apiRef, Consumer };
-}
-
 function flushMicrotasks() {
   return new Promise((resolve) => setTimeout(resolve, 0));
 }
@@ -75,30 +59,26 @@ describe("AudioPlayerContext", () => {
   });
 
   it("creates a single audio element per provider", () => {
-    const { Consumer } = getApiRef();
-    const { unmount } = render(
-      <AudioPlayerProvider>
-        <Consumer />
-        <Consumer />
-      </AudioPlayerProvider>,
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <AudioPlayerProvider>{children}</AudioPlayerProvider>
     );
+    const { unmount } = renderHook(() => useAudioPlayer(), { wrapper });
+    renderHook(() => useAudioPlayer(), { wrapper });
 
     expect(audioInstances).toHaveLength(1);
     unmount();
   });
 
   it("plays on load and does not pause immediately", async () => {
-    const { apiRef, Consumer } = getApiRef();
-    render(
-      <AudioPlayerProvider>
-        <Consumer />
-      </AudioPlayerProvider>,
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <AudioPlayerProvider>{children}</AudioPlayerProvider>
     );
+    const { result } = renderHook(() => useAudioPlayer(), { wrapper });
 
     const k1 = sampleKirtan("1");
 
     await act(async () => {
-      apiRef.current?.play(k1);
+      result.current.play(k1);
       await flushMicrotasks();
     });
 
@@ -108,12 +88,10 @@ describe("AudioPlayerContext", () => {
   });
 
   it("updates progress on timeupdate", async () => {
-    const { apiRef, Consumer } = getApiRef();
-    render(
-      <AudioPlayerProvider>
-        <Consumer />
-      </AudioPlayerProvider>,
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <AudioPlayerProvider>{children}</AudioPlayerProvider>
     );
+    const { result } = renderHook(() => useAudioPlayer(), { wrapper });
 
     const audio = audioInstances[0];
     audio.duration = 200;
@@ -124,21 +102,19 @@ describe("AudioPlayerContext", () => {
       await flushMicrotasks();
     });
 
-    expect(apiRef.current?.progress).toBeCloseTo(0.25, 5);
+    expect(result.current.progress).toBeCloseTo(0.25, 5);
   });
 
   it("handles ended event by clearing current", async () => {
-    const { apiRef, Consumer } = getApiRef();
-    render(
-      <AudioPlayerProvider>
-        <Consumer />
-      </AudioPlayerProvider>,
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <AudioPlayerProvider>{children}</AudioPlayerProvider>
     );
+    const { result } = renderHook(() => useAudioPlayer(), { wrapper });
 
     const k1 = sampleKirtan("1");
 
     await act(async () => {
-      apiRef.current?.play(k1);
+      result.current.play(k1);
       await flushMicrotasks();
     });
 
@@ -147,6 +123,6 @@ describe("AudioPlayerContext", () => {
       await flushMicrotasks();
     });
 
-    expect(apiRef.current?.current).toBeNull();
+    expect(result.current.current).toBeNull();
   });
 });
