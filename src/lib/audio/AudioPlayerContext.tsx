@@ -44,6 +44,14 @@ function useAudioPlayerInternal() {
     const audio = audioRef.current;
     if (!audio || !playback.current) return;
 
+    if ("mediaSession" in navigator) {
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: playback.current.title || "Kunj Kirtan",
+        artist: playback.current.lead_singer ?? "Kunj Kirtan",
+        album: "Kunj Kirtan",
+      });
+    }
+
     if (playback.state === "loading") {
       audio.src = playback.current.audio_url;
       audio.currentTime = 0;

@@ -19,8 +19,13 @@ export async function GET() {
   const rareGemKirtanIds = rareGemKirtans?.map((r) => r.kirtan_id) ?? [];
   let featuredKirtanData = null;
   if (rareGemKirtanIds.length > 0) {
-    const randomIndex = Math.floor(Math.random() * rareGemKirtanIds.length);
-    const randomId = rareGemKirtanIds[randomIndex];
+    const today = new Date().toISOString().slice(0, 10);
+    let seed = 0;
+    for (let i = 0; i < today.length; i += 1) {
+      seed = (seed + today.charCodeAt(i)) % 2147483647;
+    }
+    const index = seed % rareGemKirtanIds.length;
+    const randomId = rareGemKirtanIds[index];
 
     const { data, error } = await supabase
       .from("playable_kirtans")
