@@ -21,7 +21,7 @@ const FILTERS = [
 
 export default function LeadPage() {
   const { slug } = useParams<{ slug: string }>();
-  const { isActive, isPlaying, isLoading, toggle } = useAudioPlayer();
+  const { isActive, isPlaying, isLoading, toggle, enqueue, isQueued } = useAudioPlayer();
 
   const [data, setData] = useState<LeadResponse | null>(null);
   const [filter, setFilter] = useState<"ALL" | "MM" | "BHJ">("ALL");
@@ -115,6 +115,8 @@ export default function LeadPage() {
                   isPlaying={isPlaying()}
                   isLoading={isLoading()}
                   onToggle={() => toggle(k)}
+                  onEnqueue={enqueue}
+                  isQueued={isQueued(k.id)}
                 />
               ))}
             </ul>

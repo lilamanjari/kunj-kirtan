@@ -8,6 +8,8 @@ type KirtanListItemProps = {
   isPlaying: boolean;
   isLoading: boolean;
   onToggle: () => void;
+  onEnqueue?: (kirtan: KirtanSummary) => void;
+  isQueued?: boolean;
 };
 
 function formatDuration(seconds?: number | null) {
@@ -36,6 +38,8 @@ export default function KirtanListItem({
   isPlaying,
   isLoading,
   onToggle,
+  onEnqueue,
+  isQueued = false,
 }: KirtanListItemProps) {
   const durationLabel = formatDuration(kirtan.duration_seconds);
 
@@ -60,7 +64,7 @@ export default function KirtanListItem({
         <div className="flex items-center gap-2">
           <p className="truncate text-xs text-stone-500">
             {kirtan.lead_singer}{" "}
-            {kirtan.sanga ? `in ${kirtan.sanga}` : "Unknown location"}
+            {kirtan.sanga ? `• ${kirtan.sanga}` : "Unknown location"}
           </p>
           {isActive && isPlaying ? (
             <span className="shrink-0 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-700">
@@ -68,26 +72,53 @@ export default function KirtanListItem({
             </span>
           ) : null}
         </div>
-        <p className="truncate text-xs text-stone-500">
-          {formatDateLong(kirtan.recorded_date)}
-          {durationLabel ? ` • ${durationLabel}` : ""}
-        </p>
+        <div className="flex items-center justify-between gap-2 text-xs text-stone-500">
+          <span className="truncate">
+            {formatDateLong(kirtan.recorded_date)}
+          </span>
+          {durationLabel ? (
+            <span className="shrink-0 text-stone-400">{durationLabel}</span>
+          ) : null}
+        </div>
       </div>
 
-      <div className="ml-4 flex h-6 w-6 items-center justify-center">
-        {isActive && isLoading ? (
-          <span className="block h-4 w-4 animate-spin rounded-full border-2 border-stone-300 border-t-stone-600" />
-        ) : isActive && isPlaying ? (
-          <Equalizer />
-        ) : (
-          <span
-            className={`text-sm transition ${
-              isActive ? "text-rose-600" : "text-stone-600"
+      <div className="ml-4 flex items-center gap-2">
+        {onEnqueue ? (
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+              onEnqueue(kirtan);
+            }}
+            disabled={isQueued}
+            className={`flex h-7 w-7 items-center justify-center rounded-full border transition ${
+              isQueued
+                ? "border-emerald-200 bg-emerald-50 text-emerald-500 cursor-default"
+                : "border-rose-200 bg-white text-rose-500 hover:bg-rose-50 cursor-pointer"
             }`}
+            aria-label="Add to queue"
+            title="Add to queue"
           >
-            ▶
-          </span>
-        )}
+            {isQueued ? "✓" : "+"}
+          </button>
+        ) : null}
+        <div className="flex h-6 w-6 items-center justify-center">
+          {isActive && isLoading ? (
+            <span className="block h-4 w-4 animate-spin rounded-full border-2 border-stone-300 border-t-stone-600" />
+          ) : isActive && isPlaying ? (
+            <Equalizer />
+          ) : (
+            <svg
+              viewBox="0 0 24 24"
+              className={`h-4 w-4 transition ${
+                isActive ? "text-rose-600" : "text-stone-600"
+              }`}
+              aria-hidden="true"
+            >
+              <path d="M8 5v14l11-7z" fill="currentColor" />
+            </svg>
+          )}
+        </div>
       </div>
     </li>
   );

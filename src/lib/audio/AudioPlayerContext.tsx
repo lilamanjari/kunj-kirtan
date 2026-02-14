@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { usePlayback } from "./usePlayback";
+import { useQueue } from "./useQueue";
 
 export type AudioPlayerApi = ReturnType<typeof useAudioPlayerInternal>;
 
@@ -9,9 +10,13 @@ const AudioPlayerContext = createContext<AudioPlayerApi | null>(null);
 
 function useAudioPlayerInternal() {
   const playback = usePlayback();
+  const queueApi = useQueue();
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const historyRef = useRef<KirtanSummary[]>([]);
+  const lastCurrentRef = useRef<KirtanSummary | null>(null);
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [currentTime, setCurrentTime] = useState(0);
 
   useEffect(() => {
     const audio = new Audio();
@@ -20,10 +25,21 @@ function useAudioPlayerInternal() {
     const onTimeUpdate = () => {
       if (!audio.duration) return;
       setProgress(audio.currentTime / audio.duration);
+      setCurrentTime(audio.currentTime);
     };
 
-    const onLoadedMetadata = () => setDuration(audio.duration);
-    const onEnded = () => playback.onEnded?.();
+    const onLoadedMetadata = () => {
+      setDuration(audio.duration);
+      setCurrentTime(audio.currentTime);
+    };
+    const onEnded = () => {
+      const next = queueApi.dequeue();
+      if (next) {
+        playback.play(next);
+        return;
+      }
+      playback.onEnded?.();
+    };
 
     audio.addEventListener("timeupdate", onTimeUpdate);
     audio.addEventListener("loadedmetadata", onLoadedMetadata);
@@ -82,14 +98,70 @@ function useAudioPlayerInternal() {
     }
   }, [playback.state, playback.current?.id]);
 
-  const seek = (seconds: number) => {
+  useEffect(() => {
+    const current = playback.current;
+    const last = lastCurrentRef.current;
+
+    if (current && last && current.id !== last.id) {
+      historyRef.current = [last, ...historyRef.current].slice(0, 20);
+    }
+
+    lastCurrentRef.current = current ?? null;
+  }, [playback.current?.id]);
+
+  const seekBy = (seconds: number) => {
     const audio = audioRef.current;
     if (!audio || !audio.duration) return;
     audio.currentTime += seconds;
     setProgress(audio.currentTime / audio.duration);
   };
 
-  return { ...playback, progress, duration, seek };
+  const seekTo = (fraction: number) => {
+    const audio = audioRef.current;
+    if (!audio || !audio.duration) return;
+    const clamped = Math.min(1, Math.max(0, fraction));
+    audio.currentTime = audio.duration * clamped;
+    setProgress(clamped);
+  };
+
+  const playNext = () => {
+    const next = queueApi.dequeue();
+    if (next) {
+      playback.play(next);
+    }
+  };
+
+  const playPrev = () => {
+    const previous = historyRef.current[0];
+    if (previous) {
+      historyRef.current = historyRef.current.slice(1);
+      playback.play(previous);
+      return;
+    }
+
+    const audio = audioRef.current;
+    if (audio) {
+      audio.currentTime = 0;
+      setProgress(0);
+      setCurrentTime(0);
+    }
+  };
+
+  return {
+    ...playback,
+    progress,
+    duration,
+    currentTime,
+    seekBy,
+    seekTo,
+    playNext,
+    playPrev,
+    queue: queueApi.queue,
+    enqueue: queueApi.enqueue,
+    clearQueue: queueApi.clearQueue,
+    queueNotice: queueApi.notice,
+    isQueued: queueApi.isQueued,
+  };
 }
 
 export function AudioPlayerProvider({

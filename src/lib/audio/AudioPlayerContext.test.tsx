@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { renderHook, act } from "@testing-library/react";
+import { render, renderHook, act } from "@testing-library/react";
 import React from "react";
 import { AudioPlayerProvider, useAudioPlayer } from "@/lib/audio/AudioPlayerContext";
 import type { KirtanSummary } from "@/types/kirtan";
@@ -59,11 +59,17 @@ describe("AudioPlayerContext", () => {
   });
 
   it("creates a single audio element per provider", () => {
-    const wrapper = ({ children }: { children: React.ReactNode }) => (
-      <AudioPlayerProvider>{children}</AudioPlayerProvider>
+    function Consumer() {
+      useAudioPlayer();
+      return null;
+    }
+
+    const { unmount } = render(
+      <AudioPlayerProvider>
+        <Consumer />
+        <Consumer />
+      </AudioPlayerProvider>,
     );
-    const { unmount } = renderHook(() => useAudioPlayer(), { wrapper });
-    renderHook(() => useAudioPlayer(), { wrapper });
 
     expect(audioInstances).toHaveLength(1);
     unmount();
