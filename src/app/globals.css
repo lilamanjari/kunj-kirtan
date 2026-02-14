@@ -68,3 +68,55 @@ body {
 .animate-breathe {
   animation: breathe 3s ease-in-out infinite;
 }
+
+@keyframes toast-in {
+  0% {
+    transform: translateY(8px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-toast-in {
+  animation: toast-in 220ms ease-out;
+}
+
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  accent-color: #10b981;
+  background: transparent;
+}
+
+input[type="range"]::-webkit-slider-runnable-track {
+  background: #d1fae5;
+  height: 4px;
+  border-radius: 999px;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  margin-top: -6px;
+  height: 16px;
+  width: 16px;
+  border-radius: 999px;
+  background: #10b981;
+}
+
+input[type="range"]::-moz-range-track {
+  background: #d1fae5;
+  height: 4px;
+  border-radius: 999px;
+}
+
+input[type="range"]::-moz-range-thumb {
+  height: 16px;
+  width: 16px;
+  border-radius: 999px;
+  border: none;
+  background: #10b981;
+}

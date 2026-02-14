@@ -13,7 +13,8 @@ export default function BhajansPage() {
   const [hasFetchedOnce, setHasFetchedOnce] = useState(false);
   const [isLoadingList, setIsLoadingList] = useState(true);
 
-  const { toggle, isActive, isPlaying, isLoading } = useAudioPlayer();
+  const { toggle, isActive, isPlaying, isLoading, enqueue, queue } = useAudioPlayer();
+  const queuedIds = new Set(queue.map((item) => item.id));
 
   useEffect(() => {
     const url = search
@@ -72,6 +73,8 @@ export default function BhajansPage() {
                   isPlaying={isPlaying()}
                   isLoading={isLoading()}
                   onToggle={() => toggle(b)}
+                  onEnqueue={enqueue}
+                  isQueued={queuedIds.has(b.id)}
                 />
               );
             })

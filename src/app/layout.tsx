@@ -3,6 +3,7 @@ import { Geist, Geist_Mono, Dancing_Script } from "next/font/google";
 import "./globals.css";
 import { AudioPlayerProvider } from "@/lib/audio/AudioPlayerContext";
 import AudioPlayerBar from "@/lib/components/AudioPlayerBar";
+import QueueToast from "@/lib/components/QueueToast";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -23,6 +24,11 @@ const dancingScript = Dancing_Script({
 export const metadata: Metadata = {
   title: "Kunj Kirtan",
   description: "Sacred sounds, lovingly curated.",
+  icons: {
+    icon: "/kirtan-icon.svg",
+    shortcut: "/kirtan-icon.svg",
+    apple: "/kirtan-icon.svg",
+  },
 };
 
 export default function RootLayout({
@@ -37,6 +43,7 @@ export default function RootLayout({
       >
         <AudioPlayerProvider>
           {children}
+          <QueueToast />
           <AudioPlayerBar />
         </AudioPlayerProvider>
       </body>

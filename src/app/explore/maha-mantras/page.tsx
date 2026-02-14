@@ -26,7 +26,8 @@ export default function MahaMantrasPage() {
   const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const suggestDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const { toggle, isActive, isPlaying, isLoading } = useAudioPlayer();
+  const { toggle, isActive, isPlaying, isLoading, enqueue, queue } = useAudioPlayer();
+  const queuedIds = new Set(queue.map((item) => item.id));
 
   function resetPagination() {
     setMantras([]);
@@ -238,6 +239,8 @@ export default function MahaMantrasPage() {
                   isPlaying={isPlaying()}
                   isLoading={isLoading()}
                   onToggle={() => toggle(m)}
+                  onEnqueue={enqueue}
+                  isQueued={queuedIds.has(m.id)}
                 />
               );
             })

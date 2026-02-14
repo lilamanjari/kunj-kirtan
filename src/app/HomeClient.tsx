@@ -7,7 +7,8 @@ import KirtanListItem from "@/lib/components/KirtanListItem";
 import Link from "next/link";
 
 export default function HomeClient({ data }: { data: HomeData }) {
-  const { isPlaying, isLoading, isActive, toggle } = useAudioPlayer();
+  const { isPlaying, isLoading, isActive, toggle, enqueue, queue } = useAudioPlayer();
+  const queuedIds = new Set(queue.map((item) => item.id));
 
   const primaryAction = data.primary_action;
   const entryPointLinks: Record<string, string> = {
@@ -109,6 +110,8 @@ export default function HomeClient({ data }: { data: HomeData }) {
                   isPlaying={isPlaying()}
                   isLoading={isLoading()}
                   onToggle={() => toggle(k)}
+                  onEnqueue={enqueue}
+                  isQueued={queuedIds.has(k.id)}
                 />
               );
             })}

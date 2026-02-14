@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { usePlayback } from "./usePlayback";
+import type { KirtanSummary } from "@/types/kirtan";
 
 export type AudioPlayerApi = ReturnType<typeof useAudioPlayerInternal>;
 
@@ -12,6 +13,61 @@ function useAudioPlayerInternal() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [queue, setQueue] = useState<KirtanSummary[]>([]);
+  const [queueLoaded, setQueueLoaded] = useState(false);
+  const [queueNotice, setQueueNotice] = useState<string | null>(null);
+  const queueRef = useRef<KirtanSummary[]>([]);
+
+  const QUEUE_STORAGE_KEY = "kirtan_queue_v1";
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(QUEUE_STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          setQueue(parsed);
+        }
+      }
+    } catch {
+      // ignore corrupted storage
+    } finally {
+      setQueueLoaded(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    queueRef.current = queue;
+    if (!queueLoaded) return;
+    try {
+      localStorage.setItem(QUEUE_STORAGE_KEY, JSON.stringify(queue));
+    } catch {
+      // ignore storage failures
+    }
+  }, [queue, queueLoaded]);
+
+  function enqueue(kirtan: KirtanSummary) {
+    setQueue((prev) => [...prev, kirtan]);
+    setQueueNotice(`Added "${kirtan.title}" to queue`);
+    if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+      navigator.vibrate(20);
+    }
+  }
+
+  function dequeue() {
+    setQueue((prev) => prev.slice(1));
+  }
+
+  function clearQueue() {
+    setQueue([]);
+  }
+
+  useEffect(() => {
+    if (!queueNotice) return;
+    const timer = setTimeout(() => setQueueNotice(null), 1500);
+    return () => clearTimeout(timer);
+  }, [queueNotice]);
 
   useEffect(() => {
     const audio = new Audio();
@@ -20,10 +76,22 @@ function useAudioPlayerInternal() {
     const onTimeUpdate = () => {
       if (!audio.duration) return;
       setProgress(audio.currentTime / audio.duration);
+      setCurrentTime(audio.currentTime);
     };
 
-    const onLoadedMetadata = () => setDuration(audio.duration);
-    const onEnded = () => playback.onEnded?.();
+    const onLoadedMetadata = () => {
+      setDuration(audio.duration);
+      setCurrentTime(audio.currentTime);
+    };
+    const onEnded = () => {
+      const next = queueRef.current[0];
+      if (next) {
+        dequeue();
+        playback.play(next);
+        return;
+      }
+      playback.onEnded?.();
+    };
 
     audio.addEventListener("timeupdate", onTimeUpdate);
     audio.addEventListener("loadedmetadata", onLoadedMetadata);
@@ -82,14 +150,33 @@ function useAudioPlayerInternal() {
     }
   }, [playback.state, playback.current?.id]);
 
-  const seek = (seconds: number) => {
+  const seekBy = (seconds: number) => {
     const audio = audioRef.current;
     if (!audio || !audio.duration) return;
     audio.currentTime += seconds;
     setProgress(audio.currentTime / audio.duration);
   };
 
-  return { ...playback, progress, duration, seek };
+  const seekTo = (fraction: number) => {
+    const audio = audioRef.current;
+    if (!audio || !audio.duration) return;
+    const clamped = Math.min(1, Math.max(0, fraction));
+    audio.currentTime = audio.duration * clamped;
+    setProgress(clamped);
+  };
+
+  return {
+    ...playback,
+    progress,
+    duration,
+    currentTime,
+    seekBy,
+    seekTo,
+    queue,
+    enqueue,
+    clearQueue,
+    queueNotice,
+  };
 }
 
 export function AudioPlayerProvider({
