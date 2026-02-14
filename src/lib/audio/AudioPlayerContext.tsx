@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { usePlayback } from "./usePlayback";
-import type { KirtanSummary } from "@/types/kirtan";
+import { useQueue } from "./useQueue";
 
 export type AudioPlayerApi = ReturnType<typeof useAudioPlayerInternal>;
 
@@ -10,64 +10,13 @@ const AudioPlayerContext = createContext<AudioPlayerApi | null>(null);
 
 function useAudioPlayerInternal() {
   const playback = usePlayback();
+  const queueApi = useQueue();
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const historyRef = useRef<KirtanSummary[]>([]);
+  const lastCurrentRef = useRef<KirtanSummary | null>(null);
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
-  const [queue, setQueue] = useState<KirtanSummary[]>([]);
-  const [queueLoaded, setQueueLoaded] = useState(false);
-  const [queueNotice, setQueueNotice] = useState<string | null>(null);
-  const queueRef = useRef<KirtanSummary[]>([]);
-
-  const QUEUE_STORAGE_KEY = "kirtan_queue_v1";
-
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(QUEUE_STORAGE_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed)) {
-          setQueue(parsed);
-        }
-      }
-    } catch {
-      // ignore corrupted storage
-    } finally {
-      setQueueLoaded(true);
-    }
-  }, []);
-
-  useEffect(() => {
-    queueRef.current = queue;
-    if (!queueLoaded) return;
-    try {
-      localStorage.setItem(QUEUE_STORAGE_KEY, JSON.stringify(queue));
-    } catch {
-      // ignore storage failures
-    }
-  }, [queue, queueLoaded]);
-
-  function enqueue(kirtan: KirtanSummary) {
-    setQueue((prev) => [...prev, kirtan]);
-    setQueueNotice(`Added "${kirtan.title}" to queue`);
-    if (typeof navigator !== "undefined" && "vibrate" in navigator) {
-      navigator.vibrate(20);
-    }
-  }
-
-  function dequeue() {
-    setQueue((prev) => prev.slice(1));
-  }
-
-  function clearQueue() {
-    setQueue([]);
-  }
-
-  useEffect(() => {
-    if (!queueNotice) return;
-    const timer = setTimeout(() => setQueueNotice(null), 1500);
-    return () => clearTimeout(timer);
-  }, [queueNotice]);
 
   useEffect(() => {
     const audio = new Audio();
@@ -84,9 +33,8 @@ function useAudioPlayerInternal() {
       setCurrentTime(audio.currentTime);
     };
     const onEnded = () => {
-      const next = queueRef.current[0];
+      const next = queueApi.dequeue();
       if (next) {
-        dequeue();
         playback.play(next);
         return;
       }
@@ -150,6 +98,17 @@ function useAudioPlayerInternal() {
     }
   }, [playback.state, playback.current?.id]);
 
+  useEffect(() => {
+    const current = playback.current;
+    const last = lastCurrentRef.current;
+
+    if (current && last && current.id !== last.id) {
+      historyRef.current = [last, ...historyRef.current].slice(0, 20);
+    }
+
+    lastCurrentRef.current = current ?? null;
+  }, [playback.current?.id]);
+
   const seekBy = (seconds: number) => {
     const audio = audioRef.current;
     if (!audio || !audio.duration) return;
@@ -165,6 +124,29 @@ function useAudioPlayerInternal() {
     setProgress(clamped);
   };
 
+  const playNext = () => {
+    const next = queueApi.dequeue();
+    if (next) {
+      playback.play(next);
+    }
+  };
+
+  const playPrev = () => {
+    const previous = historyRef.current[0];
+    if (previous) {
+      historyRef.current = historyRef.current.slice(1);
+      playback.play(previous);
+      return;
+    }
+
+    const audio = audioRef.current;
+    if (audio) {
+      audio.currentTime = 0;
+      setProgress(0);
+      setCurrentTime(0);
+    }
+  };
+
   return {
     ...playback,
     progress,
@@ -172,10 +154,13 @@ function useAudioPlayerInternal() {
     currentTime,
     seekBy,
     seekTo,
-    queue,
-    enqueue,
-    clearQueue,
-    queueNotice,
+    playNext,
+    playPrev,
+    queue: queueApi.queue,
+    enqueue: queueApi.enqueue,
+    clearQueue: queueApi.clearQueue,
+    queueNotice: queueApi.notice,
+    isQueued: queueApi.isQueued,
   };
 }
 

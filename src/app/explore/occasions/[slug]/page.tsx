@@ -17,8 +17,7 @@ type OccasionResponse = {
 
 export default function OccasionDetailPage() {
   const { slug } = useParams<{ slug: string }>();
-  const { isActive, isPlaying, isLoading, toggle, enqueue, queue } = useAudioPlayer();
-  const queuedIds = new Set(queue.map((item) => item.id));
+  const { isActive, isPlaying, isLoading, toggle, enqueue, isQueued } = useAudioPlayer();
 
   const [data, setData] = useState<OccasionResponse | null>(null);
 
@@ -82,7 +81,7 @@ export default function OccasionDetailPage() {
                   isLoading={isLoading()}
                   onToggle={() => toggle(k)}
                   onEnqueue={enqueue}
-                  isQueued={queuedIds.has(k.id)}
+                  isQueued={isQueued(k.id)}
                 />
               ))}
             </ul>

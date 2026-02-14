@@ -5,6 +5,8 @@ import { SFIcon } from "@bradleyhodges/sfsymbols-react";
 import {
   sf15ArrowTriangleheadClockwise,
   sf15ArrowTriangleheadCounterclockwise,
+  sfBackwardEndFill,
+  sfForwardEndFill,
   sfPauseFill,
   sfPlayFill,
 } from "@bradleyhodges/sfsymbols";
@@ -25,6 +27,8 @@ export default function AudioPlayerBar() {
     isPlaying,
     pause,
     play,
+    playNext,
+    playPrev,
     current,
     queue,
     clearQueue,
@@ -40,6 +44,13 @@ export default function AudioPlayerBar() {
       <div className="h-0.5 w-full bg-gradient-to-r from-transparent via-rose-300/70 to-transparent" />
       <div className="mx-auto max-w-md px-4 py-3">
         <div className="flex items-center gap-3">
+          <button
+            onClick={playPrev}
+            className="text-stone-900 active:opacity-80"
+            aria-label="Previous"
+          >
+            <SFIcon icon={sfBackwardEndFill} className="w-5 h-5" />
+          </button>
           <button
             onClick={() => seekBy(-15)}
             className="text-stone-900 active:opacity-80"
@@ -67,6 +78,18 @@ export default function AudioPlayerBar() {
           >
             <SFIcon icon={sf15ArrowTriangleheadClockwise} className="w-8 h-8" />
           </button>
+          <button
+            onClick={playNext}
+            disabled={queue.length === 0}
+            className={`active:opacity-80 ${
+              queue.length === 0
+                ? "text-stone-300"
+                : "text-stone-900"
+            }`}
+            aria-label="Next"
+          >
+            <SFIcon icon={sfForwardEndFill} className="w-5 h-5" />
+          </button>
           <div className="ml-2 flex-1 min-w-0">
             <p className="truncate text-sm font-medium">{current.title}</p>
             <p className="truncate text-xs text-stone-500">
@@ -85,7 +108,7 @@ export default function AudioPlayerBar() {
           style={{ accentColor: "#10b981" }}
           className="w-full accent-emerald-500 text-emerald-500"
         />
-        <div className="-mt-2 flex items-center justify-between text-[10px] leading-none text-stone-400 tabular-nums">
+        <div className="mt-1 flex items-center justify-between text-[10px] leading-none text-stone-400 tabular-nums">
           <span>{formatTime(currentTime)}</span>
           <span>-{formatTime(Math.max(0, duration - currentTime))}</span>
         </div>
