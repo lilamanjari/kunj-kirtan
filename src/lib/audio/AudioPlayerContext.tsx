@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { usePlayback } from "./usePlayback";
 import { useQueue } from "./useQueue";
+import { KirtanSummary } from "@/types/kirtan";
 
 export type AudioPlayerApi = ReturnType<typeof useAudioPlayerInternal>;
 
