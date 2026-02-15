@@ -45,9 +45,9 @@ export async function GET(
     return NextResponse.json({ error: kirtanError.message }, { status: 500 });
   }
 
-  const ids = (kirtans ?? []).map((k) => k.id);
+  const kirtanIds = (kirtans ?? []).map((k) => k.id);
   const { harmoniumIds, error: harmoniumError } =
-    await fetchHarmoniumIds(ids);
+    await fetchHarmoniumIds(kirtanIds);
 
   if (harmoniumError) {
     return NextResponse.json({ error: harmoniumError }, { status: 500 });
