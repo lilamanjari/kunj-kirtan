@@ -32,6 +32,14 @@ function formatDuration(seconds?: number | null) {
   return `${mins}:${String(secs).padStart(2, "0")}`;
 }
 
+function hashHue(id: string) {
+  let hash = 0;
+  for (let i = 0; i < id.length; i += 1) {
+    hash = (hash * 31 + id.charCodeAt(i)) % 360;
+  }
+  return hash;
+}
+
 export default function KirtanListItem({
   kirtan,
   isActive,
@@ -42,12 +50,16 @@ export default function KirtanListItem({
   isQueued = false,
 }: KirtanListItemProps) {
   const durationLabel = formatDuration(kirtan.duration_seconds);
+  const isMaha = kirtan.type === "MM";
+  const sequenceLabel =
+    kirtan.sequence_num ? `#${kirtan.sequence_num}` : null;
+  const borderTint = isMaha ? `hsla(${hashHue(kirtan.id)}, 70%, 85%, 0.8)` : "";
 
   return (
     <li
       onClick={onToggle}
       className={`
-        flex cursor-pointer items-center justify-between rounded-xl px-4 py-3 shadow-sm transition
+        flex cursor-pointer items-center justify-between rounded-xl px-4 py-3 shadow-sm transition border
         ${
           isActive
             ? "bg-gradient-to-r from-rose-50 via-pink-50 to-rose-100"
@@ -56,12 +68,32 @@ export default function KirtanListItem({
         ${isActive && isPlaying ? "animate-breathe" : ""}
         ${isActive && !isPlaying ? "opacity-90" : ""}
       `}
+      style={{
+        borderColor: borderTint || "rgba(226,232,240,0.7)",
+      }}
     >
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-medium">
-          {kirtan.title ?? "Maha Mantra"}
-        </p>
-        <div className="flex items-center gap-2">
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0">
+            <p className="truncate text-sm font-medium">
+              {kirtan.title ?? "Maha Mantra"}
+              {sequenceLabel ? ` ${sequenceLabel}` : ""}
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            {kirtan.has_harmonium ? (
+              <span className="shrink-0 rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700">
+                H
+              </span>
+            ) : null}
+            {durationLabel ? (
+              <span className="shrink-0 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-700">
+                {durationLabel}
+              </span>
+            ) : null}
+          </div>
+        </div>
+        <div className="mt-0.5 flex items-center gap-2">
           <p className="truncate text-xs text-stone-500">
             {kirtan.lead_singer}{" "}
             {kirtan.sanga ? `• ${kirtan.sanga}` : "Unknown location"}
@@ -76,9 +108,6 @@ export default function KirtanListItem({
           <span className="truncate">
             {formatDateLong(kirtan.recorded_date)}
           </span>
-          {durationLabel ? (
-            <span className="shrink-0 text-stone-400">{durationLabel}</span>
-          ) : null}
         </div>
       </div>
 

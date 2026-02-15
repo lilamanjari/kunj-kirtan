@@ -39,6 +39,10 @@ export default function FeaturedKirtanCard({
   isLoading,
   onToggle,
 }: FeaturedKirtanCardProps) {
+  const sequenceLabel =
+    kirtan.sequence_num ? `#${kirtan.sequence_num}` : null;
+  const durationLabel = formatDuration(kirtan.duration_seconds);
+
   return (
     <section
       className={`
@@ -52,6 +56,7 @@ export default function FeaturedKirtanCard({
 
       <h1 className="mt-2 text-3xl font-semibold">
         {kirtan.title ?? "Maha Mantra"}
+        {sequenceLabel ? ` ${sequenceLabel}` : ""}
       </h1>
 
       {/* Lead singer row */}
@@ -63,12 +68,19 @@ export default function FeaturedKirtanCard({
         </div>
       </div>
 
-      <p className="mt-1 text-xs text-stone-400">
-        {formatDateShort(kirtan.recorded_date)}
-        {formatDuration(kirtan.duration_seconds)
-          ? ` • ${formatDuration(kirtan.duration_seconds)}`
-          : ""}
-      </p>
+      <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-stone-400">
+        <span>{formatDateShort(kirtan.recorded_date)}</span>
+        {kirtan.has_harmonium ? (
+          <span className="rounded-full bg-amber-400/20 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-200">
+            H
+          </span>
+        ) : null}
+        {durationLabel ? (
+          <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-200">
+            {durationLabel}
+          </span>
+        ) : null}
+      </div>
 
       {/* Action button */}
       <button

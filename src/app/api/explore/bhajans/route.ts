@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 import type { KirtanSummary } from "@/types/kirtan";
+import { fetchHarmoniumIds } from "@/lib/server/harmonium";
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
@@ -22,6 +23,14 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
+  const ids = (data ?? []).map((k) => k.id);
+  const { harmoniumIds, error: harmoniumError } =
+    await fetchHarmoniumIds(ids);
+
+  if (harmoniumError) {
+    return NextResponse.json({ error: harmoniumError }, { status: 500 });
+  }
+
   const bhajans: KirtanSummary[] = (data ?? []).map((k) => ({
     id: k.id,
     audio_url: k.audio_url,
@@ -31,6 +40,8 @@ export async function GET(req: Request) {
     recorded_date: k.recorded_date,
     sanga: k.sanga,
     duration_seconds: k.duration_seconds,
+    sequence_num: k.sequence_num ?? null,
+    has_harmonium: harmoniumIds.has(k.id),
   }));
 
   return NextResponse.json({

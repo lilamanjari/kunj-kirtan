@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 import type { KirtanSummary } from "@/types/kirtan";
+import { fetchHarmoniumIds } from "@/lib/server/harmonium";
 
 export const revalidate = 86400;
 
@@ -54,6 +55,8 @@ export async function GET() {
     recorded_date: featuredKirtanData?.recorded_date,
     sanga: featuredKirtanData?.sanga,
     duration_seconds: featuredKirtanData?.duration_seconds,
+    sequence_num: featuredKirtanData?.sequence_num ?? null,
+    has_harmonium: false,
   };
 
   /* 2. Recently added */
@@ -71,6 +74,23 @@ export async function GET() {
     );
   }
 
+  const recentIds = (recentlyAdded ?? []).map((k) => k.id);
+  const featuredId = featuredKirtanData?.id ?? null;
+  const harmoniumLookupIds = featuredId
+    ? [featuredId, ...recentIds]
+    : recentIds;
+
+  const { harmoniumIds, error: harmoniumError } =
+    await fetchHarmoniumIds(harmoniumLookupIds);
+
+  if (harmoniumError) {
+    return NextResponse.json({ error: harmoniumError }, { status: 500 });
+  }
+
+  if (featuredId) {
+    featuredKirtan.has_harmonium = harmoniumIds.has(featuredId);
+  }
+
   const recentlyAddedKirtans: KirtanSummary[] =
     recentlyAdded?.map((k) => ({
       id: k.id,
@@ -81,6 +101,8 @@ export async function GET() {
       recorded_date: k.recorded_date,
       sanga: k.sanga,
       duration_seconds: k.duration_seconds,
+      sequence_num: k.sequence_num ?? null,
+      has_harmonium: harmoniumIds.has(k.id),
     })) ?? [];
 
   const recentlyAddedNoDuplicates = recentlyAddedKirtans.filter(

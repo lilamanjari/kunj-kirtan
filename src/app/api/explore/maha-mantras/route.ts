@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 import type { KirtanSummary } from "@/types/kirtan";
+import { fetchHarmoniumIds } from "@/lib/server/harmonium";
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
@@ -28,7 +29,7 @@ export async function GET(req: Request) {
   let query = supabase
     .from("playable_kirtans")
     .select(
-      "id, audio_url, type, title, lead_singer, recorded_date, sanga, duration_seconds, created_at",
+      "id, audio_url, type, title, lead_singer, recorded_date, sanga, duration_seconds, created_at, sequence_num",
     )
     .eq("type", "MM")
     .order("created_at", { ascending: false })
@@ -68,6 +69,14 @@ export async function GET(req: Request) {
   const hasMore = rows.length > limit;
   const page = hasMore ? rows.slice(0, limit) : rows;
 
+  const ids = page.map((k) => k.id);
+  const { harmoniumIds, error: harmoniumError } =
+    await fetchHarmoniumIds(ids);
+
+  if (harmoniumError) {
+    return NextResponse.json({ error: harmoniumError }, { status: 500 });
+  }
+
   const mantras: KirtanSummary[] = page.map((k) => ({
     id: k.id,
     audio_url: k.audio_url,
@@ -77,6 +86,8 @@ export async function GET(req: Request) {
     recorded_date: k.recorded_date,
     sanga: k.sanga,
     duration_seconds: k.duration_seconds,
+    sequence_num: k.sequence_num ?? null,
+    has_harmonium: harmoniumIds.has(k.id),
   }));
 
   const last = page[page.length - 1];

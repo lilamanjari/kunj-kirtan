@@ -1,6 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { GET } from "./route";
 
+vi.mock("@/lib/server/harmonium", () => ({
+  fetchHarmoniumIds: vi.fn().mockResolvedValue({
+    harmoniumIds: new Set<string>(),
+    error: null,
+  }),
+}));
+
 type MockResult = { data: unknown; error: null | { message: string } };
 type MockBuilder = {
   select: ReturnType<typeof vi.fn>;
