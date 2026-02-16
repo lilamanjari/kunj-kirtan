@@ -51,8 +51,7 @@ export default function KirtanListItem({
 }: KirtanListItemProps) {
   const durationLabel = formatDuration(kirtan.duration_seconds);
   const isMaha = kirtan.type === "MM";
-  const sequenceLabel =
-    kirtan.sequence_num ? `#${kirtan.sequence_num}` : null;
+  const sequenceLabel = kirtan.sequence_num ? `#${kirtan.sequence_num}` : null;
   const borderTint = isMaha ? `hsla(${hashHue(kirtan.id)}, 70%, 85%, 0.8)` : "";
 
   return (
@@ -77,7 +76,6 @@ export default function KirtanListItem({
           <div className="min-w-0">
             <p className="truncate text-sm font-medium">
               {kirtan.title ?? "Maha Mantra"}
-              {sequenceLabel ? ` ${sequenceLabel}` : ""}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -93,10 +91,15 @@ export default function KirtanListItem({
             ) : null}
           </div>
         </div>
-        <div className="mt-0.5 flex items-center gap-2">
+        <div className="mt-0.5 flex items-center gap-1">
+          {sequenceLabel ? (
+            <span className="shrink-0 text-xs font-normal text-stone-500">
+              {sequenceLabel} by
+            </span>
+          ) : null}
           <p className="truncate text-xs text-stone-500">
-            {kirtan.lead_singer}{" "}
-            {kirtan.sanga ? `• ${kirtan.sanga}` : "Unknown location"}
+            {kirtan.lead_singer}
+            {kirtan.sanga ? ` • ${kirtan.sanga}` : " Unknown location"}
           </p>
           {isActive && isPlaying ? (
             <span className="shrink-0 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-700">
