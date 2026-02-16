@@ -101,11 +101,6 @@ export default function KirtanListItem({
             {kirtan.lead_singer}
             {kirtan.sanga ? ` • ${kirtan.sanga}` : " Unknown location"}
           </p>
-          {isActive && isPlaying ? (
-            <span className="shrink-0 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-700">
-              Now playing
-            </span>
-          ) : null}
         </div>
         <div className="flex items-center justify-between gap-2 text-xs text-stone-500">
           <span className="truncate">
