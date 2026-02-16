@@ -53,6 +53,8 @@ export async function GET() {
         : featuredKirtanData?.title,
     lead_singer: featuredKirtanData?.lead_singer,
     recorded_date: featuredKirtanData?.recorded_date,
+    recorded_date_precision:
+      featuredKirtanData?.recorded_date_precision ?? null,
     sanga: featuredKirtanData?.sanga,
     duration_seconds: featuredKirtanData?.duration_seconds,
     sequence_num: featuredKirtanData?.sequence_num ?? null,
@@ -99,6 +101,7 @@ export async function GET() {
       title: k.type === "MM" ? "Maha Mantra" : k.title,
       lead_singer: k.lead_singer,
       recorded_date: k.recorded_date,
+      recorded_date_precision: k.recorded_date_precision ?? null,
       sanga: k.sanga,
       duration_seconds: k.duration_seconds,
       sequence_num: k.sequence_num ?? null,

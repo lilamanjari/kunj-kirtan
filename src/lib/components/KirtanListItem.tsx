@@ -99,13 +99,16 @@ export default function KirtanListItem({
           ) : null}
           <p className="truncate text-xs text-stone-500">
             {kirtan.lead_singer}
-            {kirtan.sanga ? ` • ${kirtan.sanga}` : " Unknown location"}
+            {kirtan.sanga ? ` • ${kirtan.sanga}` : " • Unknown location"}
           </p>
         </div>
         <div className="flex items-center justify-between gap-2 text-xs text-stone-500">
           {kirtan.recorded_date ? (
             <span className="truncate">
-              {formatDateLong(kirtan.recorded_date)}
+              {formatDateLong(
+                kirtan.recorded_date,
+                kirtan.recorded_date_precision,
+              )}
             </span>
           ) : null}
         </div>

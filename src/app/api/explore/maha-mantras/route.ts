@@ -29,7 +29,7 @@ export async function GET(req: Request) {
   let query = supabase
     .from("playable_kirtans")
     .select(
-      "id, audio_url, type, title, lead_singer, recorded_date, sanga, duration_seconds, created_at, sequence_num",
+      "id, audio_url, type, title, lead_singer, recorded_date, recorded_date_precision, sanga, duration_seconds, created_at, sequence_num",
     )
     .eq("type", "MM")
     .order("created_at", { ascending: false })
@@ -84,6 +84,7 @@ export async function GET(req: Request) {
     title: "Maha Mantra",
     lead_singer: k.lead_singer,
     recorded_date: k.recorded_date,
+    recorded_date_precision: k.recorded_date_precision ?? null,
     sanga: k.sanga,
     duration_seconds: k.duration_seconds,
     sequence_num: k.sequence_num ?? null,

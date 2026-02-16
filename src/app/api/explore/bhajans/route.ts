@@ -38,6 +38,7 @@ export async function GET(req: Request) {
     title: k.title,
     lead_singer: k.lead_singer,
     recorded_date: k.recorded_date,
+    recorded_date_precision: k.recorded_date_precision ?? null,
     sanga: k.sanga,
     duration_seconds: k.duration_seconds,
     sequence_num: k.sequence_num ?? null,
