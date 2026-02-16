@@ -103,9 +103,11 @@ export default function KirtanListItem({
           </p>
         </div>
         <div className="flex items-center justify-between gap-2 text-xs text-stone-500">
-          <span className="truncate">
-            {formatDateLong(kirtan.recorded_date)}
-          </span>
+          {kirtan.recorded_date ? (
+            <span className="truncate">
+              {formatDateLong(kirtan.recorded_date)}
+            </span>
+          ) : null}
         </div>
       </div>
 

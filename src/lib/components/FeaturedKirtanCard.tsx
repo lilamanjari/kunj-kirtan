@@ -71,7 +71,9 @@ export default function FeaturedKirtanCard({
       </div>
 
       <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-stone-400">
-        <span>{formatDateShort(kirtan.recorded_date)}</span>
+        {kirtan.recorded_date ? (
+          <span>{formatDateShort(kirtan.recorded_date)}</span>
+        ) : null}
         {kirtan.has_harmonium ? (
           <span className="rounded-full bg-amber-400/20 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-200">
             H
