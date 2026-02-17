@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { useAudioPlayer } from "@/lib/audio/AudioPlayerContext";
 import type { KirtanSummary } from "@/types/kirtan";
 import KirtanListItem from "@/lib/components/KirtanListItem";
+import { useKirtanDeepLink } from "@/lib/hooks/useKirtanDeepLink";
 
 export default function MahaMantrasPage() {
   const [mantras, setMantras] = useState<KirtanSummary[]>([]);
@@ -26,7 +28,7 @@ export default function MahaMantrasPage() {
   const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const suggestDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const { toggle, isActive, isPlaying, isLoading, enqueue, isQueued } = useAudioPlayer();
+  const { toggle, isActive, isPlaying, isLoading, enqueue, isQueued, select } = useAudioPlayer();
 
   function resetPagination() {
     setMantras([]);
@@ -113,6 +115,14 @@ export default function MahaMantrasPage() {
   };
 
   const visibleMantras = mantras;
+  const pinnedKirtan = useKirtanDeepLink({
+    kirtans: visibleMantras,
+    onSelect: select,
+    isActive,
+  });
+  const renderedMantras = pinnedKirtan
+    ? [pinnedKirtan, ...visibleMantras.filter((k) => k.id !== pinnedKirtan.id)]
+    : visibleMantras;
 
   useEffect(() => {
     if (!hasMore || isLoadingMore) return;
@@ -153,7 +163,16 @@ export default function MahaMantrasPage() {
     <div className="min-h-screen bg-[radial-gradient(circle_at_top,_#ffe4ef_0%,_#fff6fa_45%,_#f8fafc_100%)] text-stone-900">
       <main className="relative mx-auto max-w-md px-5 py-6 space-y-6">
         <div className="pointer-events-none absolute -top-10 left-6 h-28 w-28 rounded-full bg-rose-300/40 blur-3xl" />
-        <h1 className="text-2xl font-semibold font-script">Maha Mantras</h1>
+        <div className="flex items-center justify-between">
+          <Link
+            href="/"
+            className="text-xs font-medium uppercase tracking-wide text-rose-400 hover:text-rose-500"
+          >
+            Home
+          </Link>
+          <h1 className="text-2xl font-semibold font-script">Maha Mantras</h1>
+          <span className="w-10" />
+        </div>
 
         <div className="relative">
           <input
@@ -224,12 +243,12 @@ export default function MahaMantrasPage() {
                 ))}
               </div>
             </li>
-          ) : visibleMantras.length === 0 && hasFetchedOnce ? (
+          ) : renderedMantras.length === 0 && hasFetchedOnce ? (
             <li className="rounded-xl border border-dashed border-stone-200 bg-white px-4 py-6 text-center text-sm text-stone-500">
               No Maha Mantras match your filters.
             </li>
           ) : (
-            visibleMantras.map((m) => {
+            renderedMantras.map((m) => {
               return (
                 <KirtanListItem
                   key={m.id}

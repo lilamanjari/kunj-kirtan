@@ -37,6 +37,11 @@ export function usePlayback() {
     // same kirtan, already playing → no-op
   }
 
+  function select(kirtan: KirtanSummary) {
+    setCurrent(kirtan);
+    setState("paused");
+  }
+
   function pause() {
     if (!current) return;
     setState("paused");
@@ -67,6 +72,7 @@ export function usePlayback() {
     isPlaying,
     setState,
     play,
+    select,
     pause,
     toggle,
     onEnded,

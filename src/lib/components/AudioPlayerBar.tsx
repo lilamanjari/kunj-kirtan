@@ -1,6 +1,8 @@
 "use client";
 
 import { useAudioPlayer } from "@/lib/audio/AudioPlayerContext";
+import { useKirtanShare } from "@/lib/hooks/useKirtanShare";
+import { useEffect, useState } from "react";
 import { SFIcon } from "@bradleyhodges/sfsymbols-react";
 import {
   sf15ArrowTriangleheadClockwise,
@@ -36,12 +38,25 @@ export default function AudioPlayerBar() {
     currentTime,
   } =
     useAudioPlayer();
+  const shareKirtan = useKirtanShare();
+  const [shareNotice, setShareNotice] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!shareNotice) return;
+    const timer = setTimeout(() => setShareNotice(null), 1800);
+    return () => clearTimeout(timer);
+  }, [shareNotice]);
 
   if (!current) return null;
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-rose-100 bg-white/95 text-stone-900 backdrop-blur">
       <div className="h-0.5 w-full bg-gradient-to-r from-transparent via-rose-300/70 to-transparent" />
+      {shareNotice ? (
+        <div className="mx-auto mt-2 w-fit rounded-full bg-rose-50 px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-rose-500">
+          {shareNotice}
+        </div>
+      ) : null}
       <div className="mx-auto max-w-md px-4 py-3">
         <div className="flex items-center gap-3">
           <button
@@ -82,9 +97,7 @@ export default function AudioPlayerBar() {
             onClick={playNext}
             disabled={queue.length === 0}
             className={`active:opacity-80 ${
-              queue.length === 0
-                ? "text-stone-300"
-                : "text-stone-900"
+              queue.length === 0 ? "text-stone-300" : "text-stone-900"
             }`}
             aria-label="Next"
           >
@@ -93,9 +106,33 @@ export default function AudioPlayerBar() {
           <div className="ml-2 flex-1 min-w-0">
             <p className="truncate text-sm font-medium">{current.title}</p>
             <p className="truncate text-xs text-stone-500">
-              {current.lead_singer}
+              {current.type === "MM" && current.sequence_num
+                ? `#${current.sequence_num} by ${
+                    current.lead_singer ?? "Unknown singer"
+                  }`
+                : current.lead_singer ?? "Unknown singer"}
             </p>
           </div>
+          <button
+            type="button"
+            onClick={() => {
+              shareKirtan(current).then((result) => {
+                if (result?.copied) {
+                  setShareNotice("Link copied");
+                }
+              });
+            }}
+            className="text-stone-700 active:opacity-80"
+            aria-label="Share"
+            title="Share"
+          >
+            <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
+              <path
+                d="M12 3a1 1 0 0 1 .72.31l3.5 3.6a1 1 0 1 1-1.44 1.38L13 6.7V14a1 1 0 1 1-2 0V6.7L9.22 8.29A1 1 0 0 1 7.78 6.9l3.5-3.6A1 1 0 0 1 12 3Zm-6 11a1 1 0 0 1 1 1v3a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-3a1 1 0 1 1 2 0v3a4 4 0 0 1-4 4H9a4 4 0 0 1-4-4v-3a1 1 0 0 1 1-1Z"
+                fill="currentColor"
+              />
+            </svg>
+          </button>
         </div>
 
         <input

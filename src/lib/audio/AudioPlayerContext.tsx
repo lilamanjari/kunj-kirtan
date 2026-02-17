@@ -77,20 +77,27 @@ function useAudioPlayerInternal() {
       });
     }
 
-    if (playback.state === "loading") {
+    if (audio.src !== playback.current.audio_url) {
       audio.src = playback.current.audio_url;
       audio.currentTime = 0;
+    }
+
+    if (playback.state === "loading") {
 
       audio
         .play()
-        .then(() => playback.setState("playing"))
-        .catch(() => playback.setState("paused"));
+        .then(() => {
+          playback.setState("playing");
+        })
+        .catch(() => {
+          playback.setState("paused");
+        });
 
       return;
     }
 
     if (playback.state === "playing") {
-      audio.play();
+      audio.play().catch(() => {});
       return;
     }
 

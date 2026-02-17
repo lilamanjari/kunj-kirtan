@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useAudioPlayer } from "@/lib/audio/AudioPlayerContext";
 import KirtanListItem from "@/lib/components/KirtanListItem";
 import type { KirtanSummary } from "@/types/kirtan";
+import { useKirtanDeepLink } from "@/lib/hooks/useKirtanDeepLink";
 
 type LeadResponse = {
   lead: {
@@ -21,7 +23,7 @@ const FILTERS = [
 
 export default function LeadPage() {
   const { slug } = useParams<{ slug: string }>();
-  const { isActive, isPlaying, isLoading, toggle, enqueue, isQueued } = useAudioPlayer();
+  const { isActive, isPlaying, isLoading, toggle, enqueue, isQueued, select } = useAudioPlayer();
 
   const [data, setData] = useState<LeadResponse | null>(null);
   const [filter, setFilter] = useState<"ALL" | "MM" | "BHJ">("ALL");
@@ -31,6 +33,20 @@ export default function LeadPage() {
       .then((res) => res.json())
       .then(setData);
   }, [slug]);
+
+  const visible =
+    data?.kirtans?.filter((k) =>
+      filter === "ALL" ? true : k.type === filter,
+    ) ?? [];
+
+  const pinnedKirtan = useKirtanDeepLink({
+    kirtans: visible,
+    onSelect: select,
+    isActive,
+  });
+  const renderedKirtans = pinnedKirtan
+    ? [pinnedKirtan, ...visible.filter((k) => k.id !== pinnedKirtan.id)]
+    : visible;
 
   if (!data) {
     return (
@@ -53,20 +69,24 @@ export default function LeadPage() {
     );
   }
 
-  const visible =
-    data.kirtans?.filter((k) =>
-      filter === "ALL" ? true : k.type === filter,
-    ) ?? [];
-
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top,_#ffe4ef_0%,_#fff6fa_45%,_#f8fafc_100%)] text-stone-900">
       <main className="relative mx-auto max-w-md px-5 py-6 space-y-8">
         <div className="pointer-events-none absolute -top-10 left-6 h-28 w-28 rounded-full bg-rose-300/40 blur-3xl" />
         {/* Header */}
-        <header className="space-y-1">
-          <p className="text-xs uppercase tracking-wide text-stone-500">
-            Lead singer
-          </p>
+        <header className="space-y-2">
+          <div className="flex items-center justify-between">
+            <Link
+              href="/"
+              className="text-xs font-medium uppercase tracking-wide text-rose-400 hover:text-rose-500"
+            >
+              Home
+            </Link>
+            <span className="text-xs uppercase tracking-wide text-stone-500">
+              Lead singer
+            </span>
+            <span className="w-10" />
+          </div>
           <h1 className="text-2xl font-semibold font-script">
             {data.lead.display_name}
           </h1>
@@ -101,13 +121,13 @@ export default function LeadPage() {
             Kirtans
           </h2>
 
-          {visible.length === 0 ? (
+          {renderedKirtans.length === 0 ? (
             <p className="mt-4 text-sm text-stone-500">
               No kirtans found for this filter.
             </p>
           ) : (
             <ul className="mt-3 space-y-3">
-              {visible.map((k) => (
+              {renderedKirtans.map((k) => (
                 <KirtanListItem
                   key={k.id}
                   kirtan={k}

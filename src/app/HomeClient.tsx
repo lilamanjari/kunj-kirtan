@@ -1,21 +1,40 @@
 "use client";
 
+import { useState } from "react";
 import { useAudioPlayer } from "@/lib/audio/AudioPlayerContext";
 import type { HomeData } from "@/types/home";
 import FeaturedKirtanCard from "@/lib/components/FeaturedKirtanCard";
 import KirtanListItem from "@/lib/components/KirtanListItem";
 import Link from "next/link";
+import { useKirtanDeepLink } from "@/lib/hooks/useKirtanDeepLink";
 
 export default function HomeClient({ data }: { data: HomeData }) {
-  const { isPlaying, isLoading, isActive, toggle, enqueue, isQueued } = useAudioPlayer();
-
+  const {
+    isPlaying,
+    isLoading,
+    isActive,
+    toggle,
+    enqueue,
+    isQueued,
+    select,
+  } = useAudioPlayer();
   const primaryAction = data.primary_action;
+  const [recentlyAdded, setRecentlyAdded] = useState(
+    () => data.recently_added ?? [],
+  );
   const entryPointLinks: Record<string, string> = {
     MM: "/explore/maha-mantras",
     BHJ: "/explore/bhajans",
     LEADS: "/explore/leads",
     OCCASIONS: "/explore/occasions",
   };
+
+  const pinnedKirtan = useKirtanDeepLink({
+    kirtans: recentlyAdded,
+    onSelect: select,
+    isActive,
+  });
+
 
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top,_#ffe4ef_0%,_#fff6fa_45%,_#f8fafc_100%)] text-stone-900">
@@ -100,7 +119,9 @@ export default function HomeClient({ data }: { data: HomeData }) {
           </h2>
 
           <ul className="mt-3 space-y-3">
-            {data.recently_added?.map((k) => {
+            {[...(pinnedKirtan ? [pinnedKirtan] : []),
+              ...recentlyAdded.filter((k) => k.id !== pinnedKirtan?.id),
+            ].map((k) => {
               return (
                 <KirtanListItem
                   key={k.id}

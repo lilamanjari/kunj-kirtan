@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useAudioPlayer } from "@/lib/audio/AudioPlayerContext";
 import type { KirtanSummary } from "@/types/kirtan";
 import KirtanListItem from "@/lib/components/KirtanListItem";
+import { useKirtanDeepLink } from "@/lib/hooks/useKirtanDeepLink";
 
 type BhajanItem = KirtanSummary;
 
@@ -13,7 +15,7 @@ export default function BhajansPage() {
   const [hasFetchedOnce, setHasFetchedOnce] = useState(false);
   const [isLoadingList, setIsLoadingList] = useState(true);
 
-  const { toggle, isActive, isPlaying, isLoading, enqueue, isQueued } = useAudioPlayer();
+  const { toggle, isActive, isPlaying, isLoading, enqueue, isQueued, select } = useAudioPlayer();
 
   useEffect(() => {
     const url = search
@@ -29,11 +31,29 @@ export default function BhajansPage() {
       .finally(() => setIsLoadingList(false));
   }, [search]);
 
+  const pinnedKirtan = useKirtanDeepLink({
+    kirtans: bhajans,
+    onSelect: select,
+    isActive,
+  });
+  const renderedBhajans = pinnedKirtan
+    ? [pinnedKirtan, ...bhajans.filter((k) => k.id !== pinnedKirtan.id)]
+    : bhajans;
+
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top,_#ffe4ef_0%,_#fff6fa_45%,_#f8fafc_100%)] text-stone-900">
       <main className="relative mx-auto max-w-md px-5 py-6 space-y-6">
         <div className="pointer-events-none absolute -top-10 left-6 h-28 w-28 rounded-full bg-rose-300/40 blur-3xl" />
-        <h1 className="text-2xl font-semibold font-script">Bhajans</h1>
+        <div className="flex items-center justify-between">
+          <Link
+            href="/"
+            className="text-xs font-medium uppercase tracking-wide text-rose-400 hover:text-rose-500"
+          >
+            Home
+          </Link>
+          <h1 className="text-2xl font-semibold font-script">Bhajans</h1>
+          <span className="w-10" />
+        </div>
 
         <input
           type="text"
@@ -58,12 +78,12 @@ export default function BhajansPage() {
                 ))}
               </div>
             </li>
-          ) : bhajans.length === 0 && hasFetchedOnce ? (
+          ) : renderedBhajans.length === 0 && hasFetchedOnce ? (
             <li className="rounded-xl border border-dashed border-stone-200 bg-white px-4 py-6 text-center text-sm text-stone-500">
               No Bhajans match your search.
             </li>
           ) : (
-            bhajans.map((b) => {
+            renderedBhajans.map((b) => {
               return (
                 <KirtanListItem
                   key={b.id}

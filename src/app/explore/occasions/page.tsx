@@ -28,7 +28,16 @@ export default function OccasionsPage() {
     <div className="min-h-screen bg-[radial-gradient(circle_at_top,_#ffe4ef_0%,_#fff6fa_45%,_#f8fafc_100%)] text-stone-900">
       <main className="relative mx-auto max-w-md px-5 py-6 space-y-6">
         <div className="pointer-events-none absolute -top-10 left-6 h-28 w-28 rounded-full bg-rose-300/40 blur-3xl" />
-        <h1 className="text-2xl font-semibold font-script">Occasions</h1>
+        <div className="flex items-center justify-between">
+          <Link
+            href="/"
+            className="text-xs font-medium uppercase tracking-wide text-rose-400 hover:text-rose-500"
+          >
+            Home
+          </Link>
+          <h1 className="text-2xl font-semibold font-script">Occasions</h1>
+          <span className="w-10" />
+        </div>
 
         {isLoading ? (
           <div className="rounded-xl border border-dashed border-stone-200 bg-white px-4 py-6">
