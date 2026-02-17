@@ -167,7 +167,7 @@ export default function MahaMantrasPage() {
             onPin={setPinnedKirtan}
           />
         </Suspense>
-        <div className="flex items-center justify-between">
+        <header className="space-y-1">
           <Link
             href="/"
             className="text-xs font-medium uppercase tracking-wide text-rose-400 hover:text-rose-500"
@@ -175,8 +175,7 @@ export default function MahaMantrasPage() {
             Home
           </Link>
           <h1 className="text-2xl font-semibold font-script">Maha Mantras</h1>
-          <span className="w-10" />
-        </div>
+        </header>
 
         <div className="relative">
           <input

@@ -23,18 +23,12 @@ export default function LeadsPage() {
         <div className="pointer-events-none absolute -top-10 left-6 h-28 w-28 rounded-full bg-rose-300/40 blur-3xl" />
         {/* Header */}
         <header className="space-y-2">
-          <div className="flex items-center justify-between">
-            <Link
-              href="/"
-              className="text-xs font-medium uppercase tracking-wide text-rose-400 hover:text-rose-500"
-            >
-              Home
-            </Link>
-            <span className="text-xs uppercase tracking-wide text-stone-500">
-              Lead singers
-            </span>
-            <span className="w-10" />
-          </div>
+          <Link
+            href="/"
+            className="text-xs font-medium uppercase tracking-wide text-rose-400 hover:text-rose-500"
+          >
+            Home
+          </Link>
           <h1 className="text-2xl font-semibold font-script">Lead singers</h1>
           <p className="text-sm text-stone-500">
             Explore kirtans by the voices that carry them

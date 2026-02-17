@@ -70,18 +70,12 @@ export default function OccasionDetailPage() {
           />
         </Suspense>
         <header className="space-y-2">
-          <div className="flex items-center justify-between">
-            <Link
-              href="/"
-              className="text-xs font-medium uppercase tracking-wide text-rose-400 hover:text-rose-500"
-            >
-              Home
-            </Link>
-            <span className="text-xs uppercase tracking-wide text-stone-500">
-              Occasion
-            </span>
-            <span className="w-10" />
-          </div>
+          <Link
+            href="/"
+            className="text-xs font-medium uppercase tracking-wide text-rose-400 hover:text-rose-500"
+          >
+            Home
+          </Link>
           <h1 className="text-2xl font-semibold font-script">
             {data.tag.name}
           </h1>

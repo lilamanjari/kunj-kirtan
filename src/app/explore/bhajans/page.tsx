@@ -48,7 +48,7 @@ export default function BhajansPage() {
             onPin={setPinnedKirtan}
           />
         </Suspense>
-        <div className="flex items-center justify-between">
+        <header className="space-y-1">
           <Link
             href="/"
             className="text-xs font-medium uppercase tracking-wide text-rose-400 hover:text-rose-500"
@@ -56,8 +56,7 @@ export default function BhajansPage() {
             Home
           </Link>
           <h1 className="text-2xl font-semibold font-script">Bhajans</h1>
-          <span className="w-10" />
-        </div>
+        </header>
 
         <input
           type="text"
