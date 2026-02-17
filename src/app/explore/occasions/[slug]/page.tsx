@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useAudioPlayer } from "@/lib/audio/AudioPlayerContext";
 import KirtanListItem from "@/lib/components/KirtanListItem";
 import type { KirtanSummary } from "@/types/kirtan";
-import { useKirtanDeepLink } from "@/lib/hooks/useKirtanDeepLink";
+import KirtanDeepLinkHandler from "@/lib/components/KirtanDeepLinkHandler";
 
 type OccasionResponse = {
   tag: {
@@ -22,6 +22,7 @@ export default function OccasionDetailPage() {
   const { isActive, isPlaying, isLoading, toggle, enqueue, isQueued, select } = useAudioPlayer();
 
   const [data, setData] = useState<OccasionResponse | null>(null);
+  const [pinnedKirtan, setPinnedKirtan] = useState<KirtanSummary | null>(null);
 
   useEffect(() => {
     fetch(`/api/explore/occasions/${slug}`)
@@ -31,11 +32,6 @@ export default function OccasionDetailPage() {
 
   const visible = data?.kirtans ?? [];
 
-  const pinnedKirtan = useKirtanDeepLink({
-    kirtans: visible,
-    onSelect: select,
-    isActive,
-  });
   const renderedKirtans = pinnedKirtan
     ? [pinnedKirtan, ...visible.filter((k) => k.id !== pinnedKirtan.id)]
     : visible;
@@ -65,6 +61,14 @@ export default function OccasionDetailPage() {
     <div className="min-h-screen bg-[radial-gradient(circle_at_top,_#ffe4ef_0%,_#fff6fa_45%,_#f8fafc_100%)] text-stone-900">
       <main className="relative mx-auto max-w-md px-5 py-6 space-y-8">
         <div className="pointer-events-none absolute -top-10 left-6 h-28 w-28 rounded-full bg-rose-300/40 blur-3xl" />
+        <Suspense fallback={null}>
+          <KirtanDeepLinkHandler
+            kirtans={visible}
+            onSelect={select}
+            isActive={isActive}
+            onPin={setPinnedKirtan}
+          />
+        </Suspense>
         <header className="space-y-2">
           <div className="flex items-center justify-between">
             <Link

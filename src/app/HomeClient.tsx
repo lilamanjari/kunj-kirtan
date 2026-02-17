@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useAudioPlayer } from "@/lib/audio/AudioPlayerContext";
 import type { HomeData } from "@/types/home";
+import type { KirtanSummary } from "@/types/kirtan";
 import FeaturedKirtanCard from "@/lib/components/FeaturedKirtanCard";
 import KirtanListItem from "@/lib/components/KirtanListItem";
+import KirtanDeepLinkHandler from "@/lib/components/KirtanDeepLinkHandler";
 import Link from "next/link";
-import { useKirtanDeepLink } from "@/lib/hooks/useKirtanDeepLink";
 
 export default function HomeClient({ data }: { data: HomeData }) {
   const {
@@ -22,18 +23,16 @@ export default function HomeClient({ data }: { data: HomeData }) {
   const [recentlyAdded, setRecentlyAdded] = useState(
     () => data.recently_added ?? [],
   );
+  const [pinnedKirtan, setPinnedKirtan] = useState<KirtanSummary | null>(null);
   const entryPointLinks: Record<string, string> = {
     MM: "/explore/maha-mantras",
     BHJ: "/explore/bhajans",
     LEADS: "/explore/leads",
     OCCASIONS: "/explore/occasions",
   };
-
-  const pinnedKirtan = useKirtanDeepLink({
-    kirtans: recentlyAdded,
-    onSelect: select,
-    isActive,
-  });
+  const renderedRecentlyAdded = pinnedKirtan
+    ? [pinnedKirtan, ...recentlyAdded.filter((k) => k.id !== pinnedKirtan.id)]
+    : recentlyAdded;
 
 
   return (
@@ -60,6 +59,14 @@ export default function HomeClient({ data }: { data: HomeData }) {
             Sacred sounds, lovingly curated.
           </p>
         </header>
+        <Suspense fallback={null}>
+          <KirtanDeepLinkHandler
+            kirtans={recentlyAdded}
+            onSelect={select}
+            isActive={isActive}
+            onPin={setPinnedKirtan}
+          />
+        </Suspense>
         {primaryAction && (
           <FeaturedKirtanCard
             kirtan={primaryAction.kirtan}
@@ -119,9 +126,7 @@ export default function HomeClient({ data }: { data: HomeData }) {
           </h2>
 
           <ul className="mt-3 space-y-3">
-            {[...(pinnedKirtan ? [pinnedKirtan] : []),
-              ...recentlyAdded.filter((k) => k.id !== pinnedKirtan?.id),
-            ].map((k) => {
+            {renderedRecentlyAdded.map((k) => {
               return (
                 <KirtanListItem
                   key={k.id}

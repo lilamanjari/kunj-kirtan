@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useAudioPlayer } from "@/lib/audio/AudioPlayerContext";
 import type { KirtanSummary } from "@/types/kirtan";
 import KirtanListItem from "@/lib/components/KirtanListItem";
-import { useKirtanDeepLink } from "@/lib/hooks/useKirtanDeepLink";
+import KirtanDeepLinkHandler from "@/lib/components/KirtanDeepLinkHandler";
 
 export default function MahaMantrasPage() {
   const [mantras, setMantras] = useState<KirtanSummary[]>([]);
@@ -29,6 +29,7 @@ export default function MahaMantrasPage() {
   const suggestDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { toggle, isActive, isPlaying, isLoading, enqueue, isQueued, select } = useAudioPlayer();
+  const [pinnedKirtan, setPinnedKirtan] = useState<KirtanSummary | null>(null);
 
   function resetPagination() {
     setMantras([]);
@@ -115,11 +116,6 @@ export default function MahaMantrasPage() {
   };
 
   const visibleMantras = mantras;
-  const pinnedKirtan = useKirtanDeepLink({
-    kirtans: visibleMantras,
-    onSelect: select,
-    isActive,
-  });
   const renderedMantras = pinnedKirtan
     ? [pinnedKirtan, ...visibleMantras.filter((k) => k.id !== pinnedKirtan.id)]
     : visibleMantras;
@@ -163,6 +159,14 @@ export default function MahaMantrasPage() {
     <div className="min-h-screen bg-[radial-gradient(circle_at_top,_#ffe4ef_0%,_#fff6fa_45%,_#f8fafc_100%)] text-stone-900">
       <main className="relative mx-auto max-w-md px-5 py-6 space-y-6">
         <div className="pointer-events-none absolute -top-10 left-6 h-28 w-28 rounded-full bg-rose-300/40 blur-3xl" />
+        <Suspense fallback={null}>
+          <KirtanDeepLinkHandler
+            kirtans={visibleMantras}
+            onSelect={select}
+            isActive={isActive}
+            onPin={setPinnedKirtan}
+          />
+        </Suspense>
         <div className="flex items-center justify-between">
           <Link
             href="/"

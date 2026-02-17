@@ -27,16 +27,18 @@ describe("useKirtanDeepLink", () => {
 
   it("pins and selects the kirtan when query param matches", async () => {
     const onSelect = vi.fn();
+    const onPin = vi.fn();
 
-    const { result } = renderHook(() =>
+    renderHook(() =>
       useKirtanDeepLink({
         kirtans: [kirtan],
         onSelect,
+        onPin,
       }),
     );
 
     await waitFor(() => {
-      expect(result.current?.id).toBe("test-id");
+      expect(onPin).toHaveBeenCalledWith(kirtan);
     });
 
     expect(onSelect).toHaveBeenCalledWith(kirtan);
