@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import type { KirtanSummary } from "@/types/kirtan";
 
@@ -8,16 +8,17 @@ type UseKirtanDeepLinkOptions = {
   kirtans: KirtanSummary[];
   onSelect: (kirtan: KirtanSummary) => void;
   isActive?: (kirtan: KirtanSummary) => boolean;
+  onPin?: (kirtan: KirtanSummary) => void;
 };
 
 export function useKirtanDeepLink({
   kirtans,
   onSelect,
   isActive,
+  onPin,
 }: UseKirtanDeepLinkOptions) {
   const searchParams = useSearchParams();
   const handledRef = useRef<string | null>(null);
-  const [pinnedKirtan, setPinnedKirtan] = useState<KirtanSummary | null>(null);
 
   useEffect(() => {
     const id = searchParams.get("kirtan");
@@ -26,11 +27,10 @@ export function useKirtanDeepLink({
 
     const existing = kirtans.find((k) => k.id === id);
     if (existing) {
-      setPinnedKirtan(existing);
+      onPin?.(existing);
       if (!isActive || !isActive(existing)) {
         onSelect(existing);
       }
-      window.scrollTo({ top: 0, behavior: "smooth" });
       handledRef.current = id;
       return;
     }
@@ -48,9 +48,8 @@ export function useKirtanDeepLink({
         if (canceled) return;
         const kirtan = json.kirtan as KirtanSummary | null;
         if (kirtan) {
-          setPinnedKirtan(kirtan);
+          onPin?.(kirtan);
           onSelect(kirtan);
-          window.scrollTo({ top: 0, behavior: "smooth" });
         }
       })
       .catch(() => {})
@@ -63,7 +62,5 @@ export function useKirtanDeepLink({
     return () => {
       canceled = true;
     };
-  }, [kirtans, onSelect, isActive, searchParams]);
-
-  return pinnedKirtan;
+  }, [kirtans, onSelect, isActive, searchParams, onPin]);
 }
