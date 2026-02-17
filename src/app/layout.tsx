@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { Geist, Geist_Mono, Dancing_Script } from "next/font/google";
 import "./globals.css";
 import { AudioPlayerProvider } from "@/lib/audio/AudioPlayerContext";
@@ -44,7 +45,9 @@ export default function RootLayout({
         <AudioPlayerProvider>
           {children}
           <QueueToast />
-          <AudioPlayerBar />
+          <Suspense fallback={null}>
+            <AudioPlayerBar />
+          </Suspense>
         </AudioPlayerProvider>
       </body>
     </html>
