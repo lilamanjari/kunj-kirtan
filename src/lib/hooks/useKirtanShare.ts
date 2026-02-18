@@ -32,13 +32,27 @@ export function useKirtanShare() {
       const url = `${window.location.origin}${pathname}?${params.toString()}`;
 
       let copied = false;
-      try {
-        copied = copyToClipboard(url);
-      } catch {
-        copied = false;
-      }
+      // try {
+      //   copied = copyToClipboard(url);
+      // } catch {
+      //   copied = false;
+      // }
 
-      if (!copied) {
+      // if (!copied) {
+
+      const shareData = {
+        title: document.title,
+        text: "Here's a song for you!",
+        url: url,
+      };
+      if (navigator.share) {
+        try {
+          await navigator.share(shareData);
+          console.log("Successful share");
+        } catch (err) {
+          console.error("Error sharing:", err);
+        }
+      } else {
         try {
           if (navigator.clipboard?.writeText) {
             await navigator.clipboard.writeText(url);
@@ -48,6 +62,7 @@ export function useKirtanShare() {
           copied = false;
         }
       }
+      // }
 
       return { url, copied };
     },
