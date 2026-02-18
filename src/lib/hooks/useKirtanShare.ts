@@ -8,23 +8,6 @@ export function useKirtanShare() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const copyToClipboard = (text: string) => {
-    try {
-      const textarea = document.createElement("textarea");
-      textarea.value = text;
-      textarea.setAttribute("readonly", "true");
-      textarea.style.position = "fixed";
-      textarea.style.opacity = "0";
-      document.body.appendChild(textarea);
-      textarea.select();
-      const success = document.execCommand("copy");
-      document.body.removeChild(textarea);
-      return success;
-    } catch {
-      return false;
-    }
-  };
-
   return useCallback(
     async (kirtan: KirtanSummary) => {
       const params = new URLSearchParams(searchParams?.toString() ?? "");
@@ -32,13 +15,6 @@ export function useKirtanShare() {
       const url = `${window.location.origin}${pathname}?${params.toString()}`;
 
       let copied = false;
-      // try {
-      //   copied = copyToClipboard(url);
-      // } catch {
-      //   copied = false;
-      // }
-
-      // if (!copied) {
 
       const shareData = {
         title: document.title,
@@ -62,7 +38,6 @@ export function useKirtanShare() {
           copied = false;
         }
       }
-      // }
 
       return { url, copied };
     },
