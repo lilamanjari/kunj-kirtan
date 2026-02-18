@@ -50,9 +50,8 @@ export default function KirtanListItem({
   isQueued = false,
 }: KirtanListItemProps) {
   const durationLabel = formatDuration(kirtan.duration_seconds);
-  const isMaha = kirtan.type === "MM";
   const sequenceLabel = kirtan.sequence_num ? `#${kirtan.sequence_num}` : null;
-  const borderTint = isMaha ? `hsla(${hashHue(kirtan.id)}, 70%, 85%, 0.8)` : "";
+  const borderTint = `hsla(${hashHue(kirtan.id)}, 70%, 85%, 1)`;
 
   return (
     <li
