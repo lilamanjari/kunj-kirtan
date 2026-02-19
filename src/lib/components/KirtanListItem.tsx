@@ -51,7 +51,9 @@ export default function KirtanListItem({
 }: KirtanListItemProps) {
   const durationLabel = formatDuration(kirtan.duration_seconds);
   const sequenceLabel = kirtan.sequence_num ? `#${kirtan.sequence_num}` : null;
-  const borderTint = `hsla(${hashHue(kirtan.id)}, 70%, 85%, 1)`;
+  const baseHue = hashHue(kirtan.id);
+  const tintHue = kirtan.type === "BHJ" ? (baseHue + 340) % 360 : baseHue;
+  const borderTint = `hsla(${tintHue}, 70%, 85%, 1)`;
 
   return (
     <li
