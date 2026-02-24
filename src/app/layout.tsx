@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import { Geist, Geist_Mono, Dancing_Script } from "next/font/google";
 import "./globals.css";
 import { AudioPlayerProvider } from "@/lib/audio/AudioPlayerContext";
-import AudioPlayerBar from "@/lib/components/AudioPlayerBar";
+import ClientAudioPlayerBar from "@/lib/components/ClientAudioPlayerBar";
 import QueueToast from "@/lib/components/QueueToast";
 
 const geistSans = Geist({
@@ -46,7 +46,7 @@ export default function RootLayout({
           {children}
           <QueueToast />
           <Suspense fallback={null}>
-            <AudioPlayerBar />
+            <ClientAudioPlayerBar />
           </Suspense>
         </AudioPlayerProvider>
       </body>
