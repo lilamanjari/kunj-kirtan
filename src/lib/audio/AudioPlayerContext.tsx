@@ -8,6 +8,7 @@ import { KirtanSummary } from "@/types/kirtan";
 export type AudioPlayerApi = ReturnType<typeof useAudioPlayerInternal>;
 
 const AudioPlayerContext = createContext<AudioPlayerApi | null>(null);
+const LAST_PLAYBACK_KEY = "kirtan_last_playback_v1";
 
 function useAudioPlayerInternal() {
   const playback = usePlayback();
@@ -19,6 +20,13 @@ function useAudioPlayerInternal() {
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
 
+  //Variables used for Continue Playback:
+  const pendingSeekRef = useRef<number | null>(null); //Seek to this position once audio metadata has loaded
+  const restoringRef = useRef(false); //Used to make sure we don't accidentally overwrite the stored position while seeking
+  const lastSavedRef = useRef(0); //Throttle writing to localStorage
+  const restoredRef = useRef(false); //Used to make sure we restore only once per session
+
+  // Initialize a single shared audio element and wire basic listeners.
   useEffect(() => {
     const audio = new Audio();
     audioRef.current = audio;
@@ -32,6 +40,17 @@ function useAudioPlayerInternal() {
     const onLoadedMetadata = () => {
       setDuration(audio.duration);
       setCurrentTime(audio.currentTime);
+      if (pendingSeekRef.current !== null && audio.duration) {
+        const target = Math.min(
+          audio.duration,
+          Math.max(0, pendingSeekRef.current),
+        );
+        audio.currentTime = target;
+        setProgress(audio.currentTime / audio.duration);
+        setCurrentTime(audio.currentTime);
+        pendingSeekRef.current = null;
+        restoringRef.current = false;
+      }
     };
     const onEnded = () => {
       const next = queueApi.dequeue();
@@ -55,7 +74,72 @@ function useAudioPlayerInternal() {
     };
   }, []);
 
-  // sync playback → audio
+  // Restore the last playback position once per session (after queue loads).
+  useEffect(() => {
+    if (restoredRef.current) return;
+    if (typeof window === "undefined") return;
+    if (!queueApi.loaded) return;
+
+    const raw = window.localStorage.getItem(LAST_PLAYBACK_KEY);
+    if (!raw) {
+      restoredRef.current = true;
+      return;
+    }
+
+    try {
+      const saved = JSON.parse(raw) as {
+        kirtan?: KirtanSummary;
+        time?: number;
+        duration?: number;
+      };
+      const savedKirtan = saved.kirtan;
+      const savedTime = Number(saved.time ?? 0);
+      const savedDuration = Number(saved.duration ?? 0);
+      const hasQueue = queueApi.queue.length > 0;
+      const timeOk = savedTime > 10;
+      const remainingOk =
+        !Number.isFinite(savedDuration) ||
+        savedDuration <= 0 ||
+        savedDuration - savedTime > 10;
+
+      if (savedKirtan && (hasQueue || (timeOk && remainingOk))) {
+        playback.select(savedKirtan);
+        if (Number.isFinite(savedTime) && savedTime > 0) {
+          pendingSeekRef.current = savedTime;
+          restoringRef.current = true;
+        }
+      }
+    } catch {
+      // ignore corrupted storage
+    } finally {
+      restoredRef.current = true;
+    }
+  }, [queueApi.queue.length, queueApi.loaded]);
+
+  // Persist playback position, throttled, avoiding writes during restore.
+  useEffect(() => {
+    if (!playback.current) return;
+    if (typeof window === "undefined") return;
+    if (restoringRef.current) return;
+    const now = Date.now();
+    if (now - lastSavedRef.current < 2000) return;
+    if (playback.state === "paused" && currentTime === 0) return;
+
+    const payload = {
+      kirtan: playback.current,
+      time: currentTime,
+      duration: duration || undefined,
+    };
+
+    try {
+      window.localStorage.setItem(LAST_PLAYBACK_KEY, JSON.stringify(payload));
+      lastSavedRef.current = now;
+    } catch {
+      // ignore storage failures
+    }
+  }, [currentTime, duration, playback.current?.id]);
+
+  // Sync playback state to the underlying audio element.
   useEffect(() => {
     console.log("effect", playback.state, playback.current);
     const audio = audioRef.current;
@@ -83,7 +167,6 @@ function useAudioPlayerInternal() {
     }
 
     if (playback.state === "loading") {
-
       audio
         .play()
         .then(() => {
@@ -106,6 +189,7 @@ function useAudioPlayerInternal() {
     }
   }, [playback.state, playback.current?.id]);
 
+  // Track playback history for the "previous" button.
   useEffect(() => {
     const current = playback.current;
     const last = lastCurrentRef.current;

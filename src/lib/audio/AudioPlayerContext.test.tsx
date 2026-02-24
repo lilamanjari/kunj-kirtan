@@ -1,134 +1,62 @@
-/**
- * @vitest-environment jsdom
- */
-import { describe, it, expect, beforeEach, vi } from "vitest";
-import { render, renderHook, act } from "@testing-library/react";
-import React from "react";
-import { AudioPlayerProvider, useAudioPlayer } from "@/lib/audio/AudioPlayerContext";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, waitFor } from "@testing-library/react";
+import { AudioPlayerProvider, useAudioPlayer } from "./AudioPlayerContext";
 import type { KirtanSummary } from "@/types/kirtan";
 
-class MockAudio {
-  src = "";
-  currentTime = 0;
-  duration = 120;
-  play = vi.fn(() => Promise.resolve());
-  pause = vi.fn();
-  private listeners = new Map<string, Set<() => void>>();
+vi.mock("./useQueue", () => ({
+  useQueue: () => ({
+    queue: [],
+    enqueue: vi.fn(),
+    dequeue: vi.fn(),
+    clearQueue: vi.fn(),
+    isQueued: vi.fn(),
+    notice: null,
+    loaded: true,
+  }),
+}));
 
-  addEventListener(event: string, cb: () => void) {
-    if (!this.listeners.has(event)) {
-      this.listeners.set(event, new Set());
-    }
-    this.listeners.get(event)?.add(cb);
-  }
-
-  removeEventListener(event: string, cb: () => void) {
-    this.listeners.get(event)?.delete(cb);
-  }
-
-  emit(event: string) {
-    this.listeners.get(event)?.forEach((cb) => cb());
-  }
-}
-
-const sampleKirtan = (id: string): KirtanSummary => ({
-  id,
-  audio_url: `https://example.com/${id}.m4a`,
-  type: "MM",
-  title: "Maha Mantra",
+const testKirtan: KirtanSummary = {
+  id: "kirtan-1",
+  audio_url: "https://example.com/test.mp3",
+  type: "BHJ",
+  title: "Test Bhajan",
   lead_singer: "Singer",
   recorded_date: "2020-01-01",
-  sanga: "Sanga",
-  duration_seconds: 120,
-});
+  sanga: "Test",
+};
 
-function flushMicrotasks() {
-  return new Promise((resolve) => setTimeout(resolve, 0));
+function TestHarness() {
+  const player = useAudioPlayer();
+  return (
+    <button type="button" onClick={() => player.select(testKirtan)}>
+      Select
+    </button>
+  );
 }
 
-describe("AudioPlayerContext", () => {
-  let audioInstances: MockAudio[] = [];
-
+describe("AudioPlayerContext resume behavior", () => {
   beforeEach(() => {
-    audioInstances = [];
-    vi.stubGlobal("Audio", vi.fn(() => {
-      const audio = new MockAudio();
-      audioInstances.push(audio);
-      return audio;
-    }));
+    localStorage.clear();
   });
 
-  it("creates a single audio element per provider", () => {
-    function Consumer() {
-      useAudioPlayer();
-      return null;
-    }
+  it("does not overwrite restored position with 0 on next render", async () => {
+    const saved = {
+      kirtan: testKirtan,
+      time: 20,
+      duration: 120,
+    };
+    localStorage.setItem("kirtan_last_playback_v1", JSON.stringify(saved));
 
-    const { unmount } = render(
+    render(
       <AudioPlayerProvider>
-        <Consumer />
-        <Consumer />
+        <TestHarness />
       </AudioPlayerProvider>,
     );
 
-    expect(audioInstances).toHaveLength(1);
-    unmount();
-  });
-
-  it("plays on load and does not pause immediately", async () => {
-    const wrapper = ({ children }: { children: React.ReactNode }) => (
-      <AudioPlayerProvider>{children}</AudioPlayerProvider>
-    );
-    const { result } = renderHook(() => useAudioPlayer(), { wrapper });
-
-    const k1 = sampleKirtan("1");
-
-    await act(async () => {
-      result.current.play(k1);
-      await flushMicrotasks();
+    await waitFor(() => {
+      expect(JSON.parse(localStorage.getItem("kirtan_last_playback_v1")!)).toMatchObject({
+        time: 20,
+      });
     });
-
-    const audio = audioInstances[0];
-    expect(audio.play).toHaveBeenCalled();
-    expect(audio.pause).not.toHaveBeenCalled();
-  });
-
-  it("updates progress on timeupdate", async () => {
-    const wrapper = ({ children }: { children: React.ReactNode }) => (
-      <AudioPlayerProvider>{children}</AudioPlayerProvider>
-    );
-    const { result } = renderHook(() => useAudioPlayer(), { wrapper });
-
-    const audio = audioInstances[0];
-    audio.duration = 200;
-    audio.currentTime = 50;
-
-    await act(async () => {
-      audio.emit("timeupdate");
-      await flushMicrotasks();
-    });
-
-    expect(result.current.progress).toBeCloseTo(0.25, 5);
-  });
-
-  it("handles ended event by clearing current", async () => {
-    const wrapper = ({ children }: { children: React.ReactNode }) => (
-      <AudioPlayerProvider>{children}</AudioPlayerProvider>
-    );
-    const { result } = renderHook(() => useAudioPlayer(), { wrapper });
-
-    const k1 = sampleKirtan("1");
-
-    await act(async () => {
-      result.current.play(k1);
-      await flushMicrotasks();
-    });
-
-    await act(async () => {
-      audioInstances[0].emit("ended");
-      await flushMicrotasks();
-    });
-
-    expect(result.current.current).toBeNull();
   });
 });

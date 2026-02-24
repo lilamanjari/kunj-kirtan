@@ -10,6 +10,7 @@ export type QueueApi = {
   clearQueue: () => void;
   isQueued: (id: string) => boolean;
   notice: string | null;
+  loaded: boolean;
 };
 
 export function useQueue(storage?: Storage): QueueApi {
@@ -74,5 +75,5 @@ export function useQueue(storage?: Storage): QueueApi {
     return () => clearTimeout(timer);
   }, [notice]);
 
-  return { queue, enqueue, dequeue, clearQueue, isQueued, notice };
+  return { queue, enqueue, dequeue, clearQueue, isQueued, notice, loaded };
 }
