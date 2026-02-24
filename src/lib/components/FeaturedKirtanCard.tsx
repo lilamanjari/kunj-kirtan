@@ -45,7 +45,7 @@ export default function FeaturedKirtanCard({
   return (
     <section
       className={`
-        relative rounded-3xl p-6 shadow-lg transition
+        relative rounded-2xl p-6 shadow-lg transition
         bg-gradient-to-br from-stone-900 via-stone-900 to-rose-950 text-white
         ${isActive ? "ring-2 ring-rose-400/50" : ""}
         ${isPlaying ? "animate-breathe" : ""}
