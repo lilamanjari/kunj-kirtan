@@ -66,7 +66,7 @@ export function useQueue(storage?: Storage): QueueApi {
   }
 
   function isQueued(id: string) {
-    return queueRef.current.some((item) => item.id === id);
+    return queue.some((item) => item.id === id);
   }
 
   useEffect(() => {
