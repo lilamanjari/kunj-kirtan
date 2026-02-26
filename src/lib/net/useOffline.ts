@@ -7,6 +7,8 @@ import {
   subscribeOffline,
 } from "./offlineStore";
 
+const SERVER_SNAPSHOT = { isOffline: false, lastOfflineAt: 0 };
+
 export function useOffline(): { isOffline: boolean; lastOfflineAt: number } {
   useEffect(() => {
     const update = () => {
@@ -21,8 +23,9 @@ export function useOffline(): { isOffline: boolean; lastOfflineAt: number } {
     };
   }, []);
 
-  return useSyncExternalStore(subscribeOffline, getOfflineSnapshot, () => ({
-    isOffline: false,
-    lastOfflineAt: 0,
-  }));
+  return useSyncExternalStore(
+    subscribeOffline,
+    getOfflineSnapshot,
+    () => SERVER_SNAPSHOT,
+  );
 }

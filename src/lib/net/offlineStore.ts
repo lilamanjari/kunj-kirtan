@@ -5,6 +5,7 @@ let requestIssues = false;
 let lastOfflineAt = 0;
 let failureTimestamps: number[] = [];
 const listeners = new Set<Listener>();
+let snapshot = { isOffline: false, lastOfflineAt: 0 };
 
 const FAILURE_WINDOW_MS = 20000;
 const FAILURE_THRESHOLD = 2;
@@ -13,11 +14,16 @@ function notify() {
   listeners.forEach((listener) => listener());
 }
 
-export function getOfflineSnapshot() {
-  return {
+function updateSnapshot() {
+  const next = {
     isOffline: navigatorOffline || requestIssues,
     lastOfflineAt,
   };
+  snapshot = next;
+}
+
+export function getOfflineSnapshot() {
+  return snapshot;
 }
 
 export function setNavigatorStatus(isOffline: boolean) {
@@ -26,6 +32,7 @@ export function setNavigatorStatus(isOffline: boolean) {
   if (isOffline) {
     lastOfflineAt = Date.now();
   }
+  updateSnapshot();
   notify();
 }
 
@@ -33,6 +40,7 @@ export function markOffline() {
   if (!requestIssues) {
     requestIssues = true;
     lastOfflineAt = Date.now();
+    updateSnapshot();
     notify();
   }
 }
@@ -47,6 +55,7 @@ export function recordRequestFailure() {
   if (!requestIssues && failureTimestamps.length >= FAILURE_THRESHOLD) {
     requestIssues = true;
     lastOfflineAt = now;
+    updateSnapshot();
     notify();
   }
 }
@@ -55,6 +64,7 @@ export function recordRequestSuccess() {
   failureTimestamps = [];
   if (requestIssues) {
     requestIssues = false;
+    updateSnapshot();
     notify();
   }
 }
