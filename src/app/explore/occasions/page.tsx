@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { fetchWithStatus } from "@/lib/net/fetchWithStatus";
 
 type Occasion = {
   id: string;
@@ -15,7 +16,7 @@ export default function OccasionsPage() {
   const [hasFetchedOnce, setHasFetchedOnce] = useState(false);
 
   useEffect(() => {
-    fetch("/api/explore/occasions")
+    fetchWithStatus("/api/explore/occasions")
       .then((res) => res.json())
       .then((data) => {
         setOccasions(data.occasions ?? []);

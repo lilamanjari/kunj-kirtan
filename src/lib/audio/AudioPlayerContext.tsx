@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { usePlayback } from "./usePlayback";
 import { useQueue } from "./useQueue";
 import { KirtanSummary } from "@/types/kirtan";
+import { markOffline, recordRequestSuccess } from "@/lib/net/offlineStore";
 
 export type AudioPlayerApi = ReturnType<typeof useAudioPlayerInternal>;
 
@@ -19,6 +20,7 @@ function useAudioPlayerInternal() {
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
+  const [isBuffering, setIsBuffering] = useState(false);
 
   //Variables used for Continue Playback:
   const pendingSeekRef = useRef<number | null>(null); //Seek to this position once audio metadata has loaded
@@ -52,6 +54,18 @@ function useAudioPlayerInternal() {
         restoringRef.current = false;
       }
     };
+    const onLoadStart = () => setIsBuffering(true);
+    const onWaiting = () => setIsBuffering(true);
+    const onStalled = () => setIsBuffering(true);
+    const onPlaying = () => {
+      setIsBuffering(false);
+      recordRequestSuccess();
+    };
+    const onCanPlay = () => setIsBuffering(false);
+    const onError = () => {
+      setIsBuffering(false);
+      markOffline();
+    };
     const onEnded = () => {
       const next = queueApi.dequeue();
       if (next) {
@@ -64,6 +78,12 @@ function useAudioPlayerInternal() {
     audio.addEventListener("timeupdate", onTimeUpdate);
     audio.addEventListener("loadedmetadata", onLoadedMetadata);
     audio.addEventListener("ended", onEnded);
+    audio.addEventListener("loadstart", onLoadStart);
+    audio.addEventListener("waiting", onWaiting);
+    audio.addEventListener("stalled", onStalled);
+    audio.addEventListener("playing", onPlaying);
+    audio.addEventListener("canplay", onCanPlay);
+    audio.addEventListener("error", onError);
 
     return () => {
       audio.pause();
@@ -71,6 +91,12 @@ function useAudioPlayerInternal() {
       audio.removeEventListener("timeupdate", onTimeUpdate);
       audio.removeEventListener("loadedmetadata", onLoadedMetadata);
       audio.removeEventListener("ended", onEnded);
+      audio.removeEventListener("loadstart", onLoadStart);
+      audio.removeEventListener("waiting", onWaiting);
+      audio.removeEventListener("stalled", onStalled);
+      audio.removeEventListener("playing", onPlaying);
+      audio.removeEventListener("canplay", onCanPlay);
+      audio.removeEventListener("error", onError);
     };
   }, []);
 
@@ -244,6 +270,7 @@ function useAudioPlayerInternal() {
     progress,
     duration,
     currentTime,
+    isBuffering,
     seekBy,
     seekTo,
     playNext,

@@ -36,6 +36,7 @@ export default function AudioPlayerBar() {
     clearQueue,
     duration,
     currentTime,
+    isBuffering,
   } =
     useAudioPlayer();
   const shareKirtan = useKirtanShare();
@@ -80,8 +81,42 @@ export default function AudioPlayerBar() {
               isPlaying() && current ? pause() : current && play(current)
             }
             className="text-stone-900 active:opacity-80"
+            aria-label={isBuffering ? "Buffering" : "Play or pause"}
           >
-            {isPlaying() ? (
+            {isBuffering ? (
+              // SVG spinner with SMIL animation for iOS/Safari reliability.
+              <svg
+                viewBox="0 0 24 24"
+                className="h-6 w-6 text-emerald-500"
+                aria-hidden="true"
+              >
+                <circle
+                  cx="12"
+                  cy="12"
+                  r="9"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  opacity="0.25"
+                />
+                <path
+                  d="M12 3a9 9 0 0 1 9 9"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                >
+                  <animateTransform
+                    attributeName="transform"
+                    type="rotate"
+                    from="0 12 12"
+                    to="360 12 12"
+                    dur="0.9s"
+                    repeatCount="indefinite"
+                  />
+                </path>
+              </svg>
+            ) : isPlaying() ? (
               <SFIcon icon={sfPauseFill} className="w-6 h-6" />
             ) : (
               <SFIcon icon={sfPlayFill} className="w-6 h-6 ml-1" />

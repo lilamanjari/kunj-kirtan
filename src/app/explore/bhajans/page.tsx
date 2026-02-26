@@ -6,6 +6,7 @@ import { useAudioPlayer } from "@/lib/audio/AudioPlayerContext";
 import type { KirtanSummary } from "@/types/kirtan";
 import KirtanListItem from "@/lib/components/KirtanListItem";
 import KirtanDeepLinkHandler from "@/lib/components/KirtanDeepLinkHandler";
+import { fetchWithStatus } from "@/lib/net/fetchWithStatus";
 
 type BhajanItem = KirtanSummary;
 
@@ -15,7 +16,8 @@ export default function BhajansPage() {
   const [hasFetchedOnce, setHasFetchedOnce] = useState(false);
   const [isLoadingList, setIsLoadingList] = useState(true);
 
-  const { toggle, isActive, isPlaying, isLoading, enqueue, isQueued, select } = useAudioPlayer();
+  const { toggle, isActive, isPlaying, isLoading, enqueue, isQueued, select } =
+    useAudioPlayer();
   const [pinnedKirtan, setPinnedKirtan] = useState<KirtanSummary | null>(null);
 
   useEffect(() => {
@@ -23,7 +25,7 @@ export default function BhajansPage() {
       ? `/api/explore/bhajans?search=${encodeURIComponent(search)}`
       : `/api/explore/bhajans`;
 
-    fetch(url)
+    fetchWithStatus(url)
       .then((res) => res.json())
       .then((data) => {
         setBhajans(data.bhajans ?? []);

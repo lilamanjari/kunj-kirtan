@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import type { KirtanSummary } from "@/types/kirtan";
+import { fetchWithStatus } from "@/lib/net/fetchWithStatus";
 
 type UseKirtanDeepLinkOptions = {
   kirtans: KirtanSummary[];
@@ -37,7 +38,7 @@ export function useKirtanDeepLink({
 
     let canceled = false;
 
-    fetch(`/api/kirtans/${id}`)
+    fetchWithStatus(`/api/kirtans/${id}`)
       .then((res) => {
         if (!res.ok) {
           throw new Error("Kirtan not found");

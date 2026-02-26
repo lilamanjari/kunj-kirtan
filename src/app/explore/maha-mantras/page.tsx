@@ -6,6 +6,7 @@ import { useAudioPlayer } from "@/lib/audio/AudioPlayerContext";
 import type { KirtanSummary } from "@/types/kirtan";
 import KirtanListItem from "@/lib/components/KirtanListItem";
 import KirtanDeepLinkHandler from "@/lib/components/KirtanDeepLinkHandler";
+import { fetchWithStatus } from "@/lib/net/fetchWithStatus";
 
 export default function MahaMantrasPage() {
   const [mantras, setMantras] = useState<KirtanSummary[]>([]);
@@ -73,7 +74,7 @@ export default function MahaMantrasPage() {
       const controller = new AbortController();
       searchAbortRef.current = controller;
 
-      fetch(`/api/explore/leads/suggest?q=${encodeURIComponent(query)}`, {
+      fetchWithStatus(`/api/explore/leads/suggest?q=${encodeURIComponent(query)}`, {
         signal: controller.signal,
       })
         .then((res) => res.json())
@@ -94,7 +95,7 @@ export default function MahaMantrasPage() {
 
     const url = `/api/explore/maha-mantras?${params.toString()}`;
 
-    fetch(url)
+    fetchWithStatus(url)
       .then((res) => res.json())
       .then((data) => {
         setMantras(data.mantras ?? []);
@@ -140,7 +141,7 @@ export default function MahaMantrasPage() {
         params.set("cursor_created_at", nextCursor.created_at);
         params.set("cursor_id", nextCursor.id);
 
-        fetch(`/api/explore/maha-mantras?${params.toString()}`)
+        fetchWithStatus(`/api/explore/maha-mantras?${params.toString()}`)
           .then((res) => res.json())
           .then((data) => {
             setMantras((prev) => [...prev, ...(data.mantras ?? [])]);

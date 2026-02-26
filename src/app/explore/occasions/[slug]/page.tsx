@@ -7,6 +7,7 @@ import { useAudioPlayer } from "@/lib/audio/AudioPlayerContext";
 import KirtanListItem from "@/lib/components/KirtanListItem";
 import type { KirtanSummary } from "@/types/kirtan";
 import KirtanDeepLinkHandler from "@/lib/components/KirtanDeepLinkHandler";
+import { fetchWithStatus } from "@/lib/net/fetchWithStatus";
 
 type OccasionResponse = {
   tag: {
@@ -25,7 +26,7 @@ export default function OccasionDetailPage() {
   const [pinnedKirtan, setPinnedKirtan] = useState<KirtanSummary | null>(null);
 
   useEffect(() => {
-    fetch(`/api/explore/occasions/${slug}`)
+    fetchWithStatus(`/api/explore/occasions/${slug}`)
       .then((res) => res.json())
       .then(setData);
   }, [slug]);

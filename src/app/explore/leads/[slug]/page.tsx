@@ -7,6 +7,7 @@ import { useAudioPlayer } from "@/lib/audio/AudioPlayerContext";
 import KirtanListItem from "@/lib/components/KirtanListItem";
 import type { KirtanSummary } from "@/types/kirtan";
 import KirtanDeepLinkHandler from "@/lib/components/KirtanDeepLinkHandler";
+import { fetchWithStatus } from "@/lib/net/fetchWithStatus";
 
 type LeadResponse = {
   lead: {
@@ -30,7 +31,7 @@ export default function LeadPage() {
   const [pinnedKirtan, setPinnedKirtan] = useState<KirtanSummary | null>(null);
 
   useEffect(() => {
-    fetch(`/api/explore/leads/${slug}`)
+    fetchWithStatus(`/api/explore/leads/${slug}`)
       .then((res) => res.json())
       .then(setData);
   }, [slug]);

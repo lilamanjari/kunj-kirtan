@@ -5,6 +5,7 @@ import "./globals.css";
 import { AudioPlayerProvider } from "@/lib/audio/AudioPlayerContext";
 import ClientAudioPlayerBar from "@/lib/components/ClientAudioPlayerBar";
 import QueueToast from "@/lib/components/QueueToast";
+import OfflineBanner from "@/lib/components/OfflineBanner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -44,6 +45,7 @@ export default function RootLayout({
       >
         <AudioPlayerProvider>
           {children}
+          <OfflineBanner />
           <QueueToast />
           <Suspense fallback={null}>
             <ClientAudioPlayerBar />

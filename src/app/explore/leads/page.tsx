@@ -3,13 +3,14 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import type { LeadItem } from "@/types/explore";
+import { fetchWithStatus } from "@/lib/net/fetchWithStatus";
 
 export default function LeadsPage() {
   const [leads, setLeads] = useState<LeadItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/explore/leads")
+    fetchWithStatus("/api/explore/leads")
       .then((res) => res.json())
       .then((data) => {
         setLeads(data.leads ?? []);
