@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 import type { KirtanSummary } from "@/types/kirtan";
 import { fetchHarmoniumIds } from "@/lib/server/harmonium";
+import { toProxyAudioUrl } from "@/lib/server/audioProxy";
 
 export const revalidate = 86400;
 
@@ -45,7 +46,7 @@ export async function GET() {
 
   const featuredKirtan: KirtanSummary = {
     id: featuredKirtanData?.id,
-    audio_url: featuredKirtanData?.audio_url,
+    audio_url: toProxyAudioUrl(featuredKirtanData?.audio_url),
     type: featuredKirtanData?.type === "MM" ? "MM" : "BHJ",
     title:
       featuredKirtanData?.type === "MM"
@@ -96,7 +97,7 @@ export async function GET() {
   const recentlyAddedKirtans: KirtanSummary[] =
     recentlyAdded?.map((k) => ({
       id: k.id,
-      audio_url: k.audio_url,
+      audio_url: toProxyAudioUrl(k.audio_url),
       type: k.type === "MM" ? "MM" : "BHJ",
       title: k.type === "MM" ? "Maha Mantra" : k.title,
       lead_singer: k.lead_singer,

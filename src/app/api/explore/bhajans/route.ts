@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 import type { KirtanSummary } from "@/types/kirtan";
 import { fetchHarmoniumIds } from "@/lib/server/harmonium";
+import { toProxyAudioUrl } from "@/lib/server/audioProxy";
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
@@ -33,7 +34,7 @@ export async function GET(req: Request) {
 
   const bhajans: KirtanSummary[] = (data ?? []).map((k) => ({
     id: k.id,
-    audio_url: k.audio_url,
+    audio_url: toProxyAudioUrl(k.audio_url),
     type: k.type,
     title: k.title,
     lead_singer: k.lead_singer,
