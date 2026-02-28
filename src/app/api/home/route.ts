@@ -42,8 +42,6 @@ export async function GET() {
     featuredKirtanData = data;
   }
 
-  console.log("featuredKirtan raw:", featuredKirtanData);
-
   const featuredKirtan: KirtanSummary = {
     id: featuredKirtanData?.id,
     audio_url: toProxyAudioUrl(featuredKirtanData?.audio_url),

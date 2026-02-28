@@ -14,6 +14,8 @@ type MockBuilder = {
   eq: ReturnType<typeof vi.fn>;
   order: ReturnType<typeof vi.fn>;
   ilike: ReturnType<typeof vi.fn>;
+  or: ReturnType<typeof vi.fn>;
+  limit: ReturnType<typeof vi.fn>;
   then: (
     onFulfilled: (value: MockResult) => unknown,
     onRejected?: (reason: unknown) => unknown,
@@ -37,6 +39,8 @@ function createMockBuilder(result: MockResult): MockBuilder {
   self.eq = vi.fn(chain);
   self.order = vi.fn(chain);
   self.ilike = vi.fn(chain);
+  self.or = vi.fn(chain);
+  self.limit = vi.fn(chain);
   self.then = (onFulfilled, onRejected) =>
     Promise.resolve(result).then(onFulfilled, onRejected);
 
@@ -74,6 +78,8 @@ describe("GET /api/explore/bhajans", () => {
       title: "Bhajan One",
       duration_seconds: 123,
     });
+    expect(json.has_more).toBe(false);
+    expect(json.next_cursor).toBeNull();
   });
 
   it("applies search filter", async () => {
@@ -84,6 +90,18 @@ describe("GET /api/explore/bhajans", () => {
     );
 
     expect(builder.ilike).toHaveBeenCalledWith("title", "%ram%");
+  });
+
+  it("applies cursor pagination", async () => {
+    builder = createMockBuilder({ data: [], error: null });
+
+    await GET(
+      new Request(
+        "http://localhost/api/explore/bhajans?cursor_title=Bhajan%20A&cursor_id=abc",
+      ),
+    );
+
+    expect(builder.or).toHaveBeenCalled();
   });
 
   it("returns error payload when supabase fails", async () => {

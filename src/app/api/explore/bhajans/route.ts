@@ -7,24 +7,42 @@ import { toProxyAudioUrl } from "@/lib/server/audioProxy";
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const search = searchParams.get("search");
+  const limit = Number(searchParams.get("limit") ?? "20");
+  const cursorTitle = searchParams.get("cursor_title");
+  const cursorId = searchParams.get("cursor_id");
 
   let query = supabase
     .from("playable_kirtans")
     .select("*")
     .eq("type", "BHJ")
-    .order("title", { ascending: true });
+    .order("title", { ascending: true })
+    .order("id", { ascending: true });
 
   if (search) {
     query = query.ilike("title", `%${search}%`);
   }
 
-  const { data, error } = await query;
+  if (cursorTitle && cursorId) {
+    const safeTitle = cursorTitle.replace(/"/g, '\\"');
+    query = query.or(
+      `title.gt."${safeTitle}",and(title.eq."${safeTitle}",id.gt.${cursorId})`,
+    );
+  }
+
+  const { data, error } = await query.limit(limit + 1);
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  const ids = (data ?? []).map((k) => k.id);
+  const rows = (data ?? []).slice(0, limit);
+  const hasMore = (data ?? []).length > limit;
+  const last = rows[rows.length - 1];
+  const nextCursor = hasMore && last
+    ? { title: last.title, id: last.id }
+    : null;
+
+  const ids = rows.map((k) => k.id);
   const { harmoniumIds, error: harmoniumError } =
     await fetchHarmoniumIds(ids);
 
@@ -32,7 +50,7 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: harmoniumError }, { status: 500 });
   }
 
-  const bhajans: KirtanSummary[] = (data ?? []).map((k) => ({
+  const bhajans: KirtanSummary[] = rows.map((k) => ({
     id: k.id,
     audio_url: toProxyAudioUrl(k.audio_url),
     type: k.type,
@@ -48,5 +66,7 @@ export async function GET(req: Request) {
 
   return NextResponse.json({
     bhajans,
+    has_more: hasMore,
+    next_cursor: nextCursor,
   });
 }
