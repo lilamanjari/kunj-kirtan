@@ -8,6 +8,13 @@ vi.mock("@/lib/server/harmonium", () => ({
   }),
 }));
 
+vi.mock("@/lib/server/featured", () => ({
+  getDailyRareGem: vi.fn().mockResolvedValue({
+    kirtan: null,
+    error: null,
+  }),
+}));
+
 type MockResult = { data: unknown; error: null | { message: string } };
 type MockBuilder = {
   select: ReturnType<typeof vi.fn>;
@@ -80,6 +87,7 @@ describe("GET /api/explore/bhajans", () => {
     });
     expect(json.has_more).toBe(false);
     expect(json.next_cursor).toBeNull();
+    expect(json.featured).toBeNull();
   });
 
   it("applies search filter", async () => {

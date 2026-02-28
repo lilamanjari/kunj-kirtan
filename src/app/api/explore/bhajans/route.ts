@@ -3,6 +3,7 @@ import { supabase } from "@/lib/supabase";
 import type { KirtanSummary } from "@/types/kirtan";
 import { fetchHarmoniumIds } from "@/lib/server/harmonium";
 import { toProxyAudioUrl } from "@/lib/server/audioProxy";
+import { getDailyRareGem } from "@/lib/server/featured";
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
@@ -20,6 +21,15 @@ export async function GET(req: Request) {
 
   if (search) {
     query = query.ilike("title", `%${search}%`);
+  }
+
+  const featured =
+    search?.length ?? 0
+      ? { kirtan: null, error: null }
+      : await getDailyRareGem("BHJ");
+
+  if (featured.error) {
+    return NextResponse.json({ error: featured.error }, { status: 500 });
   }
 
   if (cursorTitle && cursorId) {
@@ -43,6 +53,9 @@ export async function GET(req: Request) {
     : null;
 
   const ids = rows.map((k) => k.id);
+  if (featured.kirtan?.id) {
+    ids.unshift(featured.kirtan.id);
+  }
   const { harmoniumIds, error: harmoniumError } =
     await fetchHarmoniumIds(ids);
 
@@ -64,9 +77,26 @@ export async function GET(req: Request) {
     has_harmonium: harmoniumIds.has(k.id),
   }));
 
+  const featuredKirtan: KirtanSummary | null = featured.kirtan
+    ? {
+        id: featured.kirtan.id,
+        audio_url: toProxyAudioUrl(featured.kirtan.audio_url),
+        type: featured.kirtan.type,
+        title: featured.kirtan.title,
+        lead_singer: featured.kirtan.lead_singer,
+        recorded_date: featured.kirtan.recorded_date,
+        recorded_date_precision: featured.kirtan.recorded_date_precision ?? null,
+        sanga: featured.kirtan.sanga,
+        duration_seconds: featured.kirtan.duration_seconds,
+        sequence_num: featured.kirtan.sequence_num ?? null,
+        has_harmonium: harmoniumIds.has(featured.kirtan.id),
+      }
+    : null;
+
   return NextResponse.json({
     bhajans,
     has_more: hasMore,
     next_cursor: nextCursor,
+    featured: featuredKirtan,
   });
 }

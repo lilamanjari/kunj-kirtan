@@ -3,46 +3,22 @@ import { supabase } from "@/lib/supabase";
 import type { KirtanSummary } from "@/types/kirtan";
 import { fetchHarmoniumIds } from "@/lib/server/harmonium";
 import { toProxyAudioUrl } from "@/lib/server/audioProxy";
+import { getDailyRareGem } from "@/lib/server/featured";
 
 export const revalidate = 86400;
 
 export async function GET() {
   /* 1. Rare gem */
 
-  const { data: rareGemKirtans, error: tagError } = await supabase
-    .from("kirtan_tag_slugs")
-    .select("kirtan_id")
-    .eq("slug", "rare-gem");
+  const { kirtan: featuredKirtanData, error: featuredError } =
+    await getDailyRareGem();
 
-  if (tagError) {
-    return NextResponse.json({ error: tagError.message }, { status: 500 });
+  if (featuredError) {
+    return NextResponse.json({ error: featuredError }, { status: 500 });
   }
 
-  const rareGemKirtanIds = rareGemKirtans?.map((r) => r.kirtan_id) ?? [];
-  let featuredKirtanData = null;
-  if (rareGemKirtanIds.length > 0) {
-    const today = new Date().toISOString().slice(0, 10);
-    let seed = 0;
-    for (let i = 0; i < today.length; i += 1) {
-      seed = (seed + today.charCodeAt(i)) % 2147483647;
-    }
-    const index = seed % rareGemKirtanIds.length;
-    const randomId = rareGemKirtanIds[index];
-
-    const { data, error } = await supabase
-      .from("playable_kirtans")
-      .select("*")
-      .eq("id", randomId)
-      .maybeSingle();
-
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
-
-    featuredKirtanData = data;
-  }
-
-  const featuredKirtan: KirtanSummary = {
+  const featuredKirtan: KirtanSummary | null = featuredKirtanData
+    ? {
     id: featuredKirtanData?.id,
     audio_url: toProxyAudioUrl(featuredKirtanData?.audio_url),
     type: featuredKirtanData?.type === "MM" ? "MM" : "BHJ",
@@ -58,7 +34,8 @@ export async function GET() {
     duration_seconds: featuredKirtanData?.duration_seconds,
     sequence_num: featuredKirtanData?.sequence_num ?? null,
     has_harmonium: false,
-  };
+      }
+    : null;
 
   /* 2. Recently added */
   const { data: recentlyAdded, error: recentlyAddedError } = await supabase
@@ -88,7 +65,7 @@ export async function GET() {
     return NextResponse.json({ error: harmoniumError }, { status: 500 });
   }
 
-  if (featuredId) {
+  if (featuredId && featuredKirtan) {
     featuredKirtan.has_harmonium = harmoniumIds.has(featuredId);
   }
 

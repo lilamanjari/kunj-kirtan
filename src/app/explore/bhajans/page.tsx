@@ -7,6 +7,7 @@ import type { KirtanSummary } from "@/types/kirtan";
 import KirtanListItem from "@/lib/components/KirtanListItem";
 import KirtanDeepLinkHandler from "@/lib/components/KirtanDeepLinkHandler";
 import { fetchWithStatus } from "@/lib/net/fetchWithStatus";
+import FeaturedKirtanCard from "@/lib/components/FeaturedKirtanCard";
 
 type BhajanItem = KirtanSummary;
 
@@ -21,6 +22,7 @@ export default function BhajansPage() {
     title: string;
     id: string;
   } | null>(null);
+  const [featured, setFeatured] = useState<KirtanSummary | null>(null);
 
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
@@ -46,6 +48,7 @@ export default function BhajansPage() {
         setHasMore(Boolean(data.has_more));
         setNextCursor(data.next_cursor ?? null);
         setHasFetchedOnce(true);
+        setFeatured(data.featured ?? null);
       })
       .finally(() => setIsLoadingList(false));
   }, [search]);
@@ -116,6 +119,16 @@ export default function BhajansPage() {
           </Link>
           <h1 className="text-2xl font-semibold font-script">Bhajans</h1>
         </header>
+
+        {featured && search.length === 0 ? (
+          <FeaturedKirtanCard
+            kirtan={featured}
+            isActive={isActive(featured)}
+            isPlaying={isPlaying()}
+            isLoading={isLoading()}
+            onToggle={() => toggle(featured)}
+          />
+        ) : null}
 
         <input
           type="text"

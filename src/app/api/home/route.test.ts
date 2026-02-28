@@ -8,14 +8,28 @@ vi.mock("@/lib/server/harmonium", () => ({
   }),
 }));
 
+vi.mock("@/lib/server/featured", () => ({
+  getDailyRareGem: vi.fn().mockResolvedValue({
+    kirtan: {
+      id: "k1",
+      audio_url: "a1",
+      type: "MM",
+      title: "Maha Mantra",
+      lead_singer: "S1",
+      recorded_date: "2020-01-01",
+      sanga: "X",
+      duration_seconds: 120,
+    },
+    error: null,
+  }),
+}));
+
 type MockResult = { data: unknown; error: null | { message: string } };
 type MockBuilder = {
   select: ReturnType<typeof vi.fn>;
   eq: ReturnType<typeof vi.fn>;
-  in: ReturnType<typeof vi.fn>;
   limit: ReturnType<typeof vi.fn>;
   order: ReturnType<typeof vi.fn>;
-  maybeSingle: ReturnType<typeof vi.fn>;
   then: (
     onFulfilled: (value: MockResult) => unknown,
     onRejected?: (reason: unknown) => unknown,
@@ -37,10 +51,8 @@ function createMockBuilder(result: MockResult): MockBuilder {
 
   self.select = vi.fn(chain);
   self.eq = vi.fn(chain);
-  self.in = vi.fn(chain);
   self.limit = vi.fn(chain);
   self.order = vi.fn(chain);
-  self.maybeSingle = vi.fn(chain);
   self.then = (onFulfilled, onRejected) =>
     Promise.resolve(result).then(onFulfilled, onRejected);
 
@@ -54,20 +66,6 @@ beforeEach(() => {
 describe("GET /api/home", () => {
   it("returns home data with featured and recently added", async () => {
     const sequence: MockResult[] = [
-      { data: [{ kirtan_id: "k1" }], error: null },
-      {
-        data: {
-          id: "k1",
-          audio_url: "a1",
-          type: "MM",
-          title: "Maha Mantra",
-          lead_singer: "S1",
-          recorded_date: "2020-01-01",
-          sanga: "X",
-          duration_seconds: 120,
-        },
-        error: null,
-      },
       {
         data: [
           {
@@ -103,35 +101,15 @@ describe("GET /api/home", () => {
     });
   });
 
-  it("returns error when rare gem lookup fails", async () => {
-    const sequence: MockResult[] = [
-      { data: null, error: { message: "Tag error" } },
-    ];
-
-    fromMock.mockImplementation(() => {
-      const result = sequence.shift() ?? { data: [], error: null };
-      builder = createMockBuilder(result);
-      return builder;
-    });
-
-    const res = await GET();
-    const json = await res.json();
-
-    expect(res.status).toBe(500);
-    expect(json.error).toBe("Tag error");
-  });
-
   it("returns error when featured kirtan lookup fails", async () => {
-    const sequence: MockResult[] = [
-      { data: [{ kirtan_id: "k1" }], error: null },
-      { data: null, error: { message: "Featured error" } },
-    ];
-
-    fromMock.mockImplementation(() => {
-      const result = sequence.shift() ?? { data: [], error: null };
-      builder = createMockBuilder(result);
-      return builder;
+    const { getDailyRareGem } = await import("@/lib/server/featured");
+    (getDailyRareGem as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      kirtan: null,
+      error: "Featured error",
     });
+
+    builder = createMockBuilder({ data: [], error: null });
+    fromMock.mockImplementation(() => builder);
 
     const res = await GET();
     const json = await res.json();
@@ -142,20 +120,6 @@ describe("GET /api/home", () => {
 
   it("returns error when recently added lookup fails", async () => {
     const sequence: MockResult[] = [
-      { data: [{ kirtan_id: "k1" }], error: null },
-      {
-        data: {
-          id: "k1",
-          audio_url: "a1",
-          type: "MM",
-          title: "Maha Mantra",
-          lead_singer: "S1",
-          recorded_date: "2020-01-01",
-          sanga: "X",
-          duration_seconds: 120,
-        },
-        error: null,
-      },
       { data: null, error: { message: "Recent error" } },
     ];
 
