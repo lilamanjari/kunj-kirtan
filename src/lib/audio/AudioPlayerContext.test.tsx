@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, waitFor } from "@testing-library/react";
 import { AudioPlayerProvider, useAudioPlayer } from "./AudioPlayerContext";
@@ -36,7 +37,33 @@ function TestHarness() {
 
 describe("AudioPlayerContext resume behavior", () => {
   beforeEach(() => {
-    localStorage.clear();
+    const store = new Map<string, string>();
+    const mockStorage = {
+      getItem: (key: string) => (store.has(key) ? store.get(key)! : null),
+      setItem: (key: string, value: string) => {
+        store.set(key, value);
+      },
+      removeItem: (key: string) => {
+        store.delete(key);
+      },
+      clear: () => {
+        store.clear();
+      },
+      key: (index: number) => Array.from(store.keys())[index] ?? null,
+      get length() {
+        return store.size;
+      },
+    };
+    vi.stubGlobal("localStorage", mockStorage);
+
+    Object.defineProperty(HTMLMediaElement.prototype, "play", {
+      configurable: true,
+      value: vi.fn().mockResolvedValue(undefined),
+    });
+    Object.defineProperty(HTMLMediaElement.prototype, "pause", {
+      configurable: true,
+      value: vi.fn(),
+    });
   });
 
   it("does not overwrite restored position with 0 on next render", async () => {
