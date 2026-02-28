@@ -1,9 +1,12 @@
 import HomeClient from "./HomeClient";
 import type { HomeData } from "@/types/home";
+import { headers } from "next/headers";
 
 async function getHomeData(): Promise<HomeData> {
-  const baseUrl =
-    process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+  const headerList = await headers();
+  const host = headerList.get("host");
+  const proto = headerList.get("x-forwarded-proto") ?? "http";
+  const baseUrl = host ? `${proto}://${host}` : "http://localhost:3000";
 
   const res = await fetch(`${baseUrl}/api/home`, {
     cache: "no-store",
