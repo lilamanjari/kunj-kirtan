@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 import { fetchHarmoniumIds } from "@/lib/server/harmonium";
 import { toProxyAudioUrl } from "@/lib/server/audioProxy";
+import { getDailyRareGem } from "@/lib/server/featured";
+import type { KirtanSummary } from "@/types/kirtan";
 
 export async function GET(
   _: Request,
@@ -37,13 +39,39 @@ export async function GET(
     return NextResponse.json({ error: kirtanError.message }, { status: 500 });
   }
 
+  const { kirtan: featuredData, error: featuredError } =
+    await getDailyRareGem({ leadSingerId: lead.id });
+
+  if (featuredError) {
+    return NextResponse.json({ error: featuredError }, { status: 500 });
+  }
+
   const ids = (kirtans ?? []).map((k) => k.id);
+  if (featuredData?.id) {
+    ids.unshift(featuredData.id);
+  }
   const { harmoniumIds, error: harmoniumError } =
     await fetchHarmoniumIds(ids);
 
   if (harmoniumError) {
     return NextResponse.json({ error: harmoniumError }, { status: 500 });
   }
+
+  const featured: KirtanSummary | null = featuredData
+    ? {
+        id: featuredData.id,
+        audio_url: toProxyAudioUrl(featuredData.audio_url),
+        type: featuredData.type === "MM" ? "MM" : "BHJ",
+        title: featuredData.type === "MM" ? "Maha Mantra" : featuredData.title,
+        lead_singer: featuredData.lead_singer,
+        recorded_date: featuredData.recorded_date,
+        recorded_date_precision: featuredData.recorded_date_precision ?? null,
+        sanga: featuredData.sanga,
+        duration_seconds: featuredData.duration_seconds,
+        sequence_num: featuredData.sequence_num ?? null,
+        has_harmonium: harmoniumIds.has(featuredData.id),
+      }
+    : null;
 
   return NextResponse.json({
     lead,
@@ -61,5 +89,6 @@ export async function GET(
         sequence_num: k.sequence_num ?? null,
         has_harmonium: harmoniumIds.has(k.id),
       })) ?? [],
+    featured,
   });
 }

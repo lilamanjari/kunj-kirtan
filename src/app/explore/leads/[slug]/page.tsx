@@ -8,12 +8,14 @@ import KirtanListItem from "@/lib/components/KirtanListItem";
 import type { KirtanSummary } from "@/types/kirtan";
 import KirtanDeepLinkHandler from "@/lib/components/KirtanDeepLinkHandler";
 import { fetchWithStatus } from "@/lib/net/fetchWithStatus";
+import FeaturedKirtanCard from "@/lib/components/FeaturedKirtanCard";
 
 type LeadResponse = {
   lead: {
     display_name: string;
   };
   kirtans: KirtanSummary[];
+  featured?: KirtanSummary | null;
 };
 
 const FILTERS = [
@@ -29,11 +31,15 @@ export default function LeadPage() {
   const [data, setData] = useState<LeadResponse | null>(null);
   const [filter, setFilter] = useState<"ALL" | "MM" | "BHJ">("ALL");
   const [pinnedKirtan, setPinnedKirtan] = useState<KirtanSummary | null>(null);
+  const [featured, setFeatured] = useState<KirtanSummary | null>(null);
 
   useEffect(() => {
     fetchWithStatus(`/api/explore/leads/${slug}`)
       .then((res) => res.json())
-      .then(setData);
+      .then((json) => {
+        setData(json);
+        setFeatured(json.featured ?? null);
+      });
   }, [slug]);
 
   const visible =
@@ -97,6 +103,16 @@ export default function LeadPage() {
             {data.lead.display_name}
           </h1>
         </header>
+
+        {featured ? (
+          <FeaturedKirtanCard
+            kirtan={featured}
+            isActive={isActive(featured)}
+            isPlaying={isPlaying()}
+            isLoading={isLoading()}
+            onToggle={() => toggle(featured)}
+          />
+        ) : null}
 
         {/* Filters */}
         <div className="flex gap-2">

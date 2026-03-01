@@ -16,7 +16,15 @@ function dailyIndex(length: number, salt = "") {
   return length > 0 ? seed % length : 0;
 }
 
-export async function getDailyRareGem(type?: KirtanType): Promise<FeaturedResult<any>> {
+type FeaturedFilters = {
+  type?: KirtanType;
+  leadSingerId?: string;
+};
+
+export async function getDailyRareGem(
+  filters: FeaturedFilters = {},
+): Promise<FeaturedResult<any>> {
+  const { type, leadSingerId } = filters;
   const { data: rareGemKirtans, error: tagError } = await supabase
     .from("kirtan_tag_slugs")
     .select("kirtan_id")
@@ -40,6 +48,9 @@ export async function getDailyRareGem(type?: KirtanType): Promise<FeaturedResult
   if (type) {
     query = query.eq("type", type);
   }
+  if (leadSingerId) {
+    query = query.eq("lead_singer_id", leadSingerId);
+  }
 
   const { data, error } = await query;
   if (error) {
@@ -51,6 +62,7 @@ export async function getDailyRareGem(type?: KirtanType): Promise<FeaturedResult
     return { kirtan: null, error: null };
   }
 
-  const index = dailyIndex(rows.length, type ?? "ALL");
+  const salt = [type ?? "ALL", leadSingerId ?? "ANY"].join("-");
+  const index = dailyIndex(rows.length, salt);
   return { kirtan: rows[index], error: null };
 }

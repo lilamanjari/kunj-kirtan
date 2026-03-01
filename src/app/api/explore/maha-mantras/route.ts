@@ -3,6 +3,7 @@ import { supabase } from "@/lib/supabase";
 import type { KirtanSummary } from "@/types/kirtan";
 import { fetchHarmoniumIds } from "@/lib/server/harmonium";
 import { toProxyAudioUrl } from "@/lib/server/audioProxy";
+import { getDailyRareGem } from "@/lib/server/featured";
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
@@ -42,6 +43,12 @@ export async function GET(req: Request) {
     query = query.ilike("lead_singer", `%${search}%`);
   }
 
+  const featured = await getDailyRareGem({ type: "MM" });
+
+  if (featured.error) {
+    return NextResponse.json({ error: featured.error }, { status: 500 });
+  }
+
   if (durationKey && durationKey !== "ALL") {
     const range = durationRanges[durationKey];
     if (range) {
@@ -71,6 +78,9 @@ export async function GET(req: Request) {
   const page = hasMore ? rows.slice(0, limit) : rows;
 
   const ids = page.map((k) => k.id);
+  if (featured.kirtan?.id) {
+    ids.unshift(featured.kirtan.id);
+  }
   const { harmoniumIds, error: harmoniumError } =
     await fetchHarmoniumIds(ids);
 
@@ -92,6 +102,22 @@ export async function GET(req: Request) {
     has_harmonium: harmoniumIds.has(k.id),
   }));
 
+  const featuredKirtan: KirtanSummary | null = featured.kirtan
+    ? {
+        id: featured.kirtan.id,
+        audio_url: toProxyAudioUrl(featured.kirtan.audio_url),
+        type: "MM",
+        title: "Maha Mantra",
+        lead_singer: featured.kirtan.lead_singer,
+        recorded_date: featured.kirtan.recorded_date,
+        recorded_date_precision: featured.kirtan.recorded_date_precision ?? null,
+        sanga: featured.kirtan.sanga,
+        duration_seconds: featured.kirtan.duration_seconds,
+        sequence_num: featured.kirtan.sequence_num ?? null,
+        has_harmonium: harmoniumIds.has(featured.kirtan.id),
+      }
+    : null;
+
   const last = page[page.length - 1];
 
   return NextResponse.json({
@@ -100,5 +126,6 @@ export async function GET(req: Request) {
     next_cursor: last
       ? { created_at: last.created_at, id: last.id }
       : null,
+    featured: featuredKirtan,
   });
 }

@@ -120,7 +120,7 @@ export default function BhajansPage() {
           <h1 className="text-2xl font-semibold font-script">Bhajans</h1>
         </header>
 
-        {featured && search.length === 0 ? (
+        {featured ? (
           <FeaturedKirtanCard
             kirtan={featured}
             isActive={isActive(featured)}

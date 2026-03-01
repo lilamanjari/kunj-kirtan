@@ -7,6 +7,7 @@ import type { KirtanSummary } from "@/types/kirtan";
 import KirtanListItem from "@/lib/components/KirtanListItem";
 import KirtanDeepLinkHandler from "@/lib/components/KirtanDeepLinkHandler";
 import { fetchWithStatus } from "@/lib/net/fetchWithStatus";
+import FeaturedKirtanCard from "@/lib/components/FeaturedKirtanCard";
 
 export default function MahaMantrasPage() {
   const [mantras, setMantras] = useState<KirtanSummary[]>([]);
@@ -23,6 +24,7 @@ export default function MahaMantrasPage() {
     id: string;
   } | null>(null);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [featured, setFeatured] = useState<KirtanSummary | null>(null);
 
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
   const searchAbortRef = useRef<AbortController | null>(null);
@@ -102,6 +104,7 @@ export default function MahaMantrasPage() {
         setHasMore(Boolean(data.has_more));
         setNextCursor(data.next_cursor ?? null);
         setHasFetchedOnce(true);
+        setFeatured(data.featured ?? null);
       })
       .finally(() => setIsLoadingList(false));
   }, [search, durationFilter]);
@@ -185,6 +188,16 @@ export default function MahaMantrasPage() {
           </Link>
           <h1 className="text-2xl font-semibold font-script">Maha Mantra</h1>
         </header>
+
+        {featured ? (
+          <FeaturedKirtanCard
+            kirtan={featured}
+            isActive={isActive(featured)}
+            isPlaying={isPlaying()}
+            isLoading={isLoading()}
+            onToggle={() => toggle(featured)}
+          />
+        ) : null}
 
         <div className="relative">
           <input

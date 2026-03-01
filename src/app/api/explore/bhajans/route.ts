@@ -23,10 +23,7 @@ export async function GET(req: Request) {
     query = query.ilike("title", `%${search}%`);
   }
 
-  const featured =
-    search?.length ?? 0
-      ? { kirtan: null, error: null }
-      : await getDailyRareGem("BHJ");
+  const featured = await getDailyRareGem({ type: "BHJ" });
 
   if (featured.error) {
     return NextResponse.json({ error: featured.error }, { status: 500 });

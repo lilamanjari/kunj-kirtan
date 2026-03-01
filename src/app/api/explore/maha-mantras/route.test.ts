@@ -8,6 +8,13 @@ vi.mock("@/lib/server/harmonium", () => ({
   }),
 }));
 
+vi.mock("@/lib/server/featured", () => ({
+  getDailyRareGem: vi.fn().mockResolvedValue({
+    kirtan: null,
+    error: null,
+  }),
+}));
+
 type MockResult = { data: unknown; error: null | { message: string } };
 type MockBuilder = {
   select: ReturnType<typeof vi.fn>;
@@ -107,6 +114,7 @@ describe("GET /api/explore/maha-mantras", () => {
       created_at: "2025-02-02T00:00:00Z",
       id: "2",
     });
+    expect(json.featured).toBeNull();
   });
 
   it("applies duration filter buckets", async () => {
@@ -163,5 +171,24 @@ describe("GET /api/explore/maha-mantras", () => {
 
     expect(res.status).toBe(500);
     expect(json.error).toBe("Boom");
+  });
+
+  it("returns error when featured lookup fails", async () => {
+    const { getDailyRareGem } = await import("@/lib/server/featured");
+    (getDailyRareGem as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      kirtan: null,
+      error: "Featured error",
+    });
+
+    builder = createMockBuilder({ data: [], error: null });
+    fromMock.mockImplementation(() => builder);
+
+    const res = await GET(
+      new Request("http://localhost/api/explore/maha-mantras"),
+    );
+    const json = await res.json();
+
+    expect(res.status).toBe(500);
+    expect(json.error).toBe("Featured error");
   });
 });
