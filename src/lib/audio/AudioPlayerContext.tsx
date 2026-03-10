@@ -31,17 +31,20 @@ function useAudioPlayerInternal() {
   // Initialize a single shared audio element and wire basic listeners.
   useEffect(() => {
     const audio = new Audio();
+    audio.preload = "metadata";
     audioRef.current = audio;
 
     const onTimeUpdate = () => {
-      if (!audio.duration) return;
-      setProgress(audio.currentTime / audio.duration);
       setCurrentTime(audio.currentTime);
+      if (audio.duration) {
+        setProgress(audio.currentTime / audio.duration);
+      }
     };
 
     const onLoadedMetadata = () => {
       setDuration(audio.duration);
       setCurrentTime(audio.currentTime);
+      setIsBuffering(false);
       if (pendingSeekRef.current !== null && audio.duration) {
         const target = Math.min(
           audio.duration,
@@ -190,6 +193,7 @@ function useAudioPlayerInternal() {
     if (audio.src !== playback.current.audio_url) {
       audio.src = playback.current.audio_url;
       audio.currentTime = 0;
+      audio.load();
     }
 
     if (playback.state === "loading") {
@@ -212,6 +216,7 @@ function useAudioPlayerInternal() {
 
     if (playback.state === "paused") {
       audio.pause();
+      setIsBuffering(false);
     }
   }, [playback.state, playback.current?.id]);
 
