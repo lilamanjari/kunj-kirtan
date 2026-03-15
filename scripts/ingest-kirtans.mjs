@@ -171,7 +171,11 @@ async function getOrCreateLeadSinger(name) {
 
   const { data: inserted, error: insertError } = await supabase
     .from("lead_singers")
-    .insert({ canonical_name: canonical, display_name: canonical })
+    .insert({
+      canonical_name: canonical,
+      display_name: canonical,
+      slug: slugify(canonical),
+    })
     .select("id")
     .single();
   if (insertError) throw new Error(insertError.message);
@@ -354,8 +358,6 @@ async function main() {
 
   const headers = values[0];
   const col = Object.fromEntries(headers.map((h, i) => [h, i]));
-  const updates = [];
-
   let processed = 0;
   let inserted = 0;
   let updated = 0;
@@ -386,162 +388,168 @@ async function main() {
       row[col.date],
     );
 
-    const leadSingerId = await getOrCreateLeadSinger(singer);
-    logStep(`Lead singer id: ${leadSingerId}`);
-    const sangaId = await resolveSangaId(sanga);
-    if (sangaId) logStep(`Sanga id: ${sangaId}`);
+    try {
+      const leadSingerId = await getOrCreateLeadSinger(singer);
+      logStep(`Lead singer id: ${leadSingerId}`);
+      const sangaId = await resolveSangaId(sanga);
+      if (sangaId) logStep(`Sanga id: ${sangaId}`);
 
-    let kirtanId = null;
-    let existingKirtan = null;
+      let kirtanId = null;
+      let existingKirtan = null;
 
-    if (status === "UPDATE") {
-      if (DRY_RUN) {
-        console.log(`[DRY_RUN] Would update kirtan for file_id=${fileId}`);
-      }
-      existingKirtan = await findKirtanByDriveFileId(fileId);
-      if (!existingKirtan) {
-        throw new Error(
-          `UPDATE row but no audio_files match for drive_file_id=${fileId}`,
-        );
-      }
-      kirtanId = existingKirtan.id;
-      updated += 1;
-    }
-
-    if (!kirtanId) {
-      if (DRY_RUN) {
-        console.log(`[DRY_RUN] Would insert new kirtan for file_id=${fileId}`);
-        inserted += 1;
-        continue;
-      }
-      const payload = {
-        title,
-        lead_singer_id: leadSingerId,
-        type,
-        raga,
-        recorded_date,
-        recorded_date_precision,
-        sanga_id: sangaId,
-        updated_at: new Date().toISOString(),
-      };
-      if (type === "MM") {
-        payload.sequence_num = await getNextSequenceNum(leadSingerId);
-      }
-      const { data, error } = await supabase
-        .from("kirtans")
-        .insert(payload)
-        .select("id,sequence_num")
-        .single();
-      if (error) throw new Error(error.message);
-      kirtanId = data.id;
-      existingKirtan = { id: data.id, sequence_num: data.sequence_num };
-      logStep(`Inserted kirtan id: ${kirtanId}`);
-      inserted += 1;
-    } else {
-      if (DRY_RUN) {
-        console.log(`[DRY_RUN] Would update kirtan_id=${kirtanId}`);
+      if (status === "UPDATE") {
+        if (DRY_RUN) {
+          console.log(`[DRY_RUN] Would update kirtan for file_id=${fileId}`);
+        }
+        existingKirtan = await findKirtanByDriveFileId(fileId);
+        if (!existingKirtan) {
+          throw new Error(
+            `UPDATE row but no audio_files match for drive_file_id=${fileId}`,
+          );
+        }
+        kirtanId = existingKirtan.id;
         updated += 1;
-        continue;
       }
-      const payload = {
-        title,
-        lead_singer_id: leadSingerId,
-        type,
-        raga,
-        recorded_date,
-        recorded_date_precision,
-        sanga_id: sangaId,
-        updated_at: new Date().toISOString(),
-      };
-      if (type === "MM" && !existingKirtan.sequence_num) {
-        payload.sequence_num = await getNextSequenceNum(leadSingerId);
+
+      if (!kirtanId) {
+        if (DRY_RUN) {
+          console.log(`[DRY_RUN] Would insert new kirtan for file_id=${fileId}`);
+          inserted += 1;
+          continue;
+        }
+        const payload = {
+          title,
+          lead_singer_id: leadSingerId,
+          type,
+          raga,
+          recorded_date,
+          recorded_date_precision,
+          sanga_id: sangaId,
+          updated_at: new Date().toISOString(),
+        };
+        if (type === "MM") {
+          payload.sequence_num = await getNextSequenceNum(leadSingerId);
+        }
+        const { data, error } = await supabase
+          .from("kirtans")
+          .insert(payload)
+          .select("id,sequence_num")
+          .single();
+        if (error) throw new Error(error.message);
+        kirtanId = data.id;
+        existingKirtan = { id: data.id, sequence_num: data.sequence_num };
+        logStep(`Inserted kirtan id: ${kirtanId}`);
+        inserted += 1;
+      } else {
+        if (DRY_RUN) {
+          console.log(`[DRY_RUN] Would update kirtan_id=${kirtanId}`);
+          updated += 1;
+          continue;
+        }
+        const payload = {
+          title,
+          lead_singer_id: leadSingerId,
+          type,
+          raga,
+          recorded_date,
+          recorded_date_precision,
+          sanga_id: sangaId,
+          updated_at: new Date().toISOString(),
+        };
+        if (type === "MM" && !existingKirtan.sequence_num) {
+          payload.sequence_num = await getNextSequenceNum(leadSingerId);
+        }
+        const { error } = await supabase
+          .from("kirtans")
+          .update(payload)
+          .eq("id", kirtanId);
+        if (error) throw new Error(error.message);
+        logStep(`Updated kirtan id: ${kirtanId}`);
       }
-      const { error } = await supabase
-        .from("kirtans")
-        .update(payload)
-        .eq("id", kirtanId);
-      if (error) throw new Error(error.message);
-      logStep(`Updated kirtan id: ${kirtanId}`);
-    }
 
-    const ext = getFileExtension(sourceFile);
-    const folder = type === "MM" ? "mm" : "bhajans";
-    const storagePath = `${folder}/${kirtanId}.${ext}`;
-    const localBase = type === "MM" ? MM_FOLDER : BHJ_FOLDER;
-    const localPath = path.join(localBase, sourceFile);
+      const ext = getFileExtension(sourceFile);
+      const folder = type === "MM" ? "mm" : "bhajans";
+      const storagePath = `${folder}/${kirtanId}.${ext}`;
+      const localBase = type === "MM" ? MM_FOLDER : BHJ_FOLDER;
+      const localPath = path.join(localBase, sourceFile);
 
-    if (!fs.existsSync(localPath)) {
-      throw new Error(`File not found: ${localPath}`);
-    }
-
-    if (VERBOSE) {
-      console.log(`Uploading ${localPath} -> ${storagePath}`);
-    }
-    await uploadToR2(localPath, storagePath);
-
-    await upsertAudioFile({
-      kirtanId,
-      fileId,
-      sourceFile,
-      durationSeconds,
-      storagePath,
-    });
-    logStep(`Audio linked: ${MEDIA_BASE_URL}/${storagePath}`);
-
-    if (!DRY_RUN) {
-      const tags = [
-        ...parseList(row[col.occasions]).map((name) => ({
-          name,
-          category: "occasion",
-        })),
-        ...parseList(row[col.person]).map((name) => ({
-          name,
-          category: "person",
-        })),
-        ...parseList(row[col.instrument]).map((name) => ({
-          name,
-          category: "instrument",
-        })),
-        ...parseList(row[col.flag]).map((name) => ({
-          name,
-          category: "flag",
-        })),
-      ];
-
-      for (const tag of tags) {
-        const tagId = await getOrCreateTag(tag.name, tag.category);
-        await linkTag(kirtanId, tagId);
-        logStep(`Tagged ${tag.category}: ${tag.name}`);
+      if (!fs.existsSync(localPath)) {
+        throw new Error(`File not found: ${localPath}`);
       }
-    }
 
-    const statusCell = `${SHEET_NAME}!${columnToA1(col.status)}${i + 1}`;
-    const updatedCell = `${SHEET_NAME}!${columnToA1(col.last_updated)}${i + 1}`;
-    if (!DRY_RUN) {
-      updates.push({ range: statusCell, values: [["IMPORTED"]] });
-      updates.push({
-        range: updatedCell,
-        values: [[new Date().toISOString()]],
+      if (VERBOSE) {
+        console.log(`Uploading ${localPath} -> ${storagePath}`);
+      }
+      await uploadToR2(localPath, storagePath);
+
+      await upsertAudioFile({
+        kirtanId,
+        fileId,
+        sourceFile,
+        durationSeconds,
+        storagePath,
       });
+      logStep(`Audio linked: ${MEDIA_BASE_URL}/${storagePath}`);
 
-      if (col.sequence_num !== undefined) {
-        const seqCell = `${SHEET_NAME}!${columnToA1(col.sequence_num)}${i + 1}`;
-        updates.push({
-          range: seqCell,
-          values: [[existingKirtan?.sequence_num ?? ""]],
+      if (!DRY_RUN) {
+        const tags = [
+          ...parseList(row[col.occasions]).map((name) => ({
+            name,
+            category: "occasion",
+          })),
+          ...parseList(row[col.person]).map((name) => ({
+            name,
+            category: "person",
+          })),
+          ...parseList(row[col.instrument]).map((name) => ({
+            name,
+            category: "instrument",
+          })),
+          ...parseList(row[col.flag]).map((name) => ({
+            name,
+            category: "flag",
+          })),
+        ];
+
+        for (const tag of tags) {
+          const tagId = await getOrCreateTag(tag.name, tag.category);
+          await linkTag(kirtanId, tagId);
+          logStep(`Tagged ${tag.category}: ${tag.name}`);
+        }
+      }
+
+      if (!DRY_RUN) {
+        const statusCell = `${SHEET_NAME}!${columnToA1(col.status)}${i + 1}`;
+        const updatedCell = `${SHEET_NAME}!${columnToA1(col.last_updated)}${
+          i + 1
+        }`;
+        const updates = [
+          { range: statusCell, values: [["IMPORTED"]] },
+          { range: updatedCell, values: [[new Date().toISOString()]] },
+        ];
+
+        if (col.sequence_num !== undefined) {
+          const seqCell = `${SHEET_NAME}!${columnToA1(col.sequence_num)}${
+            i + 1
+          }`;
+          updates.push({
+            range: seqCell,
+            values: [[existingKirtan?.sequence_num ?? ""]],
+          });
+        }
+
+        await sheets.spreadsheets.values.batchUpdate({
+          spreadsheetId: SHEET_ID,
+          requestBody: {
+            valueInputOption: "RAW",
+            data: updates,
+          },
         });
       }
+    } catch (err) {
+      console.error(`Row ${i + 1} failed:`, err.message || err);
+      if (DRY_RUN) continue;
     }
-  }
-
-  if (!DRY_RUN && updates.length > 0) {
-    await sheets.spreadsheets.values.batchUpdate({
-      spreadsheetId: SHEET_ID,
-      requestBody: {
-        valueInputOption: "RAW",
-        data: updates,
-      },
-    });
   }
 
   console.log(DRY_RUN ? "Dry run complete." : "Ingest complete.");
