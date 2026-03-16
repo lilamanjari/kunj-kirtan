@@ -12,10 +12,11 @@
     "test:watch": "vitest --watch"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.758.0",
     "@bradleyhodges/sfsymbols": "^7.0.4",
     "@bradleyhodges/sfsymbols-react": "^7.0.4",
-    "@aws-sdk/client-s3": "^3.758.0",
     "@supabase/supabase-js": "^2.89.0",
+    "@vercel/analytics": "^2.0.1",
     "dotenv": "^16.4.5",
     "googleapis": "^171.4.0",
     "next": "16.1.1",

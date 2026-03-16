@@ -6,6 +6,7 @@ import { AudioPlayerProvider } from "@/lib/audio/AudioPlayerContext";
 import ClientAudioPlayerBar from "@/lib/components/ClientAudioPlayerBar";
 import QueueToast from "@/lib/components/QueueToast";
 import OfflineBanner from "@/lib/components/OfflineBanner";
+import { Analytics } from "@vercel/analytics/react";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -51,6 +52,7 @@ export default function RootLayout({
             <ClientAudioPlayerBar />
           </Suspense>
         </AudioPlayerProvider>
+        <Analytics />
       </body>
     </html>
   );
