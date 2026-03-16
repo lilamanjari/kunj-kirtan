@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 import { fetchHarmoniumIds } from "@/lib/server/harmonium";
-import { toProxyAudioUrl } from "@/lib/server/audioProxy";
 import { getDailyRareGem } from "@/lib/server/featured";
 import type { KirtanSummary } from "@/types/kirtan";
 
@@ -60,7 +59,7 @@ export async function GET(
   const featured: KirtanSummary | null = featuredData
     ? {
         id: featuredData.id,
-        audio_url: toProxyAudioUrl(featuredData.audio_url),
+        audio_url: featuredData.audio_url,
         type: featuredData.type === "MM" ? "MM" : "BHJ",
         title: featuredData.type === "MM" ? "Maha Mantra" : featuredData.title,
         lead_singer: featuredData.lead_singer,
@@ -78,7 +77,7 @@ export async function GET(
     kirtans:
       kirtans?.map((k) => ({
         id: k.id,
-        audio_url: toProxyAudioUrl(k.audio_url),
+        audio_url: k.audio_url,
         type: k.type === "MM" ? "MM" : "BHJ",
         title: k.type === "MM" ? "Maha Mantra" : k.title,
         lead_singer: k.lead_singer,
