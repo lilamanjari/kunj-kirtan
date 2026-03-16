@@ -176,9 +176,18 @@ function useAudioPlayerInternal() {
 
     if ("mediaSession" in navigator) {
       const origin = window.location.origin;
+      const sequenceLabel = playback.current.sequence_num
+        ? `#${playback.current.sequence_num}`
+        : "";
+      const mediaTitle =
+        playback.current.title ||
+        (playback.current.type === "MM" ? "Maha Mantra" : "Kunj Kirtan");
+      const mediaArtist = sequenceLabel
+        ? `${sequenceLabel} by ${playback.current.lead_singer ?? "Kunj Kirtan"}`
+        : playback.current.lead_singer ?? "Kunj Kirtan";
       navigator.mediaSession.metadata = new MediaMetadata({
-        title: playback.current.title || "Kunj Kirtan",
-        artist: playback.current.lead_singer ?? "Kunj Kirtan",
+        title: mediaTitle,
+        artist: mediaArtist,
         album: "Kunj Kirtan",
         artwork: [
           {

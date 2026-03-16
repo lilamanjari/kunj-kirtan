@@ -111,6 +111,8 @@ export default function LeadPage() {
             isPlaying={isPlaying()}
             isLoading={isLoading()}
             onToggle={() => toggle(featured)}
+            onEnqueue={enqueue}
+            isQueued={isQueued(featured.id)}
           />
         ) : null}
 

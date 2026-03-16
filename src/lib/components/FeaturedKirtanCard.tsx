@@ -10,6 +10,8 @@ type FeaturedKirtanCardProps = {
   isPlaying: boolean;
   isLoading: boolean;
   onToggle: () => void;
+  onEnqueue?: (kirtan: KirtanSummary) => void;
+  isQueued?: boolean;
 };
 
 function formatDuration(seconds?: number | null) {
@@ -38,6 +40,8 @@ export default function FeaturedKirtanCard({
   isPlaying,
   isLoading,
   onToggle,
+  onEnqueue,
+  isQueued = false,
 }: FeaturedKirtanCardProps) {
   const sequenceLabel = kirtan.sequence_num ? `#${kirtan.sequence_num}` : null;
   const durationLabel = formatDuration(kirtan.duration_seconds);
@@ -58,7 +62,7 @@ export default function FeaturedKirtanCard({
       </h1>
 
       {/* Lead singer row */}
-      <div className="mt-2 flex items-center justify-between">
+      <div className="mt-2 flex items-center justify-between gap-2">
         <p className="text-stone-300">
           {sequenceLabel ? `${sequenceLabel} by` : ""}
           {sequenceLabel ? " " : ""}
@@ -88,6 +92,22 @@ export default function FeaturedKirtanCard({
           <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-200">
             {durationLabel}
           </span>
+        ) : null}
+        {onEnqueue ? (
+          <button
+            type="button"
+            onClick={() => onEnqueue(kirtan)}
+            disabled={isQueued}
+            className={`ml-auto flex h-7 w-7 items-center justify-center rounded-full border text-xs transition ${
+              isQueued
+                ? "border-emerald-400/40 bg-emerald-500/10 text-emerald-200 cursor-default"
+                : "border-rose-300/40 bg-white/10 text-rose-100 hover:bg-white/20 cursor-pointer"
+            }`}
+            aria-label="Add to queue"
+            title="Add to queue"
+          >
+            {isQueued ? "✓" : "+"}
+          </button>
         ) : null}
       </div>
 

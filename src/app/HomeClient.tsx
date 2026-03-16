@@ -68,6 +68,8 @@ export default function HomeClient({ data }: { data: HomeData }) {
             isPlaying={isPlaying()}
             isLoading={isLoading()}
             onToggle={() => toggle(primaryAction.kirtan)}
+            onEnqueue={enqueue}
+            isQueued={isQueued(primaryAction.kirtan.id)}
           />
         )}
 
