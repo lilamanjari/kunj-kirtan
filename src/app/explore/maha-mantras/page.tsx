@@ -20,7 +20,7 @@ export default function MahaMantrasPage() {
   const [hasFetchedOnce, setHasFetchedOnce] = useState(false);
   const [isLoadingList, setIsLoadingList] = useState(true);
   const [nextCursor, setNextCursor] = useState<{
-    created_at: string;
+    recorded_date: string | null;
     id: string;
   } | null>(null);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -141,7 +141,9 @@ export default function MahaMantrasPage() {
         if (search) params.set("search", search);
         if (durationFilter) params.set("duration", durationFilter);
         params.set("limit", "20");
-        params.set("cursor_created_at", nextCursor.created_at);
+        if (nextCursor.recorded_date) {
+          params.set("cursor_recorded_date", nextCursor.recorded_date);
+        }
         params.set("cursor_id", nextCursor.id);
 
         fetchWithStatus(`/api/explore/maha-mantras?${params.toString()}`)

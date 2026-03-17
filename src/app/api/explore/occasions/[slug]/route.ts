@@ -38,8 +38,9 @@ export async function GET(
     .from("playable_kirtans")
     .select("*")
     .in("id", ids)
+    .order("recorded_date", { ascending: false, nullsFirst: false })
     .order("created_at", { ascending: false })
-    .order("recorded_date", { ascending: false });
+    .order("id", { ascending: false });
 
   if (kirtanError) {
     return NextResponse.json({ error: kirtanError.message }, { status: 500 });

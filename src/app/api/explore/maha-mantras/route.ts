@@ -9,7 +9,7 @@ export async function GET(req: Request) {
   const search = searchParams.get("search");
   const durationKey = searchParams.get("duration");
   const limitParam = Number(searchParams.get("limit") ?? "20");
-  const cursorCreatedAt = searchParams.get("cursor_created_at");
+  const cursorRecordedDate = searchParams.get("cursor_recorded_date");
   const cursorId = searchParams.get("cursor_id");
 
   const limit =
@@ -33,8 +33,7 @@ export async function GET(req: Request) {
       "id, audio_url, type, title, lead_singer, recorded_date, recorded_date_precision, sanga, duration_seconds, created_at, sequence_num",
     )
     .eq("type", "MM")
-    .order("created_at", { ascending: false })
-    .order("recorded_date", { ascending: false })
+    .order("recorded_date", { ascending: false, nullsFirst: false })
     .order("id", { ascending: false })
     .limit(limit + 1);
 
@@ -60,10 +59,12 @@ export async function GET(req: Request) {
     }
   }
 
-  if (cursorCreatedAt && cursorId) {
+  if (cursorRecordedDate && cursorId) {
     query = query.or(
-      `created_at.lt.${cursorCreatedAt},and(created_at.eq.${cursorCreatedAt},id.lt.${cursorId})`,
+      `recorded_date.lt.${cursorRecordedDate},and(recorded_date.eq.${cursorRecordedDate},id.lt.${cursorId})`,
     );
+  } else if (cursorId) {
+    query = query.is("recorded_date", null).lt("id", cursorId);
   }
 
   const { data, error } = await query;
@@ -123,7 +124,7 @@ export async function GET(req: Request) {
     mantras,
     has_more: hasMore,
     next_cursor: last
-      ? { created_at: last.created_at, id: last.id }
+      ? { recorded_date: last.recorded_date, id: last.id }
       : null,
     featured: featuredKirtan,
   });

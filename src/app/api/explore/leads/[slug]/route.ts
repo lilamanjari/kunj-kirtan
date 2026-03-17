@@ -30,9 +30,9 @@ export async function GET(
     .from("playable_kirtans")
     .select("*")
     .eq("lead_singer_id", lead.id)
-    .order("type", { ascending: true })
-    .order("sort_key_created", { ascending: false })
-    .order("sort_key_alpha", { ascending: true });
+    .order("recorded_date", { ascending: false, nullsFirst: false })
+    .order("created_at", { ascending: false })
+    .order("id", { ascending: false });
 
   if (kirtanError) {
     return NextResponse.json({ error: kirtanError.message }, { status: 500 });

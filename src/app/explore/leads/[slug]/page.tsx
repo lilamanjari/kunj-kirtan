@@ -47,9 +47,35 @@ export default function LeadPage() {
       filter === "ALL" ? true : k.type === filter,
     ) ?? [];
 
+  const sortedVisible = (() => {
+    if (filter === "BHJ") {
+      return [...visible].sort((a, b) =>
+        (a.title ?? "").localeCompare(b.title ?? "", undefined, {
+          sensitivity: "base",
+        }),
+      );
+    }
+
+    if (filter === "MM") {
+      return [...visible].sort((a, b) => {
+        if (a.recorded_date && b.recorded_date) {
+          if (a.recorded_date === b.recorded_date) {
+            return b.id.localeCompare(a.id);
+          }
+          return b.recorded_date.localeCompare(a.recorded_date);
+        }
+        if (a.recorded_date) return -1;
+        if (b.recorded_date) return 1;
+        return b.id.localeCompare(a.id);
+      });
+    }
+
+    return visible;
+  })();
+
   const renderedKirtans = pinnedKirtan
-    ? [pinnedKirtan, ...visible.filter((k) => k.id !== pinnedKirtan.id)]
-    : visible;
+    ? [pinnedKirtan, ...sortedVisible.filter((k) => k.id !== pinnedKirtan.id)]
+    : sortedVisible;
 
   if (!data) {
     return (
@@ -85,7 +111,7 @@ export default function LeadPage() {
         <div className="pointer-events-none absolute -top-10 left-6 h-28 w-28 rounded-full bg-rose-300/40 blur-3xl" />
         <Suspense fallback={null}>
           <KirtanDeepLinkHandler
-            kirtans={visible}
+            kirtans={sortedVisible}
             onSelect={select}
             isActive={isActive}
             onPin={setPinnedKirtan}

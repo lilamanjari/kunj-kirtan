@@ -135,12 +135,12 @@ describe("GET /api/explore/maha-mantras", () => {
 
     await GET(
       new Request(
-        "http://localhost/api/explore/maha-mantras?cursor_created_at=2025-02-02T00:00:00Z&cursor_id=abc",
+        "http://localhost/api/explore/maha-mantras?cursor_recorded_date=2025-02-02&cursor_id=abc",
       ),
     );
 
     expect(builder.or).toHaveBeenCalledWith(
-      "created_at.lt.2025-02-02T00:00:00Z,and(created_at.eq.2025-02-02T00:00:00Z,id.lt.abc)",
+      "recorded_date.lt.2025-02-02,and(recorded_date.eq.2025-02-02,id.lt.abc)",
     );
   });
 
