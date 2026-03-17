@@ -291,6 +291,7 @@ function useAudioPlayerInternal() {
     playPrev,
     queue: queueApi.queue,
     enqueue: queueApi.enqueue,
+    dequeueById: queueApi.dequeueById,
     clearQueue: queueApi.clearQueue,
     queueNotice: queueApi.notice,
     isQueued: queueApi.isQueued,

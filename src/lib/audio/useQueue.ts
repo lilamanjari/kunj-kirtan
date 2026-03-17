@@ -7,6 +7,7 @@ export type QueueApi = {
   queue: KirtanSummary[];
   enqueue: (kirtan: KirtanSummary) => void;
   dequeue: () => KirtanSummary | null;
+  dequeueById: (id: string) => void;
   clearQueue: () => void;
   isQueued: (id: string) => boolean;
   notice: string | null;
@@ -61,6 +62,14 @@ export function useQueue(storage?: Storage): QueueApi {
     return next;
   }
 
+  function dequeueById(id: string) {
+    const removed = queueRef.current.find((item) => item.id === id) ?? null;
+    setQueue((prev) => prev.filter((item) => item.id !== id));
+    if (removed) {
+      setNotice(`Removed "${removed.title}" from queue`);
+    }
+  }
+
   function clearQueue() {
     setQueue([]);
   }
@@ -75,5 +84,14 @@ export function useQueue(storage?: Storage): QueueApi {
     return () => clearTimeout(timer);
   }, [notice]);
 
-  return { queue, enqueue, dequeue, clearQueue, isQueued, notice, loaded };
+  return {
+    queue,
+    enqueue,
+    dequeue,
+    dequeueById,
+    clearQueue,
+    isQueued,
+    notice,
+    loaded,
+  };
 }

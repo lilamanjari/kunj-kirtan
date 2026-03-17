@@ -9,6 +9,7 @@ vi.mock("./useQueue", () => ({
     queue: [],
     enqueue: vi.fn(),
     dequeue: vi.fn(),
+    dequeueById: vi.fn(),
     clearQueue: vi.fn(),
     isQueued: vi.fn(),
     notice: null,

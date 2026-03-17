@@ -9,6 +9,7 @@ type KirtanListItemProps = {
   isLoading: boolean;
   onToggle: () => void;
   onEnqueue?: (kirtan: KirtanSummary) => void;
+  onDequeue?: (id: string) => void;
   isQueued?: boolean;
 };
 
@@ -47,6 +48,7 @@ export default function KirtanListItem({
   isLoading,
   onToggle,
   onEnqueue,
+  onDequeue,
   isQueued = false,
 }: KirtanListItemProps) {
   const durationLabel = formatDuration(kirtan.duration_seconds);
@@ -121,12 +123,15 @@ export default function KirtanListItem({
             type="button"
             onClick={(event) => {
               event.stopPropagation();
+              if (isQueued && onDequeue) {
+                onDequeue(kirtan.id);
+                return;
+              }
               onEnqueue(kirtan);
             }}
-            disabled={isQueued}
             className={`flex h-7 w-7 items-center justify-center rounded-full border transition ${
               isQueued
-                ? "border-emerald-200 bg-emerald-50 text-emerald-500 cursor-default"
+                ? "border-emerald-200 bg-emerald-50 text-emerald-500 cursor-pointer"
                 : "border-rose-200 bg-white text-rose-500 hover:bg-rose-50 cursor-pointer"
             }`}
             aria-label="Add to queue"

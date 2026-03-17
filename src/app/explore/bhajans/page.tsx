@@ -26,8 +26,16 @@ export default function BhajansPage() {
 
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
-  const { toggle, isActive, isPlaying, isLoading, enqueue, isQueued, select } =
-    useAudioPlayer();
+  const {
+    toggle,
+    isActive,
+    isPlaying,
+    isLoading,
+    enqueue,
+    dequeueById,
+    isQueued,
+    select,
+  } = useAudioPlayer();
   const [pinnedKirtan, setPinnedKirtan] = useState<KirtanSummary | null>(null);
 
   function resetPagination() {
@@ -128,6 +136,7 @@ export default function BhajansPage() {
             isLoading={isLoading()}
             onToggle={() => toggle(featured)}
             onEnqueue={enqueue}
+            onDequeue={dequeueById}
             isQueued={isQueued(featured.id)}
           />
         ) : null}
@@ -171,6 +180,7 @@ export default function BhajansPage() {
                   isLoading={isLoading()}
                   onToggle={() => toggle(b)}
                   onEnqueue={enqueue}
+                  onDequeue={dequeueById}
                   isQueued={isQueued(b.id)}
                 />
               );

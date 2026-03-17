@@ -20,7 +20,16 @@ type OccasionResponse = {
 
 export default function OccasionDetailPage() {
   const { slug } = useParams<{ slug: string }>();
-  const { isActive, isPlaying, isLoading, toggle, enqueue, isQueued, select } = useAudioPlayer();
+  const {
+    isActive,
+    isPlaying,
+    isLoading,
+    toggle,
+    enqueue,
+    dequeueById,
+    isQueued,
+    select,
+  } = useAudioPlayer();
 
   const [data, setData] = useState<OccasionResponse | null>(null);
   const [pinnedKirtan, setPinnedKirtan] = useState<KirtanSummary | null>(null);
@@ -109,6 +118,7 @@ export default function OccasionDetailPage() {
                   isLoading={isLoading()}
                   onToggle={() => toggle(k)}
                   onEnqueue={enqueue}
+                  onDequeue={dequeueById}
                   isQueued={isQueued(k.id)}
                 />
               ))}

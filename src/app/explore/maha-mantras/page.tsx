@@ -31,8 +31,16 @@ export default function MahaMantrasPage() {
   const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const suggestDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const { toggle, isActive, isPlaying, isLoading, enqueue, isQueued, select } =
-    useAudioPlayer();
+  const {
+    toggle,
+    isActive,
+    isPlaying,
+    isLoading,
+    enqueue,
+    dequeueById,
+    isQueued,
+    select,
+  } = useAudioPlayer();
   const [pinnedKirtan, setPinnedKirtan] = useState<KirtanSummary | null>(null);
 
   function resetPagination() {
@@ -199,6 +207,7 @@ export default function MahaMantrasPage() {
             isLoading={isLoading()}
             onToggle={() => toggle(featured)}
             onEnqueue={enqueue}
+            onDequeue={dequeueById}
             isQueued={isQueued(featured.id)}
           />
         ) : null}
@@ -287,6 +296,7 @@ export default function MahaMantrasPage() {
                   isLoading={isLoading()}
                   onToggle={() => toggle(m)}
                   onEnqueue={enqueue}
+                  onDequeue={dequeueById}
                   isQueued={isQueued(m.id)}
                 />
               );

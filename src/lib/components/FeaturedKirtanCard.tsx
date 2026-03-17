@@ -11,6 +11,7 @@ type FeaturedKirtanCardProps = {
   isLoading: boolean;
   onToggle: () => void;
   onEnqueue?: (kirtan: KirtanSummary) => void;
+  onDequeue?: (id: string) => void;
   isQueued?: boolean;
 };
 
@@ -41,6 +42,7 @@ export default function FeaturedKirtanCard({
   isLoading,
   onToggle,
   onEnqueue,
+  onDequeue,
   isQueued = false,
 }: FeaturedKirtanCardProps) {
   const sequenceLabel = kirtan.sequence_num ? `#${kirtan.sequence_num}` : null;
@@ -96,11 +98,16 @@ export default function FeaturedKirtanCard({
         {onEnqueue ? (
           <button
             type="button"
-            onClick={() => onEnqueue(kirtan)}
-            disabled={isQueued}
+            onClick={() => {
+              if (isQueued && onDequeue) {
+                onDequeue(kirtan.id);
+                return;
+              }
+              onEnqueue(kirtan);
+            }}
             className={`ml-auto flex h-7 w-7 items-center justify-center rounded-full border text-xs transition ${
               isQueued
-                ? "border-emerald-400/40 bg-emerald-500/10 text-emerald-200 cursor-default"
+                ? "border-emerald-400/40 bg-emerald-500/10 text-emerald-200 cursor-pointer"
                 : "border-rose-300/40 bg-white/10 text-rose-100 hover:bg-white/20 cursor-pointer"
             }`}
             aria-label="Add to queue"

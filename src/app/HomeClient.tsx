@@ -10,8 +10,16 @@ import KirtanDeepLinkHandler from "@/lib/components/KirtanDeepLinkHandler";
 import Link from "next/link";
 
 export default function HomeClient({ data }: { data: HomeData }) {
-  const { isPlaying, isLoading, isActive, toggle, enqueue, isQueued, select } =
-    useAudioPlayer();
+  const {
+    isPlaying,
+    isLoading,
+    isActive,
+    toggle,
+    enqueue,
+    dequeueById,
+    isQueued,
+    select,
+  } = useAudioPlayer();
   const primaryAction = data.primary_action;
   const [recentlyAdded, setRecentlyAdded] = useState(
     () => data.recently_added ?? [],
@@ -69,6 +77,7 @@ export default function HomeClient({ data }: { data: HomeData }) {
             isLoading={isLoading()}
             onToggle={() => toggle(primaryAction.kirtan)}
             onEnqueue={enqueue}
+            onDequeue={dequeueById}
             isQueued={isQueued(primaryAction.kirtan.id)}
           />
         )}
@@ -132,6 +141,7 @@ export default function HomeClient({ data }: { data: HomeData }) {
                   isLoading={isLoading()}
                   onToggle={() => toggle(k)}
                   onEnqueue={enqueue}
+                  onDequeue={dequeueById}
                   isQueued={isQueued(k.id)}
                 />
               );
