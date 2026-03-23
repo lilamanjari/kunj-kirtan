@@ -111,7 +111,7 @@ describe("GET /api/explore/maha-mantras", () => {
     expect(json.mantras).toHaveLength(2);
     expect(json.has_more).toBe(true);
     expect(json.next_cursor).toEqual({
-      created_at: "2025-02-02T00:00:00Z",
+      recorded_date: "2020-01-02",
       id: "2",
     });
     expect(json.featured).toBeNull();

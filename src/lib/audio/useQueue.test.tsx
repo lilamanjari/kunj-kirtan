@@ -62,6 +62,25 @@ describe("useQueue", () => {
     expect(result.current.queue[0].id).toBe("2");
   });
 
+  it("dequeues a specific item by id and sets a removal notice", () => {
+    const storage = createMemoryStorage();
+    const { result } = renderHook(() => useQueue(storage));
+
+    act(() => {
+      result.current.enqueue(sampleKirtan("1"));
+      result.current.enqueue(sampleKirtan("2"));
+      result.current.enqueue(sampleKirtan("3"));
+    });
+
+    act(() => {
+      result.current.dequeueById("2");
+    });
+
+    expect(result.current.queue.map((item) => item.id)).toEqual(["1", "3"]);
+    expect(result.current.notice).toBe('Removed "Track 2" from queue');
+    expect(result.current.isQueued("2")).toBe(false);
+  });
+
   it("clears queue", () => {
     const storage = createMemoryStorage();
     const { result } = renderHook(() => useQueue(storage));
