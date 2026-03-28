@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "scan-drive": "node scripts/scan-drive-to-sheet.mjs",
     "ingest": "node scripts/ingest-kirtans.mjs",
     "test": "vitest",
     "test:watch": "vitest --watch"

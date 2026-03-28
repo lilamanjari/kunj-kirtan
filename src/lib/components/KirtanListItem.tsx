@@ -102,7 +102,7 @@ export default function KirtanListItem({
           ) : null}
           <p className="truncate text-xs text-stone-500">
             {kirtan.lead_singer}
-            {kirtan.sanga ? ` • ${kirtan.sanga}` : " • Unknown location"}
+            {kirtan.sanga ? ` • ${kirtan.sanga}` : ""}
           </p>
         </div>
         <div className="flex items-center justify-between gap-2 text-xs text-stone-500">
