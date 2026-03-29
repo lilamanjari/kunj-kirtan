@@ -21,6 +21,19 @@ function formatTime(seconds: number) {
   return `${mins}:${String(secs).padStart(2, "0")}`;
 }
 
+function formatQueueDuration(seconds: number) {
+  if (!Number.isFinite(seconds) || seconds <= 0) return "";
+  const total = Math.round(seconds);
+  const hours = Math.floor(total / 3600);
+  const minutes = Math.floor((total % 3600) / 60);
+
+  if (hours > 0) {
+    return `${hours}h ${minutes}m`;
+  }
+
+  return `${minutes}m`;
+}
+
 export default function AudioPlayerBar() {
   const {
     progress,
@@ -41,6 +54,11 @@ export default function AudioPlayerBar() {
     useAudioPlayer();
   const shareKirtan = useKirtanShare();
   const [shareNotice, setShareNotice] = useState<string | null>(null);
+  const queueDuration = queue.reduce(
+    (sum, item) => sum + (item.duration_seconds ?? 0),
+    0,
+  );
+  const queueDurationLabel = formatQueueDuration(queueDuration);
 
   useEffect(() => {
     if (!shareNotice) return;
@@ -188,9 +206,16 @@ export default function AudioPlayerBar() {
         {queue.length > 0 ? (
           <div className="mt-2 flex items-center justify-between text-xs text-stone-500">
             <div className="flex items-center gap-2 truncate">
-              <span className="inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-emerald-100 px-2 text-[10px] font-semibold text-emerald-700">
-                {queue.length}
-              </span>
+              <div className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5">
+                <span className="inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-emerald-100 px-1.5 text-[10px] font-semibold text-emerald-700">
+                  {queue.length}
+                </span>
+                {queueDurationLabel ? (
+                  <span className="text-[10px] font-medium text-emerald-700/80">
+                    {queueDurationLabel}
+                  </span>
+                ) : null}
+              </div>
               <span className="truncate">Up next: {queue[0]?.title}</span>
             </div>
             <button
