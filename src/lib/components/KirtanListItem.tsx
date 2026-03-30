@@ -55,17 +55,25 @@ export default function KirtanListItem({
   const sequenceLabel = kirtan.sequence_num ? `#${kirtan.sequence_num}` : null;
   const baseHue = hashHue(kirtan.id);
   const tintHue = kirtan.type === "BHJ" ? (baseHue + 340) % 360 : baseHue;
-  const borderTint = `hsla(${tintHue}, 70%, 85%, 1)`;
+  const borderTint = kirtan.is_rare_gem
+    ? "rgba(251, 191, 36, 0.65)"
+    : `hsla(${tintHue}, 70%, 85%, 1)`;
+  const cardBackground = kirtan.is_rare_gem
+    ? "bg-[linear-gradient(180deg,rgba(255,251,245,1)_0%,rgba(255,255,255,1)_36%,rgba(255,249,244,1)_100%)]"
+    : isActive
+      ? "bg-gradient-to-r from-rose-50 via-pink-50 to-rose-100"
+      : "bg-white hover:bg-rose-50/40";
 
   return (
     <li
       onClick={onToggle}
       className={`
-        flex cursor-pointer items-center justify-between rounded-xl px-4 py-3 shadow-sm transition border
+        relative flex cursor-pointer items-center justify-between rounded-xl px-4 py-3 shadow-sm transition border
+        ${cardBackground}
         ${
-          isActive
-            ? "bg-gradient-to-r from-rose-50 via-pink-50 to-rose-100"
-            : "bg-white hover:bg-rose-50/40"
+          kirtan.is_rare_gem
+            ? "after:absolute after:left-5 after:right-28 after:top-0 after:h-px after:bg-gradient-to-r after:from-transparent after:via-amber-200/90 after:to-transparent"
+            : ""
         }
         ${isActive && isPlaying ? "animate-breathe" : ""}
         ${isActive && !isPlaying ? "opacity-90" : ""}

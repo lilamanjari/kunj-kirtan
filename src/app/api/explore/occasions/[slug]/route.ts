@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 import type { KirtanSummary } from "@/types/kirtan";
-import { fetchHarmoniumIds } from "@/lib/server/harmonium";
+import { fetchKirtanTagFlags } from "@/lib/server/kirtanTags";
 
 export async function GET(
   _: Request,
@@ -47,11 +47,11 @@ export async function GET(
   }
 
   const kirtanIds = (kirtans ?? []).map((k) => k.id);
-  const { harmoniumIds, error: harmoniumError } =
-    await fetchHarmoniumIds(kirtanIds);
+  const { harmoniumIds, rareGemIds, error: flagsError } =
+    await fetchKirtanTagFlags(kirtanIds);
 
-  if (harmoniumError) {
-    return NextResponse.json({ error: harmoniumError }, { status: 500 });
+  if (flagsError) {
+    return NextResponse.json({ error: flagsError }, { status: 500 });
   }
 
   const payload: KirtanSummary[] =
@@ -67,6 +67,7 @@ export async function GET(
       duration_seconds: k.duration_seconds,
       sequence_num: k.sequence_num ?? null,
       has_harmonium: harmoniumIds.has(k.id),
+      is_rare_gem: rareGemIds.has(k.id),
     })) ?? [];
 
   return NextResponse.json({ tag, kirtans: payload });

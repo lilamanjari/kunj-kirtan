@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 import type { KirtanSummary } from "@/types/kirtan";
-import { fetchHarmoniumIds } from "@/lib/server/harmonium";
+import { fetchKirtanTagFlags } from "@/lib/server/kirtanTags";
 import { getDailyRareGem } from "@/lib/server/featured";
 
 export const revalidate = 86400;
@@ -33,6 +33,7 @@ export async function GET() {
     duration_seconds: featuredKirtanData?.duration_seconds,
     sequence_num: featuredKirtanData?.sequence_num ?? null,
     has_harmonium: false,
+    is_rare_gem: true,
       }
     : null;
 
@@ -57,15 +58,16 @@ export async function GET() {
     ? [featuredId, ...recentIds]
     : recentIds;
 
-  const { harmoniumIds, error: harmoniumError } =
-    await fetchHarmoniumIds(harmoniumLookupIds);
+  const { harmoniumIds, rareGemIds, error: tagError } =
+    await fetchKirtanTagFlags(harmoniumLookupIds);
 
-  if (harmoniumError) {
-    return NextResponse.json({ error: harmoniumError }, { status: 500 });
+  if (tagError) {
+    return NextResponse.json({ error: tagError }, { status: 500 });
   }
 
   if (featuredId && featuredKirtan) {
     featuredKirtan.has_harmonium = harmoniumIds.has(featuredId);
+    featuredKirtan.is_rare_gem = rareGemIds.has(featuredId);
   }
 
   const recentlyAddedKirtans: KirtanSummary[] =
@@ -81,6 +83,7 @@ export async function GET() {
       duration_seconds: k.duration_seconds,
       sequence_num: k.sequence_num ?? null,
       has_harmonium: harmoniumIds.has(k.id),
+      is_rare_gem: rareGemIds.has(k.id),
     })) ?? [];
 
   const recentlyAddedNoDuplicates = recentlyAddedKirtans.filter(

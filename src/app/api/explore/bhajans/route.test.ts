@@ -1,9 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { GET } from "./route";
 
-vi.mock("@/lib/server/harmonium", () => ({
-  fetchHarmoniumIds: vi.fn().mockResolvedValue({
+vi.mock("@/lib/server/kirtanTags", () => ({
+  fetchKirtanTagFlags: vi.fn().mockResolvedValue({
     harmoniumIds: new Set<string>(),
+    rareGemIds: new Set<string>(),
     error: null,
   }),
 }));

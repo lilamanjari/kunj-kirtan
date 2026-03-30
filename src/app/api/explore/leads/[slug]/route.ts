@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
-import { fetchHarmoniumIds } from "@/lib/server/harmonium";
+import { fetchKirtanTagFlags } from "@/lib/server/kirtanTags";
 import { getDailyRareGem } from "@/lib/server/featured";
 import type { KirtanSummary } from "@/types/kirtan";
 
@@ -49,11 +49,11 @@ export async function GET(
   if (featuredData?.id) {
     ids.unshift(featuredData.id);
   }
-  const { harmoniumIds, error: harmoniumError } =
-    await fetchHarmoniumIds(ids);
+  const { harmoniumIds, rareGemIds, error: tagError } =
+    await fetchKirtanTagFlags(ids);
 
-  if (harmoniumError) {
-    return NextResponse.json({ error: harmoniumError }, { status: 500 });
+  if (tagError) {
+    return NextResponse.json({ error: tagError }, { status: 500 });
   }
 
   const featured: KirtanSummary | null = featuredData
@@ -69,6 +69,7 @@ export async function GET(
         duration_seconds: featuredData.duration_seconds,
         sequence_num: featuredData.sequence_num ?? null,
         has_harmonium: harmoniumIds.has(featuredData.id),
+        is_rare_gem: rareGemIds.has(featuredData.id),
       }
     : null;
 
@@ -87,6 +88,7 @@ export async function GET(
         duration_seconds: k.duration_seconds,
         sequence_num: k.sequence_num ?? null,
         has_harmonium: harmoniumIds.has(k.id),
+        is_rare_gem: rareGemIds.has(k.id),
       })) ?? [],
     featured,
   });

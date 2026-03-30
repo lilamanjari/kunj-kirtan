@@ -13,4 +13,5 @@ export type KirtanSummary = {
   duration_seconds?: number | null;
   sequence_num?: number | null;
   has_harmonium?: boolean;
+  is_rare_gem?: boolean;
 };
