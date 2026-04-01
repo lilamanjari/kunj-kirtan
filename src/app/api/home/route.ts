@@ -3,17 +3,23 @@ import { supabase } from "@/lib/supabase";
 import type { KirtanSummary } from "@/types/kirtan";
 import { fetchKirtanTagFlags } from "@/lib/server/kirtanTags";
 import { getDailyRareGem } from "@/lib/server/featured";
+import { ServerTiming, jsonWithServerTiming } from "@/lib/server/serverTiming";
 
 export const revalidate = 86400;
 
 export async function GET() {
+  const timing = new ServerTiming();
   /* 1. Rare gem */
 
   const { kirtan: featuredKirtanData, error: featuredError } =
-    await getDailyRareGem();
+    await timing.measure("featured", () => getDailyRareGem());
 
   if (featuredError) {
-    return NextResponse.json({ error: featuredError }, { status: 500 });
+    return jsonWithServerTiming(
+      { error: featuredError },
+      timing,
+      { status: 500 },
+    );
   }
 
   const featuredKirtan: KirtanSummary | null = featuredKirtanData
@@ -38,16 +44,20 @@ export async function GET() {
     : null;
 
   /* 2. Recently added */
-  const { data: recentlyAdded, error: recentlyAddedError } = await supabase
-    .from("playable_kirtans")
-    .select("*")
-    .order("created_at", { ascending: false })
-    .order("recorded_date", { ascending: false })
-    .limit(10);
+  const { data: recentlyAdded, error: recentlyAddedError } =
+    await timing.measure("db", async () =>
+      await supabase
+        .from("playable_kirtans")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .order("recorded_date", { ascending: false })
+        .limit(10),
+    );
 
   if (recentlyAddedError) {
-    return NextResponse.json(
+    return jsonWithServerTiming(
       { error: recentlyAddedError.message },
+      timing,
       { status: 500 },
     );
   }
@@ -59,10 +69,10 @@ export async function GET() {
     : recentIds;
 
   const { harmoniumIds, rareGemIds, error: tagError } =
-    await fetchKirtanTagFlags(harmoniumLookupIds);
+    await timing.measure("tags", () => fetchKirtanTagFlags(harmoniumLookupIds));
 
   if (tagError) {
-    return NextResponse.json({ error: tagError }, { status: 500 });
+    return jsonWithServerTiming({ error: tagError }, timing, { status: 500 });
   }
 
   if (featuredId && featuredKirtan) {
@@ -90,25 +100,28 @@ export async function GET() {
     (k) => k.id !== featuredKirtan?.id,
   );
 
-  return NextResponse.json({
-    primary_action: featuredKirtan
-      ? {
-          type: "rare_gem",
-          kirtan: featuredKirtan,
-        }
-      : null,
+  return jsonWithServerTiming(
+    {
+      primary_action: featuredKirtan
+        ? {
+            type: "rare_gem",
+            kirtan: featuredKirtan,
+          }
+        : null,
 
-    continue_listening: null, // wired later
+      continue_listening: null, // wired later
 
-    entry_points: [
-      { id: "MM", label: "Maha Mantras" },
-      { id: "BHJ", label: "Bhajans" },
-      { id: "LEADS", label: "Lead Singers" },
-      { id: "OCCASIONS", label: "Occasions" },
-    ],
+      entry_points: [
+        { id: "MM", label: "Maha Mantras" },
+        { id: "BHJ", label: "Bhajans" },
+        { id: "LEADS", label: "Lead Singers" },
+        { id: "OCCASIONS", label: "Occasions" },
+      ],
 
-    recently_added: recentlyAddedNoDuplicates,
-  });
+      recently_added: recentlyAddedNoDuplicates,
+    },
+    timing,
+  );
 
   /* Hard coded rare gem
   const rareGem = {

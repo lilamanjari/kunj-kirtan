@@ -2,32 +2,44 @@ import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 import type { KirtanSummary } from "@/types/kirtan";
 import { fetchKirtanTagFlags } from "@/lib/server/kirtanTags";
+import { ServerTiming, jsonWithServerTiming } from "@/lib/server/serverTiming";
 
 export async function GET(
   _: Request,
   context: { params: Promise<{ id: string }> },
 ) {
+  const timing = new ServerTiming();
   const { id } = await context.params;
 
-  const { data, error } = await supabase
-    .from("playable_kirtans")
-    .select("*")
-    .eq("id", id)
-    .maybeSingle();
+  const { data, error } = await timing.measure("db", async () =>
+    await supabase
+      .from("playable_kirtans")
+      .select("*")
+      .eq("id", id)
+      .maybeSingle(),
+  );
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return jsonWithServerTiming(
+      { error: error.message },
+      timing,
+      { status: 500 },
+    );
   }
 
   if (!data) {
-    return NextResponse.json({ error: "Kirtan not found" }, { status: 404 });
+    return jsonWithServerTiming(
+      { error: "Kirtan not found" },
+      timing,
+      { status: 404 },
+    );
   }
 
   const { harmoniumIds, rareGemIds, error: tagError } =
-    await fetchKirtanTagFlags([id]);
+    await timing.measure("tags", () => fetchKirtanTagFlags([id]));
 
   if (tagError) {
-    return NextResponse.json({ error: tagError }, { status: 500 });
+    return jsonWithServerTiming({ error: tagError }, timing, { status: 500 });
   }
 
   const payload: KirtanSummary = {
@@ -45,5 +57,5 @@ export async function GET(
     is_rare_gem: rareGemIds.has(id),
   };
 
-  return NextResponse.json({ kirtan: payload });
+  return jsonWithServerTiming({ kirtan: payload }, timing);
 }

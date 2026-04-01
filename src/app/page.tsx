@@ -9,7 +9,10 @@ async function getHomeData(): Promise<HomeData> {
   const baseUrl = host ? `${proto}://${host}` : "http://localhost:3000";
 
   const res = await fetch(`${baseUrl}/api/home`, {
-    cache: "no-store",
+    next: {
+      revalidate: 86400,
+      tags: ["home"],
+    },
   });
 
   if (!res.ok) {

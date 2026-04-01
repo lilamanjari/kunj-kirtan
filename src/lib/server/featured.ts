@@ -1,3 +1,4 @@
+import { unstable_cache } from "next/cache";
 import { supabase } from "@/lib/supabase";
 import type { KirtanType } from "@/types/kirtan";
 
@@ -21,48 +22,67 @@ type FeaturedFilters = {
   leadSingerId?: string;
 };
 
+const getRareGemCandidates = unstable_cache(
+  async () => {
+    const { data: rareGemKirtans, error: tagError } = await supabase
+      .from("kirtan_tag_slugs")
+      .select("kirtan_id")
+      .eq("slug", "rare-gem");
+
+    if (tagError) {
+      return { rows: null, error: tagError.message };
+    }
+
+    const rareGemIds = rareGemKirtans?.map((r) => r.kirtan_id) ?? [];
+    if (rareGemIds.length === 0) {
+      return { rows: [], error: null };
+    }
+
+    const { data, error } = await supabase
+      .from("playable_kirtans")
+      .select("*")
+      .in("id", rareGemIds)
+      .order("id", { ascending: true });
+
+    if (error) {
+      return { rows: null, error: error.message };
+    }
+
+    return {
+      rows: data ?? [],
+      error: null,
+    };
+  },
+  ["rare-gem-candidates"],
+  {
+    revalidate: 86400,
+    tags: ["rare-gems"],
+  },
+);
+
 export async function getDailyRareGem(
   filters: FeaturedFilters = {},
 ): Promise<FeaturedResult<any>> {
   const { type, leadSingerId } = filters;
-  const { data: rareGemKirtans, error: tagError } = await supabase
-    .from("kirtan_tag_slugs")
-    .select("kirtan_id")
-    .eq("slug", "rare-gem");
-
-  if (tagError) {
-    return { kirtan: null, error: tagError.message };
-  }
-
-  const rareGemIds = rareGemKirtans?.map((r) => r.kirtan_id) ?? [];
-  if (rareGemIds.length === 0) {
-    return { kirtan: null, error: null };
-  }
-
-  let query = supabase
-    .from("playable_kirtans")
-    .select("*")
-    .in("id", rareGemIds)
-    .order("id", { ascending: true });
-
-  if (type) {
-    query = query.eq("type", type);
-  }
-  if (leadSingerId) {
-    query = query.eq("lead_singer_id", leadSingerId);
-  }
-
-  const { data, error } = await query;
+  const { rows, error } = await getRareGemCandidates();
   if (error) {
-    return { kirtan: null, error: error.message };
+    return { kirtan: null, error };
   }
-
-  const rows = data ?? [];
-  if (rows.length === 0) {
+  if (!rows || rows.length === 0) {
     return { kirtan: null, error: null };
   }
+
+  const filteredRows = rows.filter((row) => {
+    if (type && row.type !== type) {
+      return false;
+    }
+    if (leadSingerId && row.lead_singer_id !== leadSingerId) {
+      return false;
+    }
+    return true;
+  });
 
   const salt = [type ?? "ALL", leadSingerId ?? "ANY"].join("-");
-  const index = dailyIndex(rows.length, salt);
-  return { kirtan: rows[index], error: null };
+  const index = dailyIndex(filteredRows.length, salt);
+  return { kirtan: filteredRows[index] ?? null, error: null };
 }

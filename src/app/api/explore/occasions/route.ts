@@ -1,16 +1,26 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
+import { ServerTiming, jsonWithServerTiming } from "@/lib/server/serverTiming";
+
+export const revalidate = 86400;
 
 export async function GET() {
-  const { data, error } = await supabase
-    .from("tags")
-    .select("id, name, slug")
-    .eq("category", "occasion")
-    .order("name", { ascending: true });
+  const timing = new ServerTiming();
+  const { data, error } = await timing.measure("db", async () =>
+    await supabase
+      .from("tags")
+      .select("id, name, slug")
+      .eq("category", "occasion")
+      .order("name", { ascending: true }),
+  );
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return jsonWithServerTiming(
+      { error: error.message },
+      timing,
+      { status: 500 },
+    );
   }
 
-  return NextResponse.json({ occasions: data ?? [] });
+  return jsonWithServerTiming({ occasions: data ?? [] }, timing);
 }

@@ -3,8 +3,12 @@ import { supabase } from "@/lib/supabase";
 import type { KirtanSummary } from "@/types/kirtan";
 import { fetchKirtanTagFlags } from "@/lib/server/kirtanTags";
 import { getDailyRareGem } from "@/lib/server/featured";
+import { ServerTiming, jsonWithServerTiming } from "@/lib/server/serverTiming";
+
+export const revalidate = 86400;
 
 export async function GET(req: Request) {
+  const timing = new ServerTiming();
   const { searchParams } = new URL(req.url);
   const search = searchParams.get("search");
   const durationKey = searchParams.get("duration");
@@ -41,10 +45,16 @@ export async function GET(req: Request) {
     query = query.ilike("lead_singer", `%${search}%`);
   }
 
-  const featured = await getDailyRareGem({ type: "MM" });
+  const featured = await timing.measure("featured", () =>
+    getDailyRareGem({ type: "MM" }),
+  );
 
   if (featured.error) {
-    return NextResponse.json({ error: featured.error }, { status: 500 });
+    return jsonWithServerTiming(
+      { error: featured.error },
+      timing,
+      { status: 500 },
+    );
   }
 
   if (durationKey && durationKey !== "ALL") {
@@ -67,10 +77,14 @@ export async function GET(req: Request) {
     query = query.is("recorded_date", null).lt("id", cursorId);
   }
 
-  const { data, error } = await query;
+  const { data, error } = await timing.measure("db", async () => await query);
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return jsonWithServerTiming(
+      { error: error.message },
+      timing,
+      { status: 500 },
+    );
   }
 
   const rows = data ?? [];
@@ -82,10 +96,10 @@ export async function GET(req: Request) {
     ids.unshift(featured.kirtan.id);
   }
   const { harmoniumIds, rareGemIds, error: tagError } =
-    await fetchKirtanTagFlags(ids);
+    await timing.measure("tags", () => fetchKirtanTagFlags(ids));
 
   if (tagError) {
-    return NextResponse.json({ error: tagError }, { status: 500 });
+    return jsonWithServerTiming({ error: tagError }, timing, { status: 500 });
   }
 
   const mantras: KirtanSummary[] = page.map((k) => ({
@@ -122,12 +136,15 @@ export async function GET(req: Request) {
 
   const last = page[page.length - 1];
 
-  return NextResponse.json({
-    mantras,
-    has_more: hasMore,
-    next_cursor: last
-      ? { recorded_date: last.recorded_date, id: last.id }
-      : null,
-    featured: featuredKirtan,
-  });
+  return jsonWithServerTiming(
+    {
+      mantras,
+      has_more: hasMore,
+      next_cursor: last
+        ? { recorded_date: last.recorded_date, id: last.id }
+        : null,
+      featured: featuredKirtan,
+    },
+    timing,
+  );
 }

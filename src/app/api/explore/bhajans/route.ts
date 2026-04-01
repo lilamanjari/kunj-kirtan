@@ -3,8 +3,12 @@ import { supabase } from "@/lib/supabase";
 import type { KirtanSummary } from "@/types/kirtan";
 import { fetchKirtanTagFlags } from "@/lib/server/kirtanTags";
 import { getDailyRareGem } from "@/lib/server/featured";
+import { ServerTiming, jsonWithServerTiming } from "@/lib/server/serverTiming";
+
+export const revalidate = 86400;
 
 export async function GET(req: Request) {
+  const timing = new ServerTiming();
   const { searchParams } = new URL(req.url);
   const search = searchParams.get("search");
   const limit = Number(searchParams.get("limit") ?? "20");
@@ -22,10 +26,16 @@ export async function GET(req: Request) {
     query = query.ilike("title", `%${search}%`);
   }
 
-  const featured = await getDailyRareGem({ type: "BHJ" });
+  const featured = await timing.measure("featured", () =>
+    getDailyRareGem({ type: "BHJ" }),
+  );
 
   if (featured.error) {
-    return NextResponse.json({ error: featured.error }, { status: 500 });
+    return jsonWithServerTiming(
+      { error: featured.error },
+      timing,
+      { status: 500 },
+    );
   }
 
   if (cursorTitle && cursorId) {
@@ -35,10 +45,16 @@ export async function GET(req: Request) {
     );
   }
 
-  const { data, error } = await query.limit(limit + 1);
+  const { data, error } = await timing.measure("db", async () =>
+    await query.limit(limit + 1),
+  );
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return jsonWithServerTiming(
+      { error: error.message },
+      timing,
+      { status: 500 },
+    );
   }
 
   const rows = (data ?? []).slice(0, limit);
@@ -53,10 +69,10 @@ export async function GET(req: Request) {
     ids.unshift(featured.kirtan.id);
   }
   const { harmoniumIds, rareGemIds, error: tagError } =
-    await fetchKirtanTagFlags(ids);
+    await timing.measure("tags", () => fetchKirtanTagFlags(ids));
 
   if (tagError) {
-    return NextResponse.json({ error: tagError }, { status: 500 });
+    return jsonWithServerTiming({ error: tagError }, timing, { status: 500 });
   }
 
   const bhajans: KirtanSummary[] = rows.map((k) => ({
@@ -91,10 +107,13 @@ export async function GET(req: Request) {
       }
     : null;
 
-  return NextResponse.json({
-    bhajans,
-    has_more: hasMore,
-    next_cursor: nextCursor,
-    featured: featuredKirtan,
-  });
+  return jsonWithServerTiming(
+    {
+      bhajans,
+      has_more: hasMore,
+      next_cursor: nextCursor,
+      featured: featuredKirtan,
+    },
+    timing,
+  );
 }
