@@ -1,4 +1,4 @@
-export type KirtanType = "MM" | "BHJ";
+export type KirtanType = "MM" | "BHJ" | "HK";
 export type RecordedDatePrecision = "day" | "month" | "year";
 
 export type KirtanSummary = {

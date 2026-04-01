@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
-import type { KirtanSummary } from "@/types/kirtan";
+import type { KirtanSummary, KirtanType } from "@/types/kirtan";
 import { fetchKirtanTagFlags } from "@/lib/server/kirtanTags";
 import { ServerTiming, jsonWithServerTiming } from "@/lib/server/serverTiming";
 import { formatKirtanTitle } from "@/lib/kirtanTitle";
@@ -46,8 +46,8 @@ export async function GET(
   const payload: KirtanSummary = {
     id: data.id,
     audio_url: data.audio_url,
-    type: data.type === "MM" ? "MM" : "BHJ",
-    title: formatKirtanTitle(data.type === "MM" ? "MM" : "BHJ", data.title),
+    type: data.type as KirtanType,
+    title: formatKirtanTitle(data.type as KirtanType, data.title),
     lead_singer: data.lead_singer,
     recorded_date: data.recorded_date,
     recorded_date_precision: data.recorded_date_precision ?? null,
