@@ -3,6 +3,7 @@ import { supabase } from "@/lib/supabase";
 import type { KirtanSummary } from "@/types/kirtan";
 import { fetchKirtanTagFlags } from "@/lib/server/kirtanTags";
 import { ServerTiming, jsonWithServerTiming } from "@/lib/server/serverTiming";
+import { formatKirtanTitle } from "@/lib/kirtanTitle";
 
 export const revalidate = 86400;
 
@@ -85,7 +86,7 @@ export async function GET(
       id: k.id,
       audio_url: k.audio_url,
       type: k.type === "MM" ? "MM" : "BHJ",
-      title: k.type === "MM" ? "Maha Mantra" : k.title,
+      title: formatKirtanTitle(k.type === "MM" ? "MM" : "BHJ", k.title),
       lead_singer: k.lead_singer,
       recorded_date: k.recorded_date,
       recorded_date_precision: k.recorded_date_precision ?? null,

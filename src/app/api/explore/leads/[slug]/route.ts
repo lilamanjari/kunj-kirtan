@@ -4,6 +4,7 @@ import { fetchKirtanTagFlags } from "@/lib/server/kirtanTags";
 import { getDailyRareGem } from "@/lib/server/featured";
 import type { KirtanSummary } from "@/types/kirtan";
 import { ServerTiming, jsonWithServerTiming } from "@/lib/server/serverTiming";
+import { formatKirtanTitle } from "@/lib/kirtanTitle";
 
 export const revalidate = 86400;
 
@@ -80,7 +81,10 @@ export async function GET(
         id: featuredData.id,
         audio_url: featuredData.audio_url,
         type: featuredData.type === "MM" ? "MM" : "BHJ",
-        title: featuredData.type === "MM" ? "Maha Mantra" : featuredData.title,
+        title: formatKirtanTitle(
+          featuredData.type === "MM" ? "MM" : "BHJ",
+          featuredData.title,
+        ),
         lead_singer: featuredData.lead_singer,
         recorded_date: featuredData.recorded_date,
         recorded_date_precision: featuredData.recorded_date_precision ?? null,
@@ -100,7 +104,7 @@ export async function GET(
           id: k.id,
           audio_url: k.audio_url,
           type: k.type === "MM" ? "MM" : "BHJ",
-          title: k.type === "MM" ? "Maha Mantra" : k.title,
+          title: formatKirtanTitle(k.type === "MM" ? "MM" : "BHJ", k.title),
           lead_singer: k.lead_singer,
           recorded_date: k.recorded_date,
           recorded_date_precision: k.recorded_date_precision ?? null,

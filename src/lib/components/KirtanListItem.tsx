@@ -1,4 +1,5 @@
 import Equalizer from "@/lib/components/Equalizer";
+import { formatKirtanTitle } from "@/lib/kirtanTitle";
 import { formatDateLong } from "@/lib/utils/date";
 import { KirtanSummary } from "@/types/kirtan";
 
@@ -53,6 +54,7 @@ export default function KirtanListItem({
 }: KirtanListItemProps) {
   const durationLabel = formatDuration(kirtan.duration_seconds);
   const sequenceLabel = kirtan.sequence_num ? `#${kirtan.sequence_num}` : null;
+  const displayTitle = formatKirtanTitle(kirtan.type, kirtan.title);
   const baseHue = hashHue(kirtan.id);
   const tintHue = kirtan.type === "BHJ" ? (baseHue + 340) % 360 : baseHue;
   const borderTint = kirtan.is_rare_gem
@@ -86,7 +88,7 @@ export default function KirtanListItem({
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
             <p className="truncate text-sm font-medium">
-              {kirtan.title ?? "Maha Mantra"}
+              {displayTitle}
             </p>
           </div>
           <div className="flex items-center gap-2">

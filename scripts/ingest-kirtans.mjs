@@ -27,6 +27,9 @@ const BHJ_FOLDER =
 
 const MEDIA_BASE_URL =
   process.env.MEDIA_BASE_URL || "https://media.kunjkirtan.com";
+const REVALIDATE_BASE_URL =
+  process.env.REVALIDATE_BASE_URL || process.env.NEXT_PUBLIC_SITE_URL || "";
+const REVALIDATE_SECRET = process.env.REVALIDATE_SECRET || "";
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY =
@@ -64,6 +67,34 @@ function logStep(message) {
   if (VERBOSE) {
     console.log(message);
   }
+}
+
+async function triggerRevalidateAll() {
+  if (!REVALIDATE_BASE_URL || !REVALIDATE_SECRET) {
+    console.log(
+      "Skipping revalidation: REVALIDATE_BASE_URL or REVALIDATE_SECRET is not configured.",
+    );
+    return;
+  }
+
+  const baseUrl = REVALIDATE_BASE_URL.replace(/\/$/, "");
+  const url = `${baseUrl}/api/revalidate/all`;
+  logStep(`Revalidating caches via ${url}`);
+
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "x-revalidate-secret": REVALIDATE_SECRET,
+    },
+  });
+
+  if (!response.ok) {
+    const body = await response.text();
+    throw new Error(`Revalidation failed (${response.status}): ${body}`);
+  }
+
+  const payload = await response.json();
+  console.log(`Revalidation complete: ${payload.target}`);
 }
 
 function slugify(text) {
@@ -362,6 +393,7 @@ async function main() {
   let inserted = 0;
   let updated = 0;
   let skipped = 0;
+  let failures = 0;
 
   for (let i = 1; i < values.length; i += 1) {
     const row = values[i];
@@ -547,14 +579,23 @@ async function main() {
         });
       }
     } catch (err) {
+      failures += 1;
       console.error(`Row ${i + 1} failed:`, err.message || err);
       if (DRY_RUN) continue;
     }
   }
 
+  if (!DRY_RUN && inserted + updated > 0) {
+    try {
+      await triggerRevalidateAll();
+    } catch (err) {
+      console.error(`Post-ingest revalidation failed: ${err.message || err}`);
+    }
+  }
+
   console.log(DRY_RUN ? "Dry run complete." : "Ingest complete.");
   console.log(
-    `Rows processed=${processed}, inserted=${inserted}, updated=${updated}, skipped=${skipped}`,
+    `Rows processed=${processed}, inserted=${inserted}, updated=${updated}, skipped=${skipped}, failed=${failures}`,
   );
 }
 

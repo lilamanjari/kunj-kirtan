@@ -1,4 +1,5 @@
 import Equalizer from "@/lib/components/Equalizer";
+import { formatKirtanTitle } from "@/lib/kirtanTitle";
 import { formatDateShort } from "@/lib/utils/date";
 import { KirtanSummary } from "@/types/kirtan";
 import { SFIcon } from "@bradleyhodges/sfsymbols-react";
@@ -47,6 +48,7 @@ export default function FeaturedKirtanCard({
 }: FeaturedKirtanCardProps) {
   const sequenceLabel = kirtan.sequence_num ? `#${kirtan.sequence_num}` : null;
   const durationLabel = formatDuration(kirtan.duration_seconds);
+  const displayTitle = formatKirtanTitle(kirtan.type, kirtan.title);
 
   return (
     <section
@@ -60,7 +62,7 @@ export default function FeaturedKirtanCard({
       <p className="text-xs tracking-widest text-stone-400">FEATURED</p>
 
       <h1 className="mt-2 text-3xl font-semibold">
-        {kirtan.title ?? "Maha Mantra"}
+        {displayTitle}
       </h1>
 
       {/* Lead singer row */}

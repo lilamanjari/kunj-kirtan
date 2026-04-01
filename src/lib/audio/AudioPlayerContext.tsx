@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { usePlayback } from "./usePlayback";
 import { useQueue } from "./useQueue";
 import { KirtanSummary } from "@/types/kirtan";
+import { formatKirtanTitle } from "@/lib/kirtanTitle";
 import { markOffline, recordRequestSuccess } from "@/lib/net/offlineStore";
 
 export type AudioPlayerApi = ReturnType<typeof useAudioPlayerInternal>;
@@ -180,8 +181,8 @@ function useAudioPlayerInternal() {
         ? `#${playback.current.sequence_num}`
         : "";
       const mediaTitle =
-        playback.current.title ||
-        (playback.current.type === "MM" ? "Maha Mantra" : "Kunj Kirtan");
+        formatKirtanTitle(playback.current.type, playback.current.title) ||
+        "Kunj Kirtan";
       const mediaArtist = sequenceLabel
         ? `${sequenceLabel} by ${playback.current.lead_singer ?? "Kunj Kirtan"}`
         : playback.current.lead_singer ?? "Kunj Kirtan";
