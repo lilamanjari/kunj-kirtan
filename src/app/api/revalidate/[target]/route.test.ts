@@ -49,8 +49,8 @@ describe("POST /api/revalidate/[target]", () => {
       target: "explore",
     });
     expect(revalidateTag).not.toHaveBeenCalled();
-    expect(revalidatePath).toHaveBeenCalledWith("/api/explore/bhajans");
-    expect(revalidatePath).toHaveBeenCalledWith("/explore/leads");
+    expect(revalidatePath).toHaveBeenCalledWith("/api/explore/bhajans", "page");
+    expect(revalidatePath).toHaveBeenCalledWith("/explore/leads", "page");
     expect(revalidatePath).toHaveBeenCalledTimes(8);
   });
 
@@ -64,10 +64,10 @@ describe("POST /api/revalidate/[target]", () => {
 
     expect(res.status).toBe(200);
     expect(json.target).toBe("all");
-    expect(revalidateTag).toHaveBeenCalledWith("home");
-    expect(revalidateTag).toHaveBeenCalledWith("rare-gems");
-    expect(revalidatePath).toHaveBeenCalledWith("/");
-    expect(revalidatePath).toHaveBeenCalledWith("/api/home");
-    expect(revalidatePath).toHaveBeenCalledWith("/api/explore/maha-mantras");
+    expect(revalidateTag).toHaveBeenCalledWith("home", "max");
+    expect(revalidateTag).toHaveBeenCalledWith("rare-gems", "max");
+    expect(revalidatePath).toHaveBeenCalledWith("/", "page");
+    expect(revalidatePath).toHaveBeenCalledWith("/api/home", "page");
+    expect(revalidatePath).toHaveBeenCalledWith("/api/explore/maha-mantras", "page");
   });
 });

@@ -5,12 +5,12 @@ const SECRET_HEADER = "x-revalidate-secret";
 
 const TARGETS = {
   home: () => {
-    revalidateTag("home");
-    revalidatePath("/");
-    revalidatePath("/api/home");
+    revalidateTag("home", "max");
+    revalidatePath("/", "page");
+    revalidatePath("/api/home", "page");
   },
   "rare-gems": () => {
-    revalidateTag("rare-gems");
+    revalidateTag("rare-gems", "max");
   },
   explore: () => {
     const paths = [
@@ -25,7 +25,7 @@ const TARGETS = {
     ];
 
     for (const path of paths) {
-      revalidatePath(path);
+      revalidatePath(path, "page");
     }
   },
   all: () => {
