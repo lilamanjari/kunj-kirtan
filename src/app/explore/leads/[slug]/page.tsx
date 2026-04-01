@@ -28,6 +28,12 @@ type LeadResponse = {
   featured?: KirtanSummary | null;
 };
 
+type LeadListState = {
+  kirtans: KirtanSummary[];
+  has_more: boolean;
+  next_cursor: LeadCursor;
+};
+
 const FILTERS: { key: KirtanType; label: string }[] = [
   { key: "MM", label: "Maha Mantra" },
   { key: "BHJ", label: "Bhajans" },
@@ -36,6 +42,15 @@ const FILTERS: { key: KirtanType; label: string }[] = [
 
 export default function LeadPage() {
   const { slug } = useParams<{ slug: string }>();
+
+  if (!slug) {
+    return null;
+  }
+
+  return <LeadPageContent key={slug} slug={slug} />;
+}
+
+function LeadPageContent({ slug }: { slug: string }) {
   const {
     isActive,
     isPlaying,
@@ -48,69 +63,85 @@ export default function LeadPage() {
   } = useAudioPlayer();
 
   const [data, setData] = useState<LeadResponse | null>(null);
+  const [listsByType, setListsByType] = useState<Partial<Record<KirtanType, LeadListState>>>({});
   const [activeType, setActiveType] = useState<KirtanType | null>(null);
   const [pinnedKirtan, setPinnedKirtan] = useState<KirtanSummary | null>(null);
-  const [featured, setFeatured] = useState<KirtanSummary | null>(null);
-  const [isPageLoading, setIsPageLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    if (!slug) return;
-    setIsPageLoading(true);
-    const params = new URLSearchParams();
-    if (activeType) {
-      params.set("type", activeType);
-    }
-    fetchWithStatus(`/api/explore/leads/${slug}?${params.toString()}`)
+    fetchWithStatus(`/api/explore/leads/${slug}`)
       .then((res) => res.json())
       .then((json) => {
         setData(json);
-        setFeatured(json.featured ?? null);
-        setActiveType((current) => current ?? json.active_type ?? null);
-      })
-      .finally(() => setIsPageLoading(false));
-  }, [slug, activeType]);
+        setActiveType(json.active_type ?? null);
+        if (json.active_type) {
+          setListsByType({
+            [json.active_type]: {
+              kirtans: json.kirtans ?? [],
+              has_more: Boolean(json.has_more),
+              next_cursor: json.next_cursor ?? null,
+            },
+          });
+        }
+      });
+  }, [slug]);
 
   useEffect(() => {
-    if (!data?.has_more || isLoadingMore) return;
+    if (!activeType || !data) return;
+    if (listsByType[activeType]) return;
+
+    fetchWithStatus(`/api/explore/leads/${slug}/kirtans?type=${activeType}&limit=20`)
+      .then((res) => res.json())
+      .then((json) => {
+        setListsByType((prev) => ({
+          ...prev,
+          [activeType]: {
+            kirtans: json.kirtans ?? [],
+            has_more: Boolean(json.has_more),
+            next_cursor: json.next_cursor ?? null,
+            },
+          }));
+      });
+  }, [activeType, data, listsByType, slug]);
+
+  useEffect(() => {
+    const activeList = activeType ? listsByType[activeType] : null;
+    if (!activeList?.has_more || isLoadingMore) return;
     if (!activeType) return;
     const node = loadMoreRef.current;
     if (!node) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
-        if (!entries[0].isIntersecting || !data?.next_cursor) return;
+        if (!entries[0].isIntersecting || !activeList.next_cursor) return;
 
         setIsLoadingMore(true);
         const params = new URLSearchParams();
         params.set("type", activeType);
         params.set("limit", "20");
 
-        if ("title" in data.next_cursor) {
-          params.set("cursor_title", data.next_cursor.title);
-          params.set("cursor_id", data.next_cursor.id);
+        if ("title" in activeList.next_cursor) {
+          params.set("cursor_title", activeList.next_cursor.title);
+          params.set("cursor_id", activeList.next_cursor.id);
         } else {
-          if (data.next_cursor.recorded_date) {
-            params.set("cursor_recorded_date", data.next_cursor.recorded_date);
+          if (activeList.next_cursor.recorded_date) {
+            params.set("cursor_recorded_date", activeList.next_cursor.recorded_date);
           }
-          params.set("cursor_id", data.next_cursor.id);
+          params.set("cursor_id", activeList.next_cursor.id);
         }
 
-        fetchWithStatus(`/api/explore/leads/${slug}?${params.toString()}`)
+        fetchWithStatus(`/api/explore/leads/${slug}/kirtans?${params.toString()}`)
           .then((res) => res.json())
           .then((json) => {
-            setData((prev) => {
-              if (!prev) return json;
-              return {
-                ...prev,
-                counts: json.counts,
-                active_type: json.active_type,
-                has_more: json.has_more,
-                next_cursor: json.next_cursor,
-                kirtans: [...prev.kirtans, ...(json.kirtans ?? [])],
-              };
-            });
+            setListsByType((prev) => ({
+              ...prev,
+              [activeType]: {
+                kirtans: [...(prev[activeType]?.kirtans ?? []), ...(json.kirtans ?? [])],
+                has_more: Boolean(json.has_more),
+                next_cursor: json.next_cursor ?? null,
+              },
+            }));
           })
           .finally(() => setIsLoadingMore(false));
       },
@@ -119,16 +150,19 @@ export default function LeadPage() {
 
     observer.observe(node);
     return () => observer.disconnect();
-  }, [activeType, data, isLoadingMore, slug]);
+  }, [activeType, isLoadingMore, listsByType, slug]);
 
   const visibleFilters = FILTERS.filter((filter) => (data?.counts?.[filter.key] ?? 0) > 0);
   const showTabs = visibleFilters.length > 1;
-  const visible = data?.kirtans ?? [];
+  const visible = activeType ? (listsByType[activeType]?.kirtans ?? []) : [];
+  const isInitialLoading = !data;
+  const isListLoading = Boolean(data && activeType && !listsByType[activeType]);
+  const featuredKirtan = data?.featured ?? null;
   const renderedKirtans = pinnedKirtan
     ? [pinnedKirtan, ...visible.filter((k) => k.id !== pinnedKirtan.id)]
     : visible;
 
-  if (!data && isPageLoading) {
+  if (isInitialLoading) {
     return (
       <div className="min-h-screen bg-stone-50 text-stone-900">
         <main className="mx-auto max-w-md px-5 py-6 space-y-6">
@@ -185,16 +219,16 @@ export default function LeadPage() {
           </h1>
         </header>
 
-        {featured ? (
+        {featuredKirtan ? (
           <FeaturedKirtanCard
-            kirtan={featured}
-            isActive={isActive(featured)}
+            kirtan={featuredKirtan}
+            isActive={isActive(featuredKirtan)}
             isPlaying={isPlaying()}
             isLoading={isAudioLoading()}
-            onToggle={() => toggle(featured)}
+            onToggle={() => toggle(featuredKirtan)}
             onEnqueue={enqueue}
             onDequeue={dequeueById}
-            isQueued={isQueued(featured.id)}
+            isQueued={isQueued(featuredKirtan.id)}
           />
         ) : null}
 
@@ -207,16 +241,6 @@ export default function LeadPage() {
                   key={filter.key}
                   onClick={() => {
                     setPinnedKirtan(null);
-                    setData((prev) =>
-                      prev
-                        ? {
-                            ...prev,
-                            kirtans: [],
-                            has_more: false,
-                            next_cursor: null,
-                          }
-                        : prev,
-                    );
                     setActiveType(filter.key);
                   }}
                   className={`
@@ -241,7 +265,7 @@ export default function LeadPage() {
             Kirtans
           </h2>
 
-          {isPageLoading ? (
+          {isListLoading ? (
             <div className="mt-3 rounded-xl border border-dashed border-stone-200 bg-white px-4 py-6">
               <div className="space-y-3">
                 {Array.from({ length: 4 }).map((_, idx) => (
