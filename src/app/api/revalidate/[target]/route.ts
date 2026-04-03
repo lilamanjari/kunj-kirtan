@@ -13,6 +13,7 @@ const TARGETS = {
     revalidateTag("rare-gems", "max");
   },
   explore: () => {
+    revalidateTag("explore-leads-slugs", "max");
     const paths = [
       "/explore/bhajans",
       "/api/explore/bhajans",
