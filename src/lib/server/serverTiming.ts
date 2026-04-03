@@ -29,6 +29,7 @@ export class ServerTiming {
       .join(", ");
 
     headers.set("Server-Timing", value);
+    headers.set("X-App-Timing", value);
 
     return {
       ...init,

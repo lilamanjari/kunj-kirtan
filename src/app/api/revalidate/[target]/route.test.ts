@@ -48,7 +48,7 @@ describe("POST /api/revalidate/[target]", () => {
       revalidated: true,
       target: "explore",
     });
-    expect(revalidateTag).not.toHaveBeenCalled();
+    expect(revalidateTag).toHaveBeenCalledWith("explore-leads-slugs", "max");
     expect(revalidatePath).toHaveBeenCalledWith("/api/explore/bhajans", "page");
     expect(revalidatePath).toHaveBeenCalledWith("/explore/leads", "page");
     expect(revalidatePath).toHaveBeenCalledTimes(8);
