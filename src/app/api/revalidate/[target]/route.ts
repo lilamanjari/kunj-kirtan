@@ -14,6 +14,7 @@ const TARGETS = {
   },
   explore: () => {
     revalidateTag("explore-leads-slugs", "max");
+    revalidateTag("explore-occasion-slugs", "max");
     const paths = [
       "/explore/bhajans",
       "/api/explore/bhajans",
