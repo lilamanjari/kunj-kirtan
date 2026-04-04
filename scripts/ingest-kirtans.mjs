@@ -97,6 +97,37 @@ async function triggerRevalidateAll() {
   console.log(`Revalidation complete: ${payload.target}`);
 }
 
+async function warmPublicPages() {
+  if (!REVALIDATE_BASE_URL) {
+    console.log("Skipping cache warm: REVALIDATE_BASE_URL is not configured.");
+    return;
+  }
+
+  const baseUrl = REVALIDATE_BASE_URL.replace(/\/$/, "");
+  const pages = [
+    "/",
+    "/explore/bhajans",
+    "/explore/maha-mantras",
+    "/explore/leads",
+    "/explore/occasions",
+  ];
+
+  for (const page of pages) {
+    const url = `${baseUrl}${page}`;
+    logStep(`Warming cache: ${url}`);
+
+    const response = await fetch(url, {
+      method: "GET",
+    });
+
+    if (!response.ok) {
+      throw new Error(`Warm failed for ${page} (${response.status})`);
+    }
+  }
+
+  console.log(`Cache warm complete: ${pages.length} pages`);
+}
+
 function slugify(text) {
   return String(text || "")
     .toLowerCase()
@@ -590,6 +621,12 @@ async function main() {
       await triggerRevalidateAll();
     } catch (err) {
       console.error(`Post-ingest revalidation failed: ${err.message || err}`);
+    }
+
+    try {
+      await warmPublicPages();
+    } catch (err) {
+      console.error(`Post-ingest cache warm failed: ${err.message || err}`);
     }
   }
 
