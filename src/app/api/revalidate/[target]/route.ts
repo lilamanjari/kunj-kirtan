@@ -14,6 +14,7 @@ const TARGETS = {
   },
   explore: () => {
     revalidateTag("explore-bhajans", "max");
+    revalidateTag("explore-maha-mantras", "max");
     revalidateTag("explore-leads-slugs", "max");
     revalidateTag("explore-occasion-slugs", "max");
     const paths = [
