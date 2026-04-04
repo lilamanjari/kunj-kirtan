@@ -9,6 +9,7 @@ export type LeadCursor =
 
 export type LeadResponse = {
   lead: {
+    id: string;
     display_name: string;
   };
   counts: LeadCounts;

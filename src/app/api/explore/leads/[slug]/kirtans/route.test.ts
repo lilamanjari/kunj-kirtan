@@ -121,7 +121,7 @@ beforeEach(() => {
 describe("GET /api/explore/leads/[slug]/kirtans", () => {
   it("returns a paginated type-filtered list", async () => {
     const res = await GET(
-      new Request("http://localhost/api/explore/leads/krishna-das/kirtans?type=BHJ&limit=1"),
+      new Request("http://localhost/api/explore/leads/krishna-das/kirtans?lead_id=lead-1&type=BHJ&limit=1"),
       {
         params: Promise.resolve({ slug: "krishna-das" }),
       },
@@ -139,5 +139,6 @@ describe("GET /api/explore/leads/[slug]/kirtans", () => {
       type: "BHJ",
       title: "A Title",
     });
+    expect(fromMock).not.toHaveBeenCalledWith("lead_singers");
   });
 });

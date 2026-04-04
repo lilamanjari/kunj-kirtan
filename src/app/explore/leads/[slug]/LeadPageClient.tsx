@@ -54,7 +54,9 @@ export default function LeadPageClient({
     if (!activeType) return;
     if (listsByType[activeType]) return;
 
-    fetchWithStatus(`/api/explore/leads/${slug}/kirtans?type=${activeType}&limit=20`)
+    fetchWithStatus(
+      `/api/explore/leads/${slug}/kirtans?lead_id=${initialData.lead.id}&type=${activeType}&limit=20`,
+    )
       .then((res) => res.json())
       .then((json) => {
         setListsByType((prev) => ({
@@ -66,7 +68,7 @@ export default function LeadPageClient({
           },
         }));
       });
-  }, [activeType, listsByType, slug]);
+  }, [activeType, initialData.lead.id, listsByType, slug]);
 
   useEffect(() => {
     const activeList = activeType ? listsByType[activeType] : null;
@@ -81,6 +83,7 @@ export default function LeadPageClient({
 
         setIsLoadingMore(true);
         const params = new URLSearchParams();
+        params.set("lead_id", initialData.lead.id);
         params.set("type", activeType);
         params.set("limit", "20");
 
@@ -113,7 +116,7 @@ export default function LeadPageClient({
 
     observer.observe(node);
     return () => observer.disconnect();
-  }, [activeType, isLoadingMore, listsByType, slug]);
+  }, [activeType, initialData.lead.id, isLoadingMore, listsByType, slug]);
 
   const visibleFilters = FILTERS.filter((filter) => (initialData.counts?.[filter.key] ?? 0) > 0);
   const showTabs = visibleFilters.length > 1;

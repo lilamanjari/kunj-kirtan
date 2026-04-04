@@ -16,21 +16,34 @@ export async function GET(
   const { slug } = await context.params;
   const { searchParams } = new URL(req.url);
   const type = parseLeadType(searchParams.get("type"));
+  let leadId = searchParams.get("lead_id");
   const limitParam = Number(searchParams.get("limit") ?? "20");
   const limit =
     Number.isFinite(limitParam) && limitParam > 0
       ? Math.min(50, limitParam)
       : 20;
 
-  const { data: lead, error: leadError } = await timing.measure("lead", async () =>
-    await supabase
-      .from("lead_singers")
-      .select("id")
-      .eq("slug", slug)
-      .maybeSingle(),
-  );
+  if (!leadId) {
+    const { data: lead, error: leadError } = await timing.measure("lead", async () =>
+      await supabase
+        .from("lead_singers")
+        .select("id")
+        .eq("slug", slug)
+        .maybeSingle(),
+    );
 
-  if (leadError || !lead) {
+    if (leadError || !lead) {
+      return jsonWithServerTiming(
+        { error: "Lead singer not found" },
+        timing,
+        { status: 404 },
+      );
+    }
+
+    leadId = lead.id;
+  }
+
+  if (!leadId) {
     return jsonWithServerTiming(
       { error: "Lead singer not found" },
       timing,
@@ -45,7 +58,7 @@ export async function GET(
     error: kirtanError,
   } = await timing.measure("db", () =>
     fetchLeadKirtansPage({
-      leadSingerId: lead.id,
+      leadSingerId: leadId,
       type,
       limit,
       cursorRecordedDate: searchParams.get("cursor_recorded_date"),
