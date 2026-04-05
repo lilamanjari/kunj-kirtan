@@ -1,14 +1,8 @@
 import { supabase } from "@/lib/supabase";
 import type { KirtanType } from "@/types/kirtan";
+import type { LeadCounts, LeadCursor } from "@/types/leads";
 
 export const LEAD_TYPE_ORDER: KirtanType[] = ["MM", "BHJ", "HK"];
-
-export type LeadCounts = Record<KirtanType, number>;
-
-export type LeadCursor =
-  | { title: string; id: string }
-  | { recorded_date: string | null; id: string }
-  | null;
 
 export function parseLeadType(value: string | null): KirtanType | null {
   if (value === "MM" || value === "BHJ" || value === "HK") {

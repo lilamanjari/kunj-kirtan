@@ -8,7 +8,7 @@ import KirtanListItem from "@/lib/components/KirtanListItem";
 import KirtanDeepLinkHandler from "@/lib/components/KirtanDeepLinkHandler";
 import { fetchWithStatus } from "@/lib/net/fetchWithStatus";
 import FeaturedKirtanCard from "@/lib/components/FeaturedKirtanCard";
-import type { BhajansResponse } from "./types";
+import type { BhajansResponse } from "@/types/bhajans";
 
 type BhajanItem = KirtanSummary;
 

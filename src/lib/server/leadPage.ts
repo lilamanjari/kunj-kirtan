@@ -4,7 +4,7 @@ import { fetchKirtanTagFlags } from "@/lib/server/kirtanTags";
 import { getDailyRareGem } from "@/lib/server/featured";
 import type { KirtanSummary, KirtanType } from "@/types/kirtan";
 import { formatKirtanTitle } from "@/lib/kirtanTitle";
-import type { LeadResponse } from "@/app/explore/leads/[slug]/types";
+import type { LeadResponse } from "@/types/leads";
 import {
   fetchLeadCounts,
   fetchLeadKirtansPage,

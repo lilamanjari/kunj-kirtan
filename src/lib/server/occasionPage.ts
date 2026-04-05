@@ -3,7 +3,7 @@ import { supabase } from "@/lib/supabase";
 import type { KirtanSummary, KirtanType } from "@/types/kirtan";
 import { fetchKirtanTagFlags } from "@/lib/server/kirtanTags";
 import { formatKirtanTitle } from "@/lib/kirtanTitle";
-import type { OccasionResponse } from "@/app/explore/occasions/[slug]/types";
+import type { OccasionResponse } from "@/types/occasions";
 
 const getCachedOccasionPageData = unstable_cache(
   async (slug: string) => {

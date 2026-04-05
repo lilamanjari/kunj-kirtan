@@ -5,10 +5,10 @@ import Link from "next/link";
 import { useAudioPlayer } from "@/lib/audio/AudioPlayerContext";
 import KirtanListItem from "@/lib/components/KirtanListItem";
 import type { KirtanSummary, KirtanType } from "@/types/kirtan";
+import type { LeadListState, LeadResponse } from "@/types/leads";
 import KirtanDeepLinkHandler from "@/lib/components/KirtanDeepLinkHandler";
 import { fetchWithStatus } from "@/lib/net/fetchWithStatus";
 import FeaturedKirtanCard from "@/lib/components/FeaturedKirtanCard";
-import type { LeadListState, LeadResponse } from "./types";
 
 const FILTERS: { key: KirtanType; label: string }[] = [
   { key: "MM", label: "Maha Mantra" },

@@ -5,8 +5,8 @@ import Link from "next/link";
 import { useAudioPlayer } from "@/lib/audio/AudioPlayerContext";
 import KirtanListItem from "@/lib/components/KirtanListItem";
 import type { KirtanSummary } from "@/types/kirtan";
+import type { OccasionResponse } from "@/types/occasions";
 import KirtanDeepLinkHandler from "@/lib/components/KirtanDeepLinkHandler";
-import type { OccasionResponse } from "./types";
 
 export default function OccasionDetailClient({
   initialData,

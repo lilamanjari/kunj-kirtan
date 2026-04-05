@@ -1,4 +1,4 @@
-import type { KirtanSummary, KirtanType } from "@/types/kirtan";
+import type { KirtanSummary, KirtanType } from "./kirtan";
 
 export type LeadCounts = Record<KirtanType, number>;
 

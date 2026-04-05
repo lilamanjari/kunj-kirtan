@@ -3,7 +3,7 @@ import { supabase } from "@/lib/supabase";
 import type { KirtanSummary } from "@/types/kirtan";
 import { fetchKirtanTagFlags } from "@/lib/server/kirtanTags";
 import { getDailyRareGem } from "@/lib/server/featured";
-import type { BhajansResponse } from "@/app/explore/bhajans/types";
+import type { BhajansResponse } from "@/types/bhajans";
 
 const getCachedBhajansPageData = unstable_cache(
   async () => {

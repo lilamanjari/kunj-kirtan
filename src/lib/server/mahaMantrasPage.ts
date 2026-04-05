@@ -4,7 +4,7 @@ import type { KirtanSummary } from "@/types/kirtan";
 import { fetchKirtanTagFlags } from "@/lib/server/kirtanTags";
 import { getDailyRareGem } from "@/lib/server/featured";
 import { formatKirtanTitle } from "@/lib/kirtanTitle";
-import type { MahaMantrasResponse } from "@/app/explore/maha-mantras/types";
+import type { MahaMantrasResponse } from "@/types/maha-mantras";
 
 const getCachedMahaMantrasPageData = unstable_cache(
   async () => {

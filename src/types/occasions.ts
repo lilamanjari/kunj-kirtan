@@ -1,4 +1,4 @@
-import type { KirtanSummary } from "@/types/kirtan";
+import type { KirtanSummary } from "./kirtan";
 
 export type OccasionResponse = {
   tag: {
