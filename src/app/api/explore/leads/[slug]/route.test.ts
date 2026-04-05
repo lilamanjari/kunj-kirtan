@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { GET } from "./route";
+import { fetchLeadDirectory } from "@/lib/server/leadDirectory";
 
 vi.mock("@/lib/server/kirtanTags", () => ({
   fetchKirtanTagFlags: vi.fn().mockResolvedValue({
@@ -14,6 +15,18 @@ vi.mock("@/lib/server/featured", () => ({
     kirtan: null,
     error: null,
   }),
+}));
+
+vi.mock("@/lib/server/leadDirectory", () => ({
+  fetchLeadDirectory: vi.fn().mockResolvedValue({
+    leads: [],
+    otherLeadIds: [],
+    otherCounts: { MM: 0, BHJ: 0, HK: 0 },
+    error: null,
+  }),
+  OTHER_LEAD_ID: "others",
+  OTHER_LEAD_LABEL: "Other Lead Singers",
+  OTHER_LEAD_SLUG: "others",
 }));
 
 type QueryState = {
@@ -32,6 +45,7 @@ type MockResult = {
 type MockBuilder = {
   select: ReturnType<typeof vi.fn>;
   eq: ReturnType<typeof vi.fn>;
+  in: ReturnType<typeof vi.fn>;
   order: ReturnType<typeof vi.fn>;
   limit: ReturnType<typeof vi.fn>;
   or: ReturnType<typeof vi.fn>;
@@ -160,6 +174,7 @@ function createMockBuilder(table: string): MockBuilder {
     state.filters[column] = value;
     return self;
   });
+  self.in = vi.fn(() => self);
   self.order = vi.fn(() => self);
   self.limit = vi.fn((value: number) => {
     state.limit = value;
@@ -185,6 +200,12 @@ vi.mock("@/lib/supabase", () => ({
 
 beforeEach(() => {
   fromMock.mockClear();
+  vi.mocked(fetchLeadDirectory).mockResolvedValue({
+    leads: [],
+    otherLeadIds: [],
+    otherCounts: { MM: 0, BHJ: 0, HK: 0 },
+    error: null,
+  });
 });
 
 describe("GET /api/explore/leads/[slug]", () => {
@@ -223,5 +244,35 @@ describe("GET /api/explore/leads/[slug]", () => {
       type: "BHJ",
       title: "A Title",
     });
+  });
+
+  it("returns grouped data for the others slug", async () => {
+    vi.mocked(fetchLeadDirectory).mockResolvedValue({
+      leads: [],
+      otherLeadIds: ["lead-2", "lead-3"],
+      otherCounts: { MM: 0, BHJ: 2, HK: 1 },
+      error: null,
+    });
+
+    const res = await GET(
+      new Request("http://localhost/api/explore/leads/others?limit=1"),
+      {
+        params: Promise.resolve({ slug: "others" }),
+      },
+    );
+    const json = await res.json();
+
+    expect(json.lead).toEqual({
+      id: "others",
+      display_name: "Other Lead Singers",
+    });
+    expect(json.counts).toEqual({ MM: 0, BHJ: 2, HK: 1 });
+    expect(json.active_type).toBe("BHJ");
+    expect(json.featured).toBeNull();
+    expect(json.kirtans[0]).toMatchObject({
+      type: "BHJ",
+      title: "A Title",
+    });
+    expect(fromMock).not.toHaveBeenCalledWith("lead_singers");
   });
 });

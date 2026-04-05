@@ -1,28 +1,17 @@
 import { unstable_cache } from "next/cache";
-import { supabase } from "@/lib/supabase";
 import type { LeadItem } from "@/types/explore";
+import { fetchLeadDirectory } from "@/lib/server/leadDirectory";
 
 const getCachedLeadsPageData = unstable_cache(
   async () => {
-    const { data, error } = await supabase
-      .from("lead_singers")
-      .select("id, display_name, slug")
-      .eq("is_identified", true)
-      .order("display_name", { ascending: true });
+    const { leads, error } = await fetchLeadDirectory();
 
     if (error) {
-      return { data: null, error: error.message, status: 500 };
+      return { data: null, error, status: 500 };
     }
 
-    const leads: LeadItem[] =
-      data?.map((lead) => ({
-        id: lead.id,
-        display_name: lead.display_name,
-        slug: lead.slug,
-      })) ?? [];
-
     return {
-      data: { leads },
+      data: { leads: leads as LeadItem[] },
       error: null,
       status: 200,
     };

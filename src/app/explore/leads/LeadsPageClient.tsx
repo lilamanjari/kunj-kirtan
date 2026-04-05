@@ -45,7 +45,7 @@ export default function LeadsPageClient({
                 "
               >
                 <span className="text-sm font-medium text-stone-800">
-                  {lead.display_name}
+                  {lead.display_name} ({lead.count})
                 </span>
                 <span className="text-stone-400 text-sm">→</span>
               </Link>

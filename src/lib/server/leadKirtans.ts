@@ -49,7 +49,8 @@ export async function fetchLeadCounts(leadSingerId: string) {
 }
 
 type FetchLeadKirtansArgs = {
-  leadSingerId: string;
+  leadSingerId?: string;
+  leadSingerIds?: string[];
   type: KirtanType | null;
   limit: number;
   cursorRecordedDate: string | null;
@@ -59,6 +60,7 @@ type FetchLeadKirtansArgs = {
 
 export async function fetchLeadKirtansPage({
   leadSingerId,
+  leadSingerIds,
   type,
   limit,
   cursorRecordedDate,
@@ -67,8 +69,20 @@ export async function fetchLeadKirtansPage({
 }: FetchLeadKirtansArgs) {
   let query = supabase
     .from("playable_kirtans")
-    .select("*")
-    .eq("lead_singer_id", leadSingerId);
+    .select("*");
+
+  if (leadSingerIds && leadSingerIds.length > 0) {
+    query = query.in("lead_singer_id", leadSingerIds);
+  } else if (leadSingerId) {
+    query = query.eq("lead_singer_id", leadSingerId);
+  } else {
+    return {
+      rows: [],
+      hasMore: false,
+      nextCursor: null as LeadCursor,
+      error: null,
+    };
+  }
 
   if (type) {
     query = query.eq("type", type);

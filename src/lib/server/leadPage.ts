@@ -10,9 +10,103 @@ import {
   fetchLeadKirtansPage,
   firstAvailableLeadType,
 } from "@/lib/server/leadKirtans";
+import {
+  fetchLeadDirectory,
+  OTHER_LEAD_ID,
+  OTHER_LEAD_LABEL,
+  OTHER_LEAD_SLUG,
+} from "@/lib/server/leadDirectory";
 
 const getCachedLeadPageData = unstable_cache(
   async (slug: string) => {
+    if (slug === OTHER_LEAD_SLUG) {
+      console.log("[leadPage] handling others slug");
+      const {
+        otherLeadIds,
+        otherCounts,
+        error: directoryError,
+      } = await fetchLeadDirectory();
+
+      if (directoryError) {
+        console.error("[leadPage] others directory error", directoryError);
+        return { data: null, error: directoryError, status: 500 };
+      }
+
+      if (otherLeadIds.length === 0) {
+        console.warn("[leadPage] others slug resolved to zero lead ids", {
+          otherCounts,
+        });
+        return { data: null, error: "Lead singer not found", status: 404 };
+      }
+
+      console.log("[leadPage] others slug lead ids", {
+        count: otherLeadIds.length,
+        otherCounts,
+      });
+
+      const activeType = firstAvailableLeadType(otherCounts);
+      const {
+        rows,
+        hasMore,
+        nextCursor,
+        error: kirtanError,
+      } = await fetchLeadKirtansPage({
+        leadSingerIds: otherLeadIds,
+        type: activeType,
+        limit: 20,
+        cursorRecordedDate: null,
+        cursorTitle: null,
+        cursorId: null,
+      });
+
+      if (kirtanError) {
+        return { data: null, error: kirtanError, status: 500 };
+      }
+
+      const ids = rows.map((k) => k.id);
+      const {
+        harmoniumIds,
+        rareGemIds,
+        error: tagError,
+      } = await fetchKirtanTagFlags(ids);
+
+      if (tagError) {
+        return { data: null, error: tagError, status: 500 };
+      }
+
+      const data: LeadResponse = {
+        lead: {
+          id: OTHER_LEAD_ID,
+          display_name: OTHER_LEAD_LABEL,
+        },
+        counts: otherCounts,
+        active_type: activeType,
+        has_more: hasMore,
+        next_cursor: nextCursor,
+        kirtans: rows.map((k) => ({
+          id: k.id,
+          audio_url: k.audio_url,
+          type: k.type as KirtanType,
+          title: formatKirtanTitle(k.type as KirtanType, k.title),
+          lead_singer: k.lead_singer,
+          recorded_date: k.recorded_date,
+          recorded_date_precision: k.recorded_date_precision ?? null,
+          sanga: k.sanga,
+          duration_seconds: k.duration_seconds,
+          sequence_num: k.sequence_num ?? null,
+          has_harmonium: harmoniumIds.has(k.id),
+          is_rare_gem: rareGemIds.has(k.id),
+        })),
+        featured: null,
+      };
+
+      return {
+        data,
+        error: null,
+        status: 200,
+      };
+    }
+
     const { data: lead, error: leadError } = await supabase
       .from("lead_singers")
       .select("id, display_name")
@@ -58,8 +152,11 @@ const getCachedLeadPageData = unstable_cache(
     if (featuredData?.id) {
       ids.unshift(featuredData.id);
     }
-    const { harmoniumIds, rareGemIds, error: tagError } =
-      await fetchKirtanTagFlags(ids);
+    const {
+      harmoniumIds,
+      rareGemIds,
+      error: tagError,
+    } = await fetchKirtanTagFlags(ids);
 
     if (tagError) {
       return { data: null, error: tagError, status: 500 };
@@ -121,8 +218,11 @@ const getCachedLeadPageData = unstable_cache(
   },
 );
 
-export async function getLeadPageData(
-  slug: string,
-): Promise<{ data: LeadResponse | null; error: string | null; status: number }> {
+export async function getLeadPageData(slug: string): Promise<{
+  data: LeadResponse | null;
+  error: string | null;
+  status: number;
+}> {
+  console.log("[leadPage] getLeadPageData", { slug });
   return getCachedLeadPageData(slug);
 }
