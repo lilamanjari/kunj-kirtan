@@ -20,7 +20,6 @@ import {
 const getCachedLeadPageData = unstable_cache(
   async (slug: string) => {
     if (slug === OTHER_LEAD_SLUG) {
-      console.log("[leadPage] handling others slug");
       const {
         otherLeadIds,
         otherCounts,
@@ -28,23 +27,21 @@ const getCachedLeadPageData = unstable_cache(
       } = await fetchLeadDirectory();
 
       if (directoryError) {
-        console.error("[leadPage] others directory error", directoryError);
         return { data: null, error: directoryError, status: 500 };
       }
 
       if (otherLeadIds.length === 0) {
-        console.warn("[leadPage] others slug resolved to zero lead ids", {
-          otherCounts,
-        });
         return { data: null, error: "Lead singer not found", status: 404 };
       }
 
-      console.log("[leadPage] others slug lead ids", {
-        count: otherLeadIds.length,
-        otherCounts,
-      });
-
       const activeType = firstAvailableLeadType(otherCounts);
+      const { kirtan: featuredData, error: featuredError } =
+        await getDailyRareGem({ leadSingerIds: otherLeadIds });
+
+      if (featuredError) {
+        return { data: null, error: featuredError, status: 500 };
+      }
+
       const {
         rows,
         hasMore,
@@ -64,6 +61,9 @@ const getCachedLeadPageData = unstable_cache(
       }
 
       const ids = rows.map((k) => k.id);
+      if (featuredData?.id) {
+        ids.unshift(featuredData.id);
+      }
       const {
         harmoniumIds,
         rareGemIds,
@@ -73,6 +73,26 @@ const getCachedLeadPageData = unstable_cache(
       if (tagError) {
         return { data: null, error: tagError, status: 500 };
       }
+
+      const featured: KirtanSummary | null = featuredData
+        ? {
+            id: featuredData.id,
+            audio_url: featuredData.audio_url,
+            type: featuredData.type as KirtanType,
+            title: formatKirtanTitle(
+              featuredData.type as KirtanType,
+              featuredData.title,
+            ),
+            lead_singer: featuredData.lead_singer,
+            recorded_date: featuredData.recorded_date,
+            recorded_date_precision: featuredData.recorded_date_precision ?? null,
+            sanga: featuredData.sanga,
+            duration_seconds: featuredData.duration_seconds,
+            sequence_num: featuredData.sequence_num ?? null,
+            has_harmonium: harmoniumIds.has(featuredData.id),
+            is_rare_gem: rareGemIds.has(featuredData.id),
+          }
+        : null;
 
       const data: LeadResponse = {
         lead: {
@@ -96,8 +116,8 @@ const getCachedLeadPageData = unstable_cache(
           sequence_num: k.sequence_num ?? null,
           has_harmonium: harmoniumIds.has(k.id),
           is_rare_gem: rareGemIds.has(k.id),
-        })),
-        featured: null,
+          })),
+        featured,
       };
 
       return {
@@ -223,6 +243,5 @@ export async function getLeadPageData(slug: string): Promise<{
   error: string | null;
   status: number;
 }> {
-  console.log("[leadPage] getLeadPageData", { slug });
   return getCachedLeadPageData(slug);
 }

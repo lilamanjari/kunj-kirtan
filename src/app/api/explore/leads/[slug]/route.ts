@@ -1,22 +1,15 @@
-import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
-import { fetchKirtanTagFlags } from "@/lib/server/kirtanTags";
 import { getDailyRareGem } from "@/lib/server/featured";
 import type { KirtanSummary, KirtanType } from "@/types/kirtan";
 import { ServerTiming, jsonWithServerTiming } from "@/lib/server/serverTiming";
 import { formatKirtanTitle } from "@/lib/kirtanTitle";
 import {
   fetchLeadCounts,
-  fetchLeadKirtansPage,
+  fetchTaggedLeadKirtansPage,
   firstAvailableLeadType,
   parseLeadType,
+  resolveLeadTarget,
 } from "@/lib/server/leadKirtans";
-import {
-  fetchLeadDirectory,
-  OTHER_LEAD_ID,
-  OTHER_LEAD_LABEL,
-  OTHER_LEAD_SLUG,
-} from "@/lib/server/leadDirectory";
+import { fetchKirtanTagFlags } from "@/lib/server/kirtanTags";
 
 export const revalidate = 86400;
 
@@ -39,102 +32,20 @@ export async function GET(
   // unwrap the promise
   const { slug } = await context.params;
 
-  if (slug === OTHER_LEAD_SLUG) {
-    const { otherLeadIds, otherCounts, error: directoryError } =
-      await timing.measure("lead", async () => await fetchLeadDirectory());
+  const { target, error: targetError, notFound } = await timing.measure(
+    "lead",
+    () => resolveLeadTarget(slug),
+  );
 
-    if (directoryError) {
-      return jsonWithServerTiming(
-        { error: directoryError },
-        timing,
-        { status: 500 },
-      );
-    }
-
-    if (otherLeadIds.length === 0) {
-      return jsonWithServerTiming(
-        { error: "Lead singer not found" },
-        timing,
-        { status: 404 },
-      );
-    }
-
-    const activeType = requestedType && otherCounts[requestedType] > 0
-      ? requestedType
-      : firstAvailableLeadType(otherCounts);
-
-    const {
-      rows,
-      hasMore,
-      nextCursor,
-      error: kirtanError,
-    } = await timing.measure("db", () =>
-      fetchLeadKirtansPage({
-        leadSingerIds: otherLeadIds,
-        type: activeType,
-        limit,
-        cursorRecordedDate,
-        cursorTitle,
-        cursorId,
-      }),
-    );
-
-    if (kirtanError) {
-      return jsonWithServerTiming(
-        { error: kirtanError },
-        timing,
-        { status: 500 },
-      );
-    }
-
-    const ids = rows.map((k) => k.id);
-    const { harmoniumIds, rareGemIds, error: tagError } =
-      await timing.measure("tags", () => fetchKirtanTagFlags(ids));
-
-    if (tagError) {
-      return jsonWithServerTiming({ error: tagError }, timing, { status: 500 });
-    }
-
+  if (targetError) {
     return jsonWithServerTiming(
-      {
-        lead: {
-          id: OTHER_LEAD_ID,
-          display_name: OTHER_LEAD_LABEL,
-        },
-        counts: otherCounts,
-        active_type: activeType,
-        has_more: hasMore,
-        next_cursor: nextCursor,
-        kirtans: rows.map((k) => ({
-          id: k.id,
-          audio_url: k.audio_url,
-          type: k.type as KirtanType,
-          title: formatKirtanTitle(k.type as KirtanType, k.title),
-          lead_singer: k.lead_singer,
-          recorded_date: k.recorded_date,
-          recorded_date_precision: k.recorded_date_precision ?? null,
-          sanga: k.sanga,
-          duration_seconds: k.duration_seconds,
-          sequence_num: k.sequence_num ?? null,
-          has_harmonium: harmoniumIds.has(k.id),
-          is_rare_gem: rareGemIds.has(k.id),
-        })),
-        featured: null,
-      },
+      { error: targetError },
       timing,
+      { status: notFound ? 404 : 500 },
     );
   }
 
-  /* 1. Load lead singer */
-  const { data: lead, error: leadError } = await timing.measure("lead", async () =>
-    await supabase
-      .from("lead_singers")
-      .select("id, display_name")
-      .eq("slug", slug)
-      .maybeSingle(),
-  );
-
-  if (leadError || !lead) {
+  if (!target) {
     return jsonWithServerTiming(
       { error: "Lead singer not found" },
       timing,
@@ -142,15 +53,20 @@ export async function GET(
     );
   }
 
-  const { counts, error: countsError } = await timing.measure("counts", () =>
-    fetchLeadCounts(lead.id),
-  );
-  if (countsError) {
-    return jsonWithServerTiming(
-      { error: countsError },
-      timing,
-      { status: 500 },
+  let counts = target.counts;
+  if (target.kind === "single") {
+    const { counts: resolvedCounts, error: countsError } = await timing.measure(
+      "counts",
+      () => fetchLeadCounts(target.leadSingerId),
     );
+    if (countsError) {
+      return jsonWithServerTiming(
+        { error: countsError },
+        timing,
+        { status: 500 },
+      );
+    }
+    counts = resolvedCounts;
   }
 
   const activeType = requestedType && counts[requestedType] > 0
@@ -158,9 +74,13 @@ export async function GET(
     : firstAvailableLeadType(counts);
 
   const { kirtan: featuredData, error: featuredError } =
-    await timing.measure("featured", () =>
-      getDailyRareGem({ leadSingerId: lead.id }),
-    );
+    target.kind === "single"
+      ? await timing.measure("featured", () =>
+          getDailyRareGem({ leadSingerId: target.leadSingerId }),
+        )
+      : await timing.measure("featured", () =>
+          getDailyRareGem({ leadSingerIds: target.leadSingerIds }),
+        );
 
   if (featuredError) {
     return jsonWithServerTiming(
@@ -171,13 +91,14 @@ export async function GET(
   }
 
   const {
-    rows,
+    kirtans,
     hasMore,
     nextCursor,
-    error: kirtanError,
+    error,
   } = await timing.measure("db", () =>
-    fetchLeadKirtansPage({
-      leadSingerId: lead.id,
+    fetchTaggedLeadKirtansPage({
+      leadSingerId: target.kind === "single" ? target.leadSingerId : undefined,
+      leadSingerIds: target.kind === "group" ? target.leadSingerIds : undefined,
       type: activeType,
       limit,
       cursorRecordedDate,
@@ -186,67 +107,57 @@ export async function GET(
     }),
   );
 
-  if (kirtanError) {
+  if (error) {
     return jsonWithServerTiming(
-      { error: kirtanError },
+      { error },
       timing,
       { status: 500 },
     );
   }
 
-  const ids = rows.map((k) => k.id);
-  if (featuredData?.id) {
-    ids.unshift(featuredData.id);
-  }
-  const { harmoniumIds, rareGemIds, error: tagError } =
-    await timing.measure("tags", () => fetchKirtanTagFlags(ids));
+  let featured: KirtanSummary | null = null;
+  if (featuredData) {
+    const {
+      harmoniumIds,
+      rareGemIds,
+      error: tagError,
+    } = await timing.measure("tags", () => fetchKirtanTagFlags([featuredData.id]));
 
-  if (tagError) {
-    return jsonWithServerTiming({ error: tagError }, timing, { status: 500 });
-  }
+    if (tagError) {
+      return jsonWithServerTiming(
+        { error: tagError },
+        timing,
+        { status: 500 },
+      );
+    }
 
-  const featured: KirtanSummary | null = featuredData
-    ? {
-        id: featuredData.id,
-        audio_url: featuredData.audio_url,
-        type: featuredData.type as KirtanType,
-        title: formatKirtanTitle(
-          featuredData.type as KirtanType,
-          featuredData.title,
-        ),
-        lead_singer: featuredData.lead_singer,
-        recorded_date: featuredData.recorded_date,
-        recorded_date_precision: featuredData.recorded_date_precision ?? null,
-        sanga: featuredData.sanga,
-        duration_seconds: featuredData.duration_seconds,
-        sequence_num: featuredData.sequence_num ?? null,
-        has_harmonium: harmoniumIds.has(featuredData.id),
-        is_rare_gem: rareGemIds.has(featuredData.id),
-      }
-    : null;
+    featured = {
+      id: featuredData.id,
+      audio_url: featuredData.audio_url,
+      type: featuredData.type as KirtanType,
+      title: formatKirtanTitle(
+        featuredData.type as KirtanType,
+        featuredData.title,
+      ),
+      lead_singer: featuredData.lead_singer,
+      recorded_date: featuredData.recorded_date,
+      recorded_date_precision: featuredData.recorded_date_precision ?? null,
+      sanga: featuredData.sanga,
+      duration_seconds: featuredData.duration_seconds,
+      sequence_num: featuredData.sequence_num ?? null,
+      has_harmonium: harmoniumIds.has(featuredData.id),
+      is_rare_gem: rareGemIds.has(featuredData.id),
+    };
+  }
 
   return jsonWithServerTiming(
     {
-      lead,
+      lead: target.lead,
       counts,
       active_type: activeType,
       has_more: hasMore,
       next_cursor: nextCursor,
-      kirtans:
-        rows.map((k) => ({
-          id: k.id,
-          audio_url: k.audio_url,
-          type: k.type as KirtanType,
-          title: formatKirtanTitle(k.type as KirtanType, k.title),
-          lead_singer: k.lead_singer,
-          recorded_date: k.recorded_date,
-          recorded_date_precision: k.recorded_date_precision ?? null,
-          sanga: k.sanga,
-          duration_seconds: k.duration_seconds,
-          sequence_num: k.sequence_num ?? null,
-          has_harmonium: harmoniumIds.has(k.id),
-          is_rare_gem: rareGemIds.has(k.id),
-        })),
+      kirtans,
       featured,
     },
     timing,

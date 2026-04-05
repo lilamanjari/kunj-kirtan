@@ -18,6 +18,7 @@ vi.mock("@/lib/server/leadDirectory", () => ({
     error: null,
   }),
   OTHER_LEAD_ID: "others",
+  OTHER_LEAD_LABEL: "Other Lead Singers",
   OTHER_LEAD_SLUG: "others",
 }));
 

@@ -1,5 +1,13 @@
 import { supabase } from "@/lib/supabase";
-import type { KirtanType } from "@/types/kirtan";
+import { fetchKirtanTagFlags } from "@/lib/server/kirtanTags";
+import { formatKirtanTitle } from "@/lib/kirtanTitle";
+import {
+  fetchLeadDirectory,
+  OTHER_LEAD_ID,
+  OTHER_LEAD_LABEL,
+  OTHER_LEAD_SLUG,
+} from "@/lib/server/leadDirectory";
+import type { KirtanSummary, KirtanType } from "@/types/kirtan";
 import type { LeadCounts, LeadCursor } from "@/types/leads";
 
 export const LEAD_TYPE_ORDER: KirtanType[] = ["MM", "BHJ", "HK"];
@@ -46,6 +54,91 @@ export async function fetchLeadCounts(leadSingerId: string) {
   }, emptyLeadCounts());
 
   return { counts, error: null };
+}
+
+export type LeadTarget =
+  | {
+      kind: "single";
+      lead: { id: string; display_name: string };
+      leadSingerId: string;
+      counts: LeadCounts;
+    }
+  | {
+      kind: "group";
+      lead: { id: typeof OTHER_LEAD_ID; display_name: typeof OTHER_LEAD_LABEL };
+      leadSingerIds: string[];
+      counts: LeadCounts;
+    };
+
+export async function resolveLeadTarget(slug: string, leadId?: string | null) {
+  if (slug === OTHER_LEAD_SLUG || leadId === OTHER_LEAD_ID) {
+    const { otherLeadIds, otherCounts, error } = await fetchLeadDirectory();
+    if (error) {
+      return { target: null as LeadTarget | null, error, notFound: false };
+    }
+    if (otherLeadIds.length === 0) {
+      return {
+        target: null as LeadTarget | null,
+        error: "Lead singer not found",
+        notFound: true,
+      };
+    }
+
+    return {
+      target: {
+        kind: "group" as const,
+        lead: {
+          id: OTHER_LEAD_ID,
+          display_name: OTHER_LEAD_LABEL,
+        },
+        leadSingerIds: otherLeadIds,
+        counts: otherCounts,
+      },
+      error: null,
+      notFound: false,
+    };
+  }
+
+  if (!leadId) {
+    const { data: lead, error } = await supabase
+      .from("lead_singers")
+      .select("id, display_name")
+      .eq("slug", slug)
+      .maybeSingle();
+
+    if (error || !lead) {
+      return {
+        target: null as LeadTarget | null,
+        error: "Lead singer not found",
+        notFound: true,
+      };
+    }
+
+    return {
+      target: {
+        kind: "single" as const,
+        lead,
+        leadSingerId: lead.id,
+        counts: emptyLeadCounts(),
+      },
+      error: null,
+      notFound: false,
+    };
+  }
+
+  return {
+    target: {
+      kind: "single" as const,
+      lead: {
+        id: leadId,
+        display_name: "",
+      },
+      leadSingerId: leadId,
+      counts: emptyLeadCounts(),
+    },
+    error: null,
+    notFound: false,
+  };
 }
 
 type FetchLeadKirtansArgs = {
@@ -137,6 +230,75 @@ export async function fetchLeadKirtansPage({
 
   return {
     rows,
+    hasMore,
+    nextCursor,
+    error: null,
+  };
+}
+
+export async function fetchTaggedLeadKirtansPage({
+  leadSingerId,
+  leadSingerIds,
+  type,
+  limit,
+  cursorRecordedDate,
+  cursorTitle,
+  cursorId,
+}: FetchLeadKirtansArgs) {
+  const {
+    rows,
+    hasMore,
+    nextCursor,
+    error: kirtanError,
+  } = await fetchLeadKirtansPage({
+    leadSingerId,
+    leadSingerIds,
+    type,
+    limit,
+    cursorRecordedDate,
+    cursorTitle,
+    cursorId,
+  });
+
+  if (kirtanError) {
+    return {
+      kirtans: [] as KirtanSummary[],
+      hasMore: false,
+      nextCursor: null as LeadCursor,
+      error: kirtanError,
+    };
+  }
+
+  const ids = rows.map((row) => row.id);
+  const { harmoniumIds, rareGemIds, error: tagError } =
+    await fetchKirtanTagFlags(ids);
+
+  if (tagError) {
+    return {
+      kirtans: [] as KirtanSummary[],
+      hasMore: false,
+      nextCursor: null as LeadCursor,
+      error: tagError,
+    };
+  }
+
+  const kirtans: KirtanSummary[] = rows.map((k) => ({
+    id: k.id,
+    audio_url: k.audio_url,
+    type: k.type as KirtanType,
+    title: formatKirtanTitle(k.type as KirtanType, k.title),
+    lead_singer: k.lead_singer,
+    recorded_date: k.recorded_date,
+    recorded_date_precision: k.recorded_date_precision ?? null,
+    sanga: k.sanga,
+    duration_seconds: k.duration_seconds,
+    sequence_num: k.sequence_num ?? null,
+    has_harmonium: harmoniumIds.has(k.id),
+    is_rare_gem: rareGemIds.has(k.id),
+  }));
+
+  return {
+    kirtans,
     hasMore,
     nextCursor,
     error: null,
