@@ -11,6 +11,16 @@ export type AudioPlayerApi = ReturnType<typeof useAudioPlayerInternal>;
 
 const AudioPlayerContext = createContext<AudioPlayerApi | null>(null);
 const LAST_PLAYBACK_KEY = "kirtan_last_playback_v1";
+const CLIENT_ID_KEY = "kirtan_client_id_v1";
+const SESSION_ID_KEY = "kirtan_session_id_v1";
+
+function getOrCreateStorageId(storage: Storage, key: string) {
+  const existing = storage.getItem(key);
+  if (existing) return existing;
+  const value = crypto.randomUUID();
+  storage.setItem(key, value);
+  return value;
+}
 
 function useAudioPlayerInternal() {
   const playback = usePlayback();
@@ -28,6 +38,17 @@ function useAudioPlayerInternal() {
   const restoringRef = useRef(false); //Used to make sure we don't accidentally overwrite the stored position while seeking
   const lastSavedRef = useRef(0); //Throttle writing to localStorage
   const restoredRef = useRef(false); //Used to make sure we restore only once per session
+  const trackedPlayRef = useRef<{ kirtanId: string | null; sent: boolean }>({
+    kirtanId: null,
+    sent: false,
+  });
+  const [playToken, setPlayToken] = useState<{
+    kirtanId: string | null;
+    token: string | null;
+  }>({
+    kirtanId: null,
+    token: null,
+  });
 
   // Initialize a single shared audio element and wire basic listeners.
   useEffect(() => {
@@ -169,9 +190,83 @@ function useAudioPlayerInternal() {
     }
   }, [currentTime, duration, playback.current?.id]);
 
+  // Fetch a short-lived signed token for the current kirtan before logging playback.
+  useEffect(() => {
+    const current = playback.current;
+    if (!current) {
+      setPlayToken({ kirtanId: null, token: null });
+      return;
+    }
+
+    const controller = new AbortController();
+    setPlayToken({ kirtanId: current.id, token: null });
+
+    fetch(`/api/plays/token?kirtan_id=${encodeURIComponent(current.id)}`, {
+      signal: controller.signal,
+    })
+      .then(async (res) => {
+        if (!res.ok) return null;
+        const json = await res.json();
+        return typeof json.token === "string" ? json.token : null;
+      })
+      .then((token) => {
+        if (!controller.signal.aborted) {
+          setPlayToken({ kirtanId: current.id, token });
+        }
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) {
+          setPlayToken({ kirtanId: current.id, token: null });
+        }
+      });
+
+    return () => controller.abort();
+  }, [playback.current?.id]);
+
+  // Record one qualified play per playback session once the listener reaches 15 seconds.
+  useEffect(() => {
+    const current = playback.current;
+    if (!current) return;
+    if (playback.state !== "playing") return;
+    if (currentTime < 15) return;
+    if (playToken.kirtanId !== current.id || !playToken.token) return;
+
+    if (trackedPlayRef.current.kirtanId !== current.id) {
+      trackedPlayRef.current = { kirtanId: current.id, sent: false };
+    }
+
+    if (trackedPlayRef.current.sent) return;
+    trackedPlayRef.current.sent = true;
+
+    try {
+      const clientId = window.localStorage
+        ? getOrCreateStorageId(window.localStorage, CLIENT_ID_KEY)
+        : null;
+      const sessionId = window.sessionStorage
+        ? getOrCreateStorageId(window.sessionStorage, SESSION_ID_KEY)
+        : null;
+
+      fetch("/api/plays", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          kirtan_id: current.id,
+          seconds_played: Math.max(15, Math.round(currentTime)),
+          client_id: clientId,
+          session_id: sessionId,
+          token: playToken.token,
+        }),
+        keepalive: true,
+      }).catch(() => {});
+    } catch {
+      // ignore analytics failures
+    }
+  }, [currentTime, playback.current?.id, playback.state, playToken]);
+
   // Sync playback state to the underlying audio element.
   useEffect(() => {
-    console.log("effect", playback.state, playback.current);
     const audio = audioRef.current;
     if (!audio || !playback.current) return;
 
@@ -229,6 +324,15 @@ function useAudioPlayerInternal() {
       setIsBuffering(false);
     }
   }, [playback.state, playback.current?.id]);
+
+  useEffect(() => {
+    if (trackedPlayRef.current.kirtanId !== playback.current?.id) {
+      trackedPlayRef.current = {
+        kirtanId: playback.current?.id ?? null,
+        sent: false,
+      };
+    }
+  }, [playback.current?.id]);
 
   // Track playback history for the "previous" button.
   useEffect(() => {
