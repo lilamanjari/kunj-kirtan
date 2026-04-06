@@ -15,6 +15,9 @@ function getSnapshot() {
 }
 
 export default function ClientAudioPlayerBar() {
+  // The player depends on browser-only APIs such as Audio, localStorage,
+  // and Media Session, so we wait until the window has fully loaded before
+  // mounting it to avoid hydration and SSR/client timing issues.
   const isReady = useSyncExternalStore(subscribe, getSnapshot, () => false);
   if (!isReady) return null;
   return <AudioPlayerBar />;

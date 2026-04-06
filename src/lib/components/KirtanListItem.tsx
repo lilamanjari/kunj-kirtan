@@ -128,7 +128,7 @@ export default function KirtanListItem({
       </div>
 
       <div className="ml-4 flex items-center gap-2">
-        {onEnqueue ? (
+        {onEnqueue || onDequeue ? (
           <button
             type="button"
             onClick={(event) => {
@@ -137,6 +137,7 @@ export default function KirtanListItem({
                 onDequeue(kirtan.id);
                 return;
               }
+              if (!onEnqueue) return;
               onEnqueue(kirtan);
             }}
             className={`flex h-7 w-7 items-center justify-center rounded-full border transition ${
@@ -144,8 +145,8 @@ export default function KirtanListItem({
                 ? "border-emerald-200 bg-emerald-50 text-emerald-500 cursor-pointer"
                 : "border-rose-200 bg-white text-rose-500 hover:bg-rose-50 cursor-pointer"
             }`}
-            aria-label="Add to queue"
-            title="Add to queue"
+            aria-label={isQueued ? "Remove from queue" : "Add to queue"}
+            title={isQueued ? "Remove from queue" : "Add to queue"}
           >
             {isQueued ? "✓" : "+"}
           </button>
