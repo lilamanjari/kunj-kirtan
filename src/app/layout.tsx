@@ -25,8 +25,30 @@ const dancingScript = Dancing_Script({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://www.kunjkirtan.com"),
   title: "Kunj Kirtan",
   description: "Sacred sounds, lovingly curated.",
+  openGraph: {
+    title: "Kunj Kirtan",
+    description: "Sacred sounds, lovingly curated.",
+    url: "https://www.kunjkirtan.com",
+    siteName: "Kunj Kirtan",
+    images: [
+      {
+        url: "/og-kunj-kirtan.jpg",
+        width: 635,
+        height: 898,
+        alt: "Sri Caitanya Mahaprabhu and Nityananda dancing in kirtan painting by Syamarani Dasi",
+      },
+    ],
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Kunj Kirtan",
+    description: "Sacred sounds, lovingly curated.",
+    images: ["/og-kunj-kirtan.jpg"],
+  },
   icons: {
     icon: "/kirtan-icon.svg",
     shortcut: "/kirtan-icon.svg",
