@@ -22,7 +22,7 @@ export function useKirtanShare() {
 
       const shareData = {
         title: title || "Kunj Kirtan",
-        text: `Listen to ${title || "this kirtan"}${singer} on Kunj Kirtan.`,
+        text: `Check out ${title || "this kirtan"}${singer} on Kunj Kirtan:`,
         url: url,
       };
       if (navigator.share) {

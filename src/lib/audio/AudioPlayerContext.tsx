@@ -280,16 +280,16 @@ function useAudioPlayerInternal() {
         "Kunj Kirtan";
       const mediaArtist = sequenceLabel
         ? `${sequenceLabel} by ${playback.current.lead_singer ?? "Kunj Kirtan"}`
-        : playback.current.lead_singer ?? "Kunj Kirtan";
+        : (playback.current.lead_singer ?? "Kunj Kirtan");
       navigator.mediaSession.metadata = new MediaMetadata({
         title: mediaTitle,
         artist: mediaArtist,
         album: "Kunj Kirtan",
         artwork: [
           {
-            src: `${origin}/kirtan-icon.svg`,
+            src: `${origin}/og-kunj-kirtan.jpg`,
             sizes: "512x512",
-            type: "image/svg+xml",
+            type: "image/jpeg",
           },
         ],
       });
