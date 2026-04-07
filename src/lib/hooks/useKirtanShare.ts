@@ -3,6 +3,7 @@
 import { useCallback } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import type { KirtanSummary } from "@/types/kirtan";
+import { formatKirtanTitle } from "@/lib/kirtanTitle";
 
 export function useKirtanShare() {
   const pathname = usePathname();
@@ -16,9 +17,12 @@ export function useKirtanShare() {
 
       let copied = false;
 
+      const title = formatKirtanTitle(kirtan.type, kirtan.title);
+      const singer = kirtan.lead_singer ? ` by ${kirtan.lead_singer}` : "";
+
       const shareData = {
-        title: document.title,
-        text: "Here's a song for you!",
+        title: title || "Kunj Kirtan",
+        text: `Listen to ${title || "this kirtan"}${singer} on Kunj Kirtan.`,
         url: url,
       };
       if (navigator.share) {
