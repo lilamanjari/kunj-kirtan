@@ -1,18 +1,20 @@
 #!/usr/bin/env node
 import path from "node:path";
 import fs from "node:fs";
+import { randomUUID } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import dotenv from "dotenv";
 import { google } from "googleapis";
 import { createClient } from "@supabase/supabase-js";
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { DeleteObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 dotenv.config({ path: path.join(__dirname, "..", ".env.local") });
 
-const SHEET_ID = process.env.SHEET_ID || "1H5vY1IvVdNeDmT8DagD1GNT_8TFk2FZE1XXPlpJiqQ8";
+const SHEET_ID =
+  process.env.SHEET_ID || "1H5vY1IvVdNeDmT8DagD1GNT_8TFk2FZE1XXPlpJiqQ8";
 const SHEET_NAME = process.env.SHEET_NAME || "Metadata";
 const SERVICE_ACCOUNT_FILE =
   process.env.SHEETS_SERVICE_ACCOUNT_FILE ||
@@ -38,7 +40,7 @@ const SUPABASE_SERVICE_ROLE_KEY =
 const R2_ENDPOINT = process.env.R2_ENDPOINT;
 const R2_ACCESS_KEY_ID = process.env.R2_ACCESS_KEY_ID;
 const R2_SECRET_ACCESS_KEY = process.env.R2_SECRET_ACCESS_KEY;
-const R2_BUCKET = process.env.R2_BUCKET || "kirtan";
+const R2_BUCKET = process.env.R2_BUCKET || "kirtans";
 
 if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
   throw new Error("Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY in env.");
@@ -333,6 +335,16 @@ async function uploadToR2(localPath, storagePath) {
   return `${MEDIA_BASE_URL}/${storagePath}`;
 }
 
+async function deleteFromR2(storagePath) {
+  if (DRY_RUN) return;
+  logStep(`Deleting from R2: ${storagePath}`);
+  const command = new DeleteObjectCommand({
+    Bucket: R2_BUCKET,
+    Key: storagePath,
+  });
+  await s3.send(command);
+}
+
 async function findKirtanByDriveFileId(fileId) {
   logStep(`Finding kirtan by drive_file_id=${fileId}`);
   const { data, error } = await supabase
@@ -450,6 +462,8 @@ async function main() {
     const { recorded_date, recorded_date_precision } = parseRecordedDate(
       row[col.date],
     );
+    let uploadedStoragePath = null;
+    let cleanupUploadedOnFailure = false;
 
     try {
       const leadSingerId = await getOrCreateLeadSinger(singer);
@@ -457,8 +471,18 @@ async function main() {
       const sangaId = await resolveSangaId(sanga);
       if (sangaId) logStep(`Sanga id: ${sangaId}`);
 
+      const isNewRow = status === "NEW";
       let kirtanId = null;
       let existingKirtan = null;
+
+      const ext = getFileExtension(sourceFile);
+      const folder = type === "MM" ? "mm" : "bhajans";
+      const localBase = type === "MM" ? MM_FOLDER : BHJ_FOLDER;
+      const localPath = path.join(localBase, sourceFile);
+
+      if (!fs.existsSync(localPath)) {
+        throw new Error(`File not found: ${localPath}`);
+      }
 
       if (status === "UPDATE") {
         if (DRY_RUN) {
@@ -472,15 +496,28 @@ async function main() {
         }
         kirtanId = existingKirtan.id;
         updated += 1;
+      } else {
+        kirtanId = randomUUID();
+        const storagePath = `${folder}/${kirtanId}.${ext}`;
+
+        if (VERBOSE) {
+          console.log(`Uploading ${localPath} -> ${storagePath}`);
+        }
+        await uploadToR2(localPath, storagePath);
+        uploadedStoragePath = storagePath;
+        cleanupUploadedOnFailure = true;
       }
 
-      if (!kirtanId) {
+      if (isNewRow) {
         if (DRY_RUN) {
-          console.log(`[DRY_RUN] Would insert new kirtan for file_id=${fileId}`);
+          console.log(
+            `[DRY_RUN] Would insert new kirtan for file_id=${fileId}`,
+          );
           inserted += 1;
           continue;
         }
         const payload = {
+          id: kirtanId,
           title,
           lead_singer_id: leadSingerId,
           type,
@@ -501,6 +538,7 @@ async function main() {
         if (error) throw new Error(error.message);
         kirtanId = data.id;
         existingKirtan = { id: data.id, sequence_num: data.sequence_num };
+        cleanupUploadedOnFailure = false;
         logStep(`Inserted kirtan id: ${kirtanId}`);
         inserted += 1;
       } else {
@@ -530,20 +568,13 @@ async function main() {
         logStep(`Updated kirtan id: ${kirtanId}`);
       }
 
-      const ext = getFileExtension(sourceFile);
-      const folder = type === "MM" ? "mm" : "bhajans";
       const storagePath = `${folder}/${kirtanId}.${ext}`;
-      const localBase = type === "MM" ? MM_FOLDER : BHJ_FOLDER;
-      const localPath = path.join(localBase, sourceFile);
-
-      if (!fs.existsSync(localPath)) {
-        throw new Error(`File not found: ${localPath}`);
+      if (status === "UPDATE") {
+        if (VERBOSE) {
+          console.log(`Uploading ${localPath} -> ${storagePath}`);
+        }
+        await uploadToR2(localPath, storagePath);
       }
-
-      if (VERBOSE) {
-        console.log(`Uploading ${localPath} -> ${storagePath}`);
-      }
-      await uploadToR2(localPath, storagePath);
 
       await upsertAudioFile({
         kirtanId,
@@ -611,6 +642,16 @@ async function main() {
       }
     } catch (err) {
       failures += 1;
+      if (!DRY_RUN && cleanupUploadedOnFailure && uploadedStoragePath) {
+        try {
+          await deleteFromR2(uploadedStoragePath);
+        } catch (cleanupErr) {
+          console.error(
+            `Row ${i + 1} upload cleanup failed:`,
+            cleanupErr.message || cleanupErr,
+          );
+        }
+      }
       console.error(`Row ${i + 1} failed:`, err.message || err);
       if (DRY_RUN) continue;
     }
