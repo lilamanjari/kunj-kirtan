@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import SubpageHeader from "@/lib/components/SubpageHeader";
 
 type Occasion = {
   id: string;
@@ -14,25 +15,9 @@ export default function OccasionsPageClient({
   occasions: Occasion[];
 }) {
   return (
-    <div className="relative min-h-screen bg-[radial-gradient(circle_at_top,_#ffe4ef_0%,_#fff6fa_45%,_#f8fafc_100%)] text-stone-900 overflow-hidden">
-      <div
-        className="pointer-events-none absolute top-0 h-64 w-64 bg-[url('/floral-corner.png')] bg-no-repeat bg-right-top opacity-40"
-        style={{
-          backgroundSize: "280px auto",
-          right: "max(0px, calc(50% - 14rem + 8px))",
-        }}
-      />
+    <div className="relative min-h-screen overflow-hidden bg-[linear-gradient(180deg,_#f5d7d0_0%,_#f6e4de_18%,_#f7ece7_42%,_#f8f2ef_100%)] text-stone-900">
       <main className="relative z-10 mx-auto max-w-md px-5 py-6 space-y-6">
-        <div className="pointer-events-none absolute -top-10 left-6 h-28 w-28 rounded-full bg-rose-300/40 blur-3xl" />
-        <header className="space-y-1">
-          <Link
-            href="/"
-            className="text-xs font-medium uppercase tracking-wide text-rose-400 hover:text-rose-500"
-          >
-            Home
-          </Link>
-          <h1 className="text-2xl font-semibold font-script">Occasions</h1>
-        </header>
+        <SubpageHeader title="Occasions" backLabel="Home" backHref="/" />
 
         {occasions.length === 0 ? (
           <div className="rounded-xl border border-dashed border-stone-200 bg-white px-4 py-6 text-center text-sm text-stone-500">

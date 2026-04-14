@@ -1,13 +1,13 @@
 "use client";
 
 import { Suspense, useEffect, useRef, useState } from "react";
-import Link from "next/link";
 import { useAudioPlayer } from "@/lib/audio/AudioPlayerContext";
 import type { KirtanSummary } from "@/types/kirtan";
 import KirtanListItem from "@/lib/components/KirtanListItem";
 import KirtanDeepLinkHandler from "@/lib/components/KirtanDeepLinkHandler";
 import { fetchWithStatus } from "@/lib/net/fetchWithStatus";
 import FeaturedKirtanCard from "@/lib/components/FeaturedKirtanCard";
+import SubpageHeader from "@/lib/components/SubpageHeader";
 import type { MahaMantrasResponse } from "@/types/maha-mantras";
 
 export default function MahaMantrasPageClient({
@@ -182,16 +182,8 @@ export default function MahaMantrasPageClient({
   }, [hasMore, isLoadingMore, nextCursor, search, durationFilter]);
 
   return (
-    <div className="relative min-h-screen bg-[radial-gradient(circle_at_top,_#ffe4ef_0%,_#fff6fa_45%,_#f8fafc_100%)] text-stone-900 overflow-hidden">
-      <div
-        className="pointer-events-none absolute top-0 h-64 w-64 bg-[url('/floral-corner.png')] bg-no-repeat bg-right-top opacity-40"
-        style={{
-          backgroundSize: "280px auto",
-          right: "max(0px, calc(50% - 14rem + 8px))",
-        }}
-      />
+    <div className="relative min-h-screen overflow-hidden bg-[linear-gradient(180deg,_#f5d7d0_0%,_#f6e4de_18%,_#f7ece7_42%,_#f8f2ef_100%)] text-stone-900">
       <main className="relative z-10 mx-auto max-w-md px-5 py-6 space-y-6">
-        <div className="pointer-events-none absolute -top-10 left-6 h-28 w-28 rounded-full bg-rose-300/40 blur-3xl" />
         <Suspense fallback={null}>
           <KirtanDeepLinkHandler
             kirtans={visibleMantras}
@@ -200,27 +192,21 @@ export default function MahaMantrasPageClient({
             onPin={setPinnedKirtan}
           />
         </Suspense>
-        <header className="space-y-1">
-          <Link
-            href="/"
-            className="text-xs font-medium uppercase tracking-wide text-rose-400 hover:text-rose-500"
-          >
-            Home
-          </Link>
-          <h1 className="text-2xl font-semibold font-script">Maha Mantra</h1>
-        </header>
+        <SubpageHeader title="Maha Mantra" backLabel="Home" backHref="/" />
 
         {featured ? (
-          <FeaturedKirtanCard
-            kirtan={featured}
-            isActive={isActive(featured)}
-            isPlaying={isPlaying()}
-            isLoading={isLoading()}
-            onToggle={() => toggle(featured)}
-            onEnqueue={enqueue}
-            onDequeue={dequeueById}
-            isQueued={isQueued(featured.id)}
-          />
+          <div className="-mt-10">
+            <FeaturedKirtanCard
+              kirtan={featured}
+              isActive={isActive(featured)}
+              isPlaying={isPlaying()}
+              isLoading={isLoading()}
+              onToggle={() => toggle(featured)}
+              onEnqueue={enqueue}
+              onDequeue={dequeueById}
+              isQueued={isQueued(featured.id)}
+            />
+          </div>
         ) : null}
 
         <div className="relative">

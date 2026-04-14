@@ -14,6 +14,7 @@ type FeaturedKirtanCardProps = {
   onEnqueue?: (kirtan: KirtanSummary) => void;
   onDequeue?: (id: string) => void;
   isQueued?: boolean;
+  tone?: "default" | "home";
 };
 
 function formatDuration(seconds?: number | null) {
@@ -45,19 +46,33 @@ export default function FeaturedKirtanCard({
   onEnqueue,
   onDequeue,
   isQueued = false,
+  tone = "default",
 }: FeaturedKirtanCardProps) {
   const sequenceLabel = kirtan.sequence_num ? `#${kirtan.sequence_num}` : null;
   const durationLabel = formatDuration(kirtan.duration_seconds);
   const displayTitle = formatKirtanTitle(kirtan.type, kirtan.title);
+  const cardToneClass =
+    tone === "home"
+      ? "text-white shadow-[0_18px_36px_rgba(120,53,15,0.18)]"
+      : "bg-gradient-to-br from-[#241a18] via-[#2f201d] to-[#5d1b33] text-white shadow-[0_18px_36px_rgba(120,53,15,0.18)]";
+  const cardToneStyle =
+    tone === "home"
+      ? {
+          backgroundColor: "#2a1d1b",
+          backgroundImage:
+            "linear-gradient(135deg, #2a1d1b 0%, #341f1b 56%, #681730 100%)",
+        }
+      : undefined;
 
   return (
     <section
       className={`
-        relative rounded-2xl p-6 shadow-lg transition
-        bg-gradient-to-br from-stone-900 via-stone-900 to-rose-950 text-white
-        ${isActive ? "ring-2 ring-rose-400/50" : ""}
+        relative rounded-2xl p-6 transition
+        ${cardToneClass}
+        ${isActive ? "ring-2 ring-[#d58a96]/50" : ""}
         ${isPlaying ? "animate-breathe" : ""}
       `}
+      style={cardToneStyle}
     >
       <p className="text-xs tracking-widest text-stone-400">FEATURED</p>
 
@@ -93,7 +108,7 @@ export default function FeaturedKirtanCard({
           </span>
         ) : null}
         {durationLabel ? (
-          <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-200">
+          <span className="rounded-full bg-[#8fe1bf]/16 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#c8f4e2]">
             {durationLabel}
           </span>
         ) : null}
@@ -109,8 +124,8 @@ export default function FeaturedKirtanCard({
             }}
             className={`ml-auto flex h-7 w-7 items-center justify-center rounded-full border text-xs transition ${
               isQueued
-                ? "border-emerald-400/40 bg-emerald-500/10 text-emerald-200 cursor-pointer"
-                : "border-rose-300/40 bg-white/10 text-rose-100 hover:bg-white/20 cursor-pointer"
+                ? "cursor-pointer border-[#8fe1bf]/35 bg-[#8fe1bf]/12 text-[#c8f4e2]"
+                : "cursor-pointer border-[#e8b0b8]/40 bg-white/10 text-[#ffe7ea] hover:bg-white/20"
             }`}
             aria-label="Add to queue"
             title="Add to queue"
@@ -126,8 +141,8 @@ export default function FeaturedKirtanCard({
         onClick={onToggle}
         className={`
           mt-6 w-full rounded-xl py-3 font-medium transition
-          bg-gradient-to-r from-emerald-600 to-emerald-500
-          hover:from-emerald-500 hover:to-emerald-400
+          bg-gradient-to-r from-[#12986f] to-[#20b584]
+          hover:from-[#0f8a66] hover:to-[#17a97a]
           disabled:opacity-40 disabled:pointer-events-none
         `}
       >

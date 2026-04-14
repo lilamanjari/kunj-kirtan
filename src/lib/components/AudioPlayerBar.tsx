@@ -124,7 +124,7 @@ export default function AudioPlayerBar() {
           />
           <div className="absolute inset-x-0 bottom-0 px-3 pb-3">
             <div
-              className="mx-auto max-w-md rounded-[28px] border border-rose-100 bg-[linear-gradient(180deg,rgba(255,252,253,0.98)_0%,rgba(255,255,255,0.98)_100%)] shadow-[0_-8px_32px_rgba(120,53,15,0.12)] transition-transform"
+              className="mx-auto max-w-md rounded-[28px] border border-[#efd8d1] bg-[linear-gradient(180deg,rgba(255,250,248,0.98)_0%,rgba(255,255,255,0.98)_100%)] shadow-[0_-14px_30px_rgba(120,53,15,0.14)] transition-transform"
               style={{ transform: `translateY(${sheetOffset}px)` }}
               onTouchStart={(event) => {
                 setTouchStartY(event.touches[0]?.clientY ?? null);
@@ -172,7 +172,7 @@ export default function AudioPlayerBar() {
 
                 <div className="mt-4 space-y-3">
                   <div>
-                    <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-rose-400">
+                    <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#c98892]">
                       Now playing
                     </p>
                     <ul>
@@ -224,10 +224,10 @@ export default function AudioPlayerBar() {
         </div>
       ) : null}
 
-      <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-rose-100 bg-white/95 text-stone-900 backdrop-blur">
-        <div className="h-0.5 w-full bg-gradient-to-r from-transparent via-rose-300/70 to-transparent" />
+      <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-[#efd8d1] bg-white/95 text-stone-900 backdrop-blur">
+        <div className="h-0.5 w-full bg-gradient-to-r from-transparent via-[#e7b9bf]/70 to-transparent" />
         {shareNotice ? (
-          <div className="mx-auto mt-2 w-fit rounded-full bg-rose-50 px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-rose-500">
+          <div className="mx-auto mt-2 w-fit rounded-full bg-[#fff5f2] px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-[#c56a72]">
             {shareNotice}
           </div>
         ) : null}
@@ -259,7 +259,7 @@ export default function AudioPlayerBar() {
               {isBuffering ? (
                 <svg
                   viewBox="0 0 24 24"
-                  className="h-6 w-6 text-emerald-500"
+                  className="h-6 w-6 text-[#14946f]"
                   aria-hidden="true"
                 >
                   <circle
@@ -349,8 +349,8 @@ export default function AudioPlayerBar() {
             step={0.001}
             value={progress}
             onChange={(e) => seekTo(Number(e.target.value))}
-            style={{ accentColor: "#10b981" }}
-            className="w-full accent-emerald-500 text-emerald-500"
+            style={{ accentColor: "#14946f" }}
+            className="w-full text-[#14946f]"
           />
           <div className="mt-1 flex items-center justify-between text-[10px] leading-none text-stone-400 tabular-nums">
             <span>{formatTime(currentTime)}</span>
@@ -379,12 +379,12 @@ export default function AudioPlayerBar() {
                   onClick={openQueue}
                   className="flex min-w-0 items-center gap-2 truncate rounded-full px-1 py-0.5 hover:bg-stone-50"
                 >
-                  <div className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5">
-                    <span className="inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-emerald-100 px-1.5 text-[10px] font-semibold text-emerald-700">
+                  <div className="inline-flex items-center gap-1 rounded-full bg-[#e8f6ef] px-2 py-0.5">
+                    <span className="inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#d7efe5] px-1.5 text-[10px] font-semibold text-[#2e8c6f]">
                       {queue.length}
                     </span>
                     {fullQueueDurationLabel ? (
-                      <span className="text-[10px] font-medium text-emerald-700/80">
+                      <span className="text-[10px] font-medium text-[#2e8c6f]/85">
                         {fullQueueDurationLabel}
                       </span>
                     ) : null}

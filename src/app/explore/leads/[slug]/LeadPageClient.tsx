@@ -1,7 +1,6 @@
 "use client";
 
 import { Suspense, useEffect, useRef, useState } from "react";
-import Link from "next/link";
 import { useAudioPlayer } from "@/lib/audio/AudioPlayerContext";
 import KirtanListItem from "@/lib/components/KirtanListItem";
 import type { KirtanSummary, KirtanType } from "@/types/kirtan";
@@ -9,6 +8,7 @@ import type { LeadListState, LeadResponse } from "@/types/leads";
 import KirtanDeepLinkHandler from "@/lib/components/KirtanDeepLinkHandler";
 import { fetchWithStatus } from "@/lib/net/fetchWithStatus";
 import FeaturedKirtanCard from "@/lib/components/FeaturedKirtanCard";
+import SubpageHeader from "@/lib/components/SubpageHeader";
 
 const FILTERS: { key: KirtanType; label: string }[] = [
   { key: "MM", label: "Maha Mantra" },
@@ -128,16 +128,8 @@ export default function LeadPageClient({
     : visible;
 
   return (
-    <div className="relative min-h-screen bg-[radial-gradient(circle_at_top,_#ffe4ef_0%,_#fff6fa_45%,_#f8fafc_100%)] text-stone-900 overflow-hidden">
-      <div
-        className="pointer-events-none absolute top-0 h-64 w-64 bg-[url('/floral-corner.png')] bg-no-repeat bg-right-top opacity-40"
-        style={{
-          backgroundSize: "280px auto",
-          right: "max(0px, calc(50% - 14rem + 8px))",
-        }}
-      />
+    <div className="relative min-h-screen overflow-hidden bg-[linear-gradient(180deg,_#f5d7d0_0%,_#f6e4de_18%,_#f7ece7_42%,_#f8f2ef_100%)] text-stone-900">
       <main className="relative z-10 mx-auto max-w-md px-5 py-6 space-y-8">
-        <div className="pointer-events-none absolute -top-10 left-6 h-28 w-28 rounded-full bg-rose-300/40 blur-3xl" />
         <Suspense fallback={null}>
           <KirtanDeepLinkHandler
             kirtans={visible}
@@ -146,29 +138,25 @@ export default function LeadPageClient({
             onPin={setPinnedKirtan}
           />
         </Suspense>
-        <header className="space-y-2">
-          <Link
-            href="/"
-            className="text-xs font-medium uppercase tracking-wide text-rose-400 hover:text-rose-500"
-          >
-            Home
-          </Link>
-          <h1 className="text-2xl font-semibold font-script">
-            {initialData.lead.display_name}
-          </h1>
-        </header>
+        <SubpageHeader
+          title={initialData.lead.display_name}
+          backLabel="Leads"
+          backHref="/explore/leads"
+        />
 
         {featuredKirtan ? (
-          <FeaturedKirtanCard
-            kirtan={featuredKirtan}
-            isActive={isActive(featuredKirtan)}
-            isPlaying={isPlaying()}
-            isLoading={isAudioLoading()}
-            onToggle={() => toggle(featuredKirtan)}
-            onEnqueue={enqueue}
-            onDequeue={dequeueById}
-            isQueued={isQueued(featuredKirtan.id)}
-          />
+          <div className="-mt-10">
+            <FeaturedKirtanCard
+              kirtan={featuredKirtan}
+              isActive={isActive(featuredKirtan)}
+              isPlaying={isPlaying()}
+              isLoading={isAudioLoading()}
+              onToggle={() => toggle(featuredKirtan)}
+              onEnqueue={enqueue}
+              onDequeue={dequeueById}
+              isQueued={isQueued(featuredKirtan.id)}
+            />
+          </div>
         ) : null}
 
         {showTabs ? (
@@ -186,8 +174,8 @@ export default function LeadPageClient({
                     rounded-full px-4 py-1.5 text-xs font-medium transition
                     ${
                       active
-                        ? "bg-rose-600 text-white"
-                        : "bg-white text-stone-600 border border-stone-200 hover:bg-rose-50"
+                        ? "bg-[#8f4350] text-white shadow-sm"
+                        : "border border-[#ead8d2] bg-white text-stone-600 hover:bg-[#fff7f3]"
                     }
                   `}
                 >

@@ -63,14 +63,14 @@ export default function KirtanListItem({
   const cardBackground = kirtan.is_rare_gem
     ? "bg-[linear-gradient(180deg,rgba(255,251,245,1)_0%,rgba(255,255,255,1)_36%,rgba(255,249,244,1)_100%)]"
     : isActive
-      ? "bg-gradient-to-r from-rose-50 via-pink-50 to-rose-100"
-      : "bg-white hover:bg-rose-50/40";
+      ? "bg-gradient-to-r from-[#fff7f3] via-[#fff3ee] to-[#f9e5df]"
+      : "bg-white hover:bg-[#fff7f3]";
 
   return (
     <li
       onClick={onToggle}
       className={`
-        relative flex cursor-pointer items-center justify-between rounded-xl px-4 py-3 shadow-sm transition border
+        relative flex cursor-pointer items-center justify-between rounded-xl border px-4 py-3 shadow-[0_14px_30px_rgba(120,53,15,0.10)] transition
         ${cardBackground}
         ${
           kirtan.is_rare_gem
@@ -98,7 +98,7 @@ export default function KirtanListItem({
               </span>
             ) : null}
             {durationLabel ? (
-              <span className="shrink-0 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-700">
+              <span className="shrink-0 rounded-full bg-[#e8f6ef] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#2e8c6f]">
                 {durationLabel}
               </span>
             ) : null}
@@ -142,8 +142,8 @@ export default function KirtanListItem({
             }}
             className={`flex h-7 w-7 items-center justify-center rounded-full border transition ${
               isQueued
-                ? "border-emerald-200 bg-emerald-50 text-emerald-500 cursor-pointer"
-                : "border-rose-200 bg-white text-rose-500 hover:bg-rose-50 cursor-pointer"
+                ? "cursor-pointer border-[#d2eadf] bg-[#eef8f3] text-[#2e8c6f]"
+                : "cursor-pointer border-[#efd4cb] bg-white text-[#cc7680] hover:bg-[#fff7f3]"
             }`}
             aria-label={isQueued ? "Remove from queue" : "Add to queue"}
             title={isQueued ? "Remove from queue" : "Add to queue"}
@@ -160,7 +160,7 @@ export default function KirtanListItem({
             <svg
               viewBox="0 0 24 24"
               className={`h-4 w-4 transition ${
-                isActive ? "text-rose-600" : "text-stone-600"
+                isActive ? "text-[#c56a72]" : "text-stone-600"
               }`}
               aria-hidden="true"
             >
