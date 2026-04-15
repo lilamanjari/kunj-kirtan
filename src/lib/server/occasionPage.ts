@@ -3,6 +3,7 @@ import { supabase } from "@/lib/supabase";
 import type { KirtanSummary, KirtanType } from "@/types/kirtan";
 import { fetchKirtanTagFlags } from "@/lib/server/kirtanTags";
 import { formatKirtanTitle } from "@/lib/kirtanTitle";
+import { getDailyRareGem } from "@/lib/server/featured";
 import type { OccasionResponse } from "@/types/occasions";
 
 const getCachedOccasionPageData = unstable_cache(
@@ -30,10 +31,19 @@ const getCachedOccasionPageData = unstable_cache(
     const ids = (tagLinks ?? []).map((row) => row.kirtan_id);
     if (ids.length === 0) {
       return {
-        data: { tag, kirtans: [] satisfies KirtanSummary[] } satisfies OccasionResponse,
+        data: {
+          tag,
+          featured: null,
+          kirtans: [] satisfies KirtanSummary[],
+        } satisfies OccasionResponse,
         error: null,
         status: 200,
       };
+    }
+
+    const featured = await getDailyRareGem({ kirtanIds: ids });
+    if (featured.error) {
+      return { data: null, error: featured.error, status: 500 };
     }
 
     const { data: kirtans, error: kirtanError } = await supabase
@@ -49,6 +59,9 @@ const getCachedOccasionPageData = unstable_cache(
     }
 
     const kirtanIds = (kirtans ?? []).map((k) => k.id);
+    if (featured.kirtan?.id) {
+      kirtanIds.unshift(featured.kirtan.id);
+    }
     const { harmoniumIds, rareGemIds, error: flagsError } =
       await fetchKirtanTagFlags(kirtanIds);
 
@@ -72,8 +85,29 @@ const getCachedOccasionPageData = unstable_cache(
         is_rare_gem: rareGemIds.has(k.id),
       })) ?? [];
 
+    const featuredKirtan: KirtanSummary | null = featured.kirtan
+      ? {
+          id: featured.kirtan.id,
+          audio_url: featured.kirtan.audio_url,
+          type: featured.kirtan.type as KirtanType,
+          title: formatKirtanTitle(
+            featured.kirtan.type as KirtanType,
+            featured.kirtan.title,
+          ),
+          lead_singer: featured.kirtan.lead_singer,
+          recorded_date: featured.kirtan.recorded_date,
+          recorded_date_precision:
+            featured.kirtan.recorded_date_precision ?? null,
+          sanga: featured.kirtan.sanga,
+          duration_seconds: featured.kirtan.duration_seconds,
+          sequence_num: featured.kirtan.sequence_num ?? null,
+          has_harmonium: harmoniumIds.has(featured.kirtan.id),
+          is_rare_gem: rareGemIds.has(featured.kirtan.id),
+        }
+      : null;
+
     return {
-      data: { tag, kirtans: payload } satisfies OccasionResponse,
+      data: { tag, featured: featuredKirtan, kirtans: payload } satisfies OccasionResponse,
       error: null,
       status: 200,
     };
@@ -81,7 +115,7 @@ const getCachedOccasionPageData = unstable_cache(
   ["occasion-page-data"],
   {
     revalidate: 86400,
-    tags: ["explore-occasion-slugs"],
+    tags: ["explore-occasion-slugs", "rare-gems"],
   },
 );
 

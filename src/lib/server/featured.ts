@@ -21,6 +21,7 @@ type FeaturedFilters = {
   type?: KirtanType;
   leadSingerId?: string;
   leadSingerIds?: string[];
+  kirtanIds?: string[];
 };
 
 const getRareGemCandidates = unstable_cache(
@@ -64,7 +65,7 @@ const getRareGemCandidates = unstable_cache(
 export async function getDailyRareGem(
   filters: FeaturedFilters = {},
 ): Promise<FeaturedResult<any>> {
-  const { type, leadSingerId, leadSingerIds } = filters;
+  const { type, leadSingerId, leadSingerIds, kirtanIds } = filters;
   const { rows, error } = await getRareGemCandidates();
   if (error) {
     return { kirtan: null, error };
@@ -72,6 +73,8 @@ export async function getDailyRareGem(
   if (!rows || rows.length === 0) {
     return { kirtan: null, error: null };
   }
+
+  const allowedKirtanIds = kirtanIds ? new Set(kirtanIds) : null;
 
   const filteredRows = rows.filter((row) => {
     if (type && row.type !== type) {
@@ -83,6 +86,9 @@ export async function getDailyRareGem(
     if (leadSingerIds && leadSingerIds.length > 0 && !leadSingerIds.includes(row.lead_singer_id)) {
       return false;
     }
+    if (allowedKirtanIds && !allowedKirtanIds.has(row.id)) {
+      return false;
+    }
     return true;
   });
 
@@ -90,6 +96,7 @@ export async function getDailyRareGem(
     type ?? "ALL",
     leadSingerId ?? "ANY",
     leadSingerIds?.slice().sort().join(",") ?? "ANY_GROUP",
+    kirtanIds?.slice().sort().join(",") ?? "ANY_KIRTANS",
   ].join("-");
   const index = dailyIndex(filteredRows.length, salt);
   return { kirtan: filteredRows[index] ?? null, error: null };

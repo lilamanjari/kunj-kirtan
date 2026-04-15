@@ -6,5 +6,6 @@ export type OccasionResponse = {
     name: string;
     slug: string;
   };
+  featured?: KirtanSummary | null;
   kirtans: KirtanSummary[];
 };

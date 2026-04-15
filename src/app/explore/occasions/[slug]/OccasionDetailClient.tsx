@@ -7,6 +7,7 @@ import type { KirtanSummary } from "@/types/kirtan";
 import type { OccasionResponse } from "@/types/occasions";
 import KirtanDeepLinkHandler from "@/lib/components/KirtanDeepLinkHandler";
 import SubpageHeader from "@/lib/components/SubpageHeader";
+import FeaturedKirtanCard from "@/lib/components/FeaturedKirtanCard";
 
 export default function OccasionDetailClient({
   initialData,
@@ -26,6 +27,7 @@ export default function OccasionDetailClient({
   const [pinnedKirtan, setPinnedKirtan] = useState<KirtanSummary | null>(null);
 
   const visible = initialData.kirtans ?? [];
+  const featured = initialData.featured ?? null;
   const renderedKirtans = pinnedKirtan
     ? [pinnedKirtan, ...visible.filter((k) => k.id !== pinnedKirtan.id)]
     : visible;
@@ -46,6 +48,21 @@ export default function OccasionDetailClient({
           backLabel="Occasions"
           backHref="/explore/occasions"
         />
+
+        {featured ? (
+          <div className="-mt-10">
+            <FeaturedKirtanCard
+              kirtan={featured}
+              isActive={isActive(featured)}
+              isPlaying={isPlaying()}
+              isLoading={isLoading()}
+              onToggle={() => toggle(featured)}
+              onEnqueue={enqueue}
+              onDequeue={dequeueById}
+              isQueued={isQueued(featured.id)}
+            />
+          </div>
+        ) : null}
 
         <section>
           <h2 className="text-xs uppercase tracking-wide text-stone-500">

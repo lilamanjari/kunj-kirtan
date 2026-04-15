@@ -19,23 +19,23 @@ export function useKirtanShare() {
 
       const title = formatKirtanTitle(kirtan.type, kirtan.title);
       const singer = kirtan.lead_singer ? ` by ${kirtan.lead_singer}` : "";
+      const shareText = `Check out ${title || "this kirtan"}${singer} on Kunj Kirtan:\n${url}`;
 
       const shareData = {
         title: title || "Kunj Kirtan",
-        text: `Check out ${title || "this kirtan"}${singer} on Kunj Kirtan:`,
+        text: shareText,
         url: url,
       };
       if (navigator.share) {
         try {
           await navigator.share(shareData);
-          console.log("Successful share");
-        } catch (err) {
-          console.error("Error sharing:", err);
+        } catch {
+          // Ignore cancelled shares and fall back only when needed.
         }
       } else {
         try {
           if (navigator.clipboard?.writeText) {
-            await navigator.clipboard.writeText(url);
+            await navigator.clipboard.writeText(shareText);
             copied = true;
           }
         } catch {
