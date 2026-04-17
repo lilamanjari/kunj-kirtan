@@ -15,6 +15,7 @@ type FeaturedKirtanCardProps = {
   onDequeue?: (id: string) => void;
   isQueued?: boolean;
   tone?: "default" | "home";
+  contextLine?: string;
 };
 
 function formatDuration(seconds?: number | null) {
@@ -47,6 +48,7 @@ export default function FeaturedKirtanCard({
   onDequeue,
   isQueued = false,
   tone = "default",
+  contextLine,
 }: FeaturedKirtanCardProps) {
   const sequenceLabel = kirtan.sequence_num ? `#${kirtan.sequence_num}` : null;
   const durationLabel = formatDuration(kirtan.duration_seconds);
@@ -75,8 +77,13 @@ export default function FeaturedKirtanCard({
       style={cardToneStyle}
     >
       <p className="text-xs tracking-widest text-stone-400">FEATURED</p>
+      {contextLine ? (
+        <p className="mt-2 text-sm font-medium text-[#e4b6a7]">
+          {contextLine}
+        </p>
+      ) : null}
 
-      <h1 className="mt-2 text-3xl font-semibold">
+      <h1 className={`${contextLine ? "mt-3" : "mt-2"} text-3xl font-semibold`}>
         {displayTitle}
       </h1>
 
