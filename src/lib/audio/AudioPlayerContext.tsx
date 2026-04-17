@@ -28,6 +28,9 @@ function useAudioPlayerInternal() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const historyRef = useRef<KirtanSummary[]>([]);
   const lastCurrentRef = useRef<KirtanSummary | null>(null);
+  // Audio event listeners are attached once, so they read this ref instead of a possibly stale playback.state closure.
+  const playbackStateRef = useRef(playback.state);
+  const manualPauseRef = useRef(false);
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
@@ -49,6 +52,10 @@ function useAudioPlayerInternal() {
     kirtanId: null,
     token: null,
   });
+
+  useEffect(() => {
+    playbackStateRef.current = playback.state;
+  }, [playback.state]);
 
   // Initialize a single shared audio element and wire basic listeners.
   useEffect(() => {
@@ -84,9 +91,23 @@ function useAudioPlayerInternal() {
     const onStalled = () => setIsBuffering(true);
     const onPlaying = () => {
       setIsBuffering(false);
+      manualPauseRef.current = false;
+      if (playbackStateRef.current !== "playing") {
+        playback.setState("playing");
+      }
       recordRequestSuccess();
     };
     const onCanPlay = () => setIsBuffering(false);
+    const onPause = () => {
+      setIsBuffering(false);
+      if (audio.ended) return;
+
+      manualPauseRef.current = false;
+
+      if (playbackStateRef.current !== "paused") {
+        playback.setState("paused");
+      }
+    };
     const onError = () => {
       setIsBuffering(false);
       markOffline();
@@ -108,6 +129,7 @@ function useAudioPlayerInternal() {
     audio.addEventListener("stalled", onStalled);
     audio.addEventListener("playing", onPlaying);
     audio.addEventListener("canplay", onCanPlay);
+    audio.addEventListener("pause", onPause);
     audio.addEventListener("error", onError);
 
     return () => {
@@ -121,6 +143,7 @@ function useAudioPlayerInternal() {
       audio.removeEventListener("stalled", onStalled);
       audio.removeEventListener("playing", onPlaying);
       audio.removeEventListener("canplay", onCanPlay);
+      audio.removeEventListener("pause", onPause);
       audio.removeEventListener("error", onError);
     };
   }, []);
@@ -320,6 +343,7 @@ function useAudioPlayerInternal() {
     }
 
     if (playback.state === "paused") {
+      manualPauseRef.current = true;
       audio.pause();
       setIsBuffering(false);
     }
