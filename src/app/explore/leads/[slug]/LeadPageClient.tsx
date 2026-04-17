@@ -1,6 +1,11 @@
 "use client";
 
 import { Suspense, useEffect, useRef, useState } from "react";
+import { SFIcon } from "@bradleyhodges/sfsymbols-react";
+import {
+  sfPlaySquareStackFill,
+  sfShuffleCircle,
+} from "@bradleyhodges/sfsymbols";
 import { useAudioPlayer } from "@/lib/audio/AudioPlayerContext";
 import KirtanListItem from "@/lib/components/KirtanListItem";
 import type { KirtanSummary, KirtanType } from "@/types/kirtan";
@@ -28,6 +33,7 @@ export default function LeadPageClient({
     isPlaying,
     isLoading: isAudioLoading,
     toggle,
+    playCollection,
     enqueue,
     dequeueById,
     isQueued,
@@ -187,9 +193,33 @@ export default function LeadPageClient({
         ) : null}
 
         <section>
-          <h2 className="text-xs uppercase tracking-wide text-stone-500">
-            Kirtans
-          </h2>
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="text-xs uppercase tracking-wide text-stone-500">
+              Kirtans
+            </h2>
+            {visible.length > 1 ? (
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => playCollection(visible)}
+                  aria-label="Play all kirtans"
+                  title="Play all"
+                  className="flex h-8 w-8 items-center justify-center rounded-full border border-[#ead8d2] bg-white text-stone-700 shadow-sm hover:bg-[#fff7f3]"
+                >
+                  <SFIcon icon={sfPlaySquareStackFill} className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => playCollection(visible, { shuffle: true })}
+                  aria-label="Shuffle kirtans"
+                  title="Shuffle"
+                  className="flex h-8 w-8 items-center justify-center rounded-full border border-[#ead8d2] bg-white text-stone-700 shadow-sm hover:bg-[#fff7f3]"
+                >
+                  <SFIcon icon={sfShuffleCircle} className="h-4 w-4" />
+                </button>
+              </div>
+            ) : null}
+          </div>
 
           {isListLoading ? (
             <div className="mt-3 rounded-xl border border-dashed border-stone-200 bg-white px-4 py-6">

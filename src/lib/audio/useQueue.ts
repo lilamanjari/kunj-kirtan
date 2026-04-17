@@ -6,6 +6,7 @@ const QUEUE_STORAGE_KEY = "kirtan_queue_v1";
 export type QueueApi = {
   queue: KirtanSummary[];
   enqueue: (kirtan: KirtanSummary) => void;
+  setQueue: (kirtans: KirtanSummary[]) => void;
   dequeue: () => KirtanSummary | null;
   dequeueById: (id: string) => void;
   clearQueue: () => void;
@@ -15,7 +16,8 @@ export type QueueApi = {
 };
 
 export function useQueue(storage?: Storage): QueueApi {
-  const store = storage ?? (typeof window !== "undefined" ? localStorage : undefined);
+  const store =
+    storage ?? (typeof window !== "undefined" ? localStorage : undefined);
   const [queue, setQueue] = useState<KirtanSummary[]>([]);
   const [notice, setNotice] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
@@ -50,9 +52,10 @@ export function useQueue(storage?: Storage): QueueApi {
   function enqueue(kirtan: KirtanSummary) {
     setQueue((prev) => [...prev, kirtan]);
     setNotice(`Added "${kirtan.title}" to queue`);
-    if (typeof navigator !== "undefined" && "vibrate" in navigator) {
-      navigator.vibrate(20);
-    }
+  }
+
+  function replaceQueue(kirtans: KirtanSummary[]) {
+    setQueue(kirtans);
   }
 
   function dequeue() {
@@ -87,6 +90,7 @@ export function useQueue(storage?: Storage): QueueApi {
   return {
     queue,
     enqueue,
+    setQueue: replaceQueue,
     dequeue,
     dequeueById,
     clearQueue,

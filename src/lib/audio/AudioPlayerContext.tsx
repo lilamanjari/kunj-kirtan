@@ -22,6 +22,24 @@ function getOrCreateStorageId(storage: Storage, key: string) {
   return value;
 }
 
+function dedupeKirtans(items: KirtanSummary[]) {
+  const seen = new Set<string>();
+  return items.filter((item) => {
+    if (seen.has(item.id)) return false;
+    seen.add(item.id);
+    return true;
+  });
+}
+
+function shuffleKirtans(items: KirtanSummary[]) {
+  const shuffled = [...items];
+  for (let i = shuffled.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+}
+
 function useAudioPlayerInternal() {
   const playback = usePlayback();
   const queueApi = useQueue();
@@ -408,6 +426,19 @@ function useAudioPlayerInternal() {
     }
   };
 
+  const playCollection = (
+    items: KirtanSummary[],
+    options?: { shuffle?: boolean },
+  ) => {
+    const deduped = dedupeKirtans(items);
+    if (deduped.length === 0) return;
+
+    const ordered = options?.shuffle ? shuffleKirtans(deduped) : deduped;
+    const [first, ...rest] = ordered;
+    queueApi.setQueue(rest);
+    playback.play(first);
+  };
+
   return {
     ...playback,
     progress,
@@ -418,8 +449,10 @@ function useAudioPlayerInternal() {
     seekTo,
     playNext,
     playPrev,
+    playCollection,
     queue: queueApi.queue,
     enqueue: queueApi.enqueue,
+    setQueue: queueApi.setQueue,
     dequeueById: queueApi.dequeueById,
     clearQueue: queueApi.clearQueue,
     queueNotice: queueApi.notice,
