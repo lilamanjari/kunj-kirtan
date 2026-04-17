@@ -47,6 +47,11 @@ export default function SubpageHeader({
         />
         <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,247,242,0.76)_0%,rgba(255,244,238,0.34)_32%,rgba(255,244,238,0.08)_56%,rgba(255,244,238,0)_78%)]" />
         <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-b from-transparent to-[#f6e4de]" />
+        <Link
+          href="/"
+          aria-label="Go to home page"
+          className="absolute right-4 top-0 z-10 block h-28 w-[58%] rounded-bl-[2rem]"
+        />
 
         <div className="absolute inset-x-5 top-4">
           <div className={titleWidthClassName}>
