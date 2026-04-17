@@ -1,6 +1,11 @@
 "use client";
 
 import { Suspense, useState } from "react";
+import { SFIcon } from "@bradleyhodges/sfsymbols-react";
+import {
+  sfPlaySquareStackFill,
+  sfShuffleCircle,
+} from "@bradleyhodges/sfsymbols";
 import { useAudioPlayer } from "@/lib/audio/AudioPlayerContext";
 import KirtanListItem from "@/lib/components/KirtanListItem";
 import type { KirtanSummary } from "@/types/kirtan";
@@ -19,6 +24,7 @@ export default function OccasionDetailClient({
     isPlaying,
     isLoading,
     toggle,
+    playCollection,
     enqueue,
     dequeueById,
     isQueued,
@@ -100,9 +106,33 @@ export default function OccasionDetailClient({
         ) : null}
 
         <section>
-          <h2 className="text-xs uppercase tracking-wide text-stone-500">
-            Kirtans
-          </h2>
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="text-xs uppercase tracking-wide text-stone-500">
+              Kirtans
+            </h2>
+            {visible.length > 1 ? (
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => playCollection(visible)}
+                  aria-label="Play all kirtans for this occasion"
+                  title="Play all"
+                  className="flex h-8 w-8 items-center justify-center rounded-full border border-[#ead8d2] bg-white text-stone-700 shadow-sm hover:bg-[#fff7f3]"
+                >
+                  <SFIcon icon={sfPlaySquareStackFill} className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => playCollection(visible, { shuffle: true })}
+                  aria-label="Shuffle kirtans for this occasion"
+                  title="Shuffle"
+                  className="flex h-8 w-8 items-center justify-center rounded-full border border-[#ead8d2] bg-white text-stone-700 shadow-sm hover:bg-[#fff7f3]"
+                >
+                  <SFIcon icon={sfShuffleCircle} className="h-4 w-4" />
+                </button>
+              </div>
+            ) : null}
+          </div>
 
           {pinnedKirtan ? (
             <div className="mt-4">

@@ -1,6 +1,11 @@
 "use client";
 
 import { Suspense, useEffect, useRef, useState } from "react";
+import { SFIcon } from "@bradleyhodges/sfsymbols-react";
+import {
+  sfPlaySquareStackFill,
+  sfShuffleCircle,
+} from "@bradleyhodges/sfsymbols";
 import { useAudioPlayer } from "@/lib/audio/AudioPlayerContext";
 import type { KirtanSummary } from "@/types/kirtan";
 import KirtanListItem from "@/lib/components/KirtanListItem";
@@ -37,6 +42,7 @@ export default function BhajansPageClient({
     isActive,
     isPlaying,
     isLoading,
+    playCollection,
     enqueue,
     dequeueById,
     isQueued,
@@ -149,6 +155,29 @@ export default function BhajansPageClient({
           }}
           className="w-full rounded-xl border border-stone-200 bg-white px-4 py-2 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-rose-300 focus:border-rose-300"
         />
+
+        {bhajans.length > 1 ? (
+          <div className="flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => playCollection(bhajans)}
+              aria-label="Play all bhajans"
+              title="Play all"
+              className="flex h-8 w-8 items-center justify-center rounded-full border border-[#ead8d2] bg-white text-stone-700 shadow-sm hover:bg-[#fff7f3]"
+            >
+              <SFIcon icon={sfPlaySquareStackFill} className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => playCollection(bhajans, { shuffle: true })}
+              aria-label="Shuffle bhajans"
+              title="Shuffle"
+              className="flex h-8 w-8 items-center justify-center rounded-full border border-[#ead8d2] bg-white text-stone-700 shadow-sm hover:bg-[#fff7f3]"
+            >
+              <SFIcon icon={sfShuffleCircle} className="h-4 w-4" />
+            </button>
+          </div>
+        ) : null}
 
         <ul className="space-y-3">
           {isLoadingList ? (

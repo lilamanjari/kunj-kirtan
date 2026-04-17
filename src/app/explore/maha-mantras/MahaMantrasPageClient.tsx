@@ -1,6 +1,11 @@
 "use client";
 
 import { Suspense, useEffect, useRef, useState } from "react";
+import { SFIcon } from "@bradleyhodges/sfsymbols-react";
+import {
+  sfPlaySquareStackFill,
+  sfShuffleCircle,
+} from "@bradleyhodges/sfsymbols";
 import { useAudioPlayer } from "@/lib/audio/AudioPlayerContext";
 import type { KirtanSummary } from "@/types/kirtan";
 import KirtanListItem from "@/lib/components/KirtanListItem";
@@ -42,6 +47,7 @@ export default function MahaMantrasPageClient({
     isActive,
     isPlaying,
     isLoading,
+    playCollection,
     enqueue,
     dequeueById,
     isQueued,
@@ -50,7 +56,6 @@ export default function MahaMantrasPageClient({
   const [pinnedKirtan, setPinnedKirtan] = useState<KirtanSummary | null>(null);
 
   function resetPagination() {
-    setMantras([]);
     setNextCursor(null);
     setHasMore(true);
   }
@@ -132,11 +137,11 @@ export default function MahaMantrasPageClient({
     string,
     { label: string; min: number | null; max: number | null }
   > = {
-    ALL: { label: "Any length", min: null, max: null },
-    UNDER_10: { label: "Under 10 min", min: null, max: 10 * 60 },
-    BETWEEN_10_20: { label: "10-20 min", min: 10 * 60, max: 20 * 60 },
-    BETWEEN_20_30: { label: "20-30 min", min: 20 * 60, max: 30 * 60 },
-    OVER_30: { label: "Over 30 min", min: 30 * 60, max: null },
+    ALL: { label: "Duration: Any length", min: null, max: null },
+    UNDER_10: { label: "Duration: Under 10 min", min: null, max: 10 * 60 },
+    BETWEEN_10_20: { label: "Duration: 10-20 min", min: 10 * 60, max: 20 * 60 },
+    BETWEEN_20_30: { label: "Duration: 20-30 min", min: 20 * 60, max: 30 * 60 },
+    OVER_30: { label: "Duration: Over 30 min", min: 30 * 60, max: null },
   };
 
   const visibleMantras = mantras;
@@ -245,25 +250,47 @@ export default function MahaMantrasPageClient({
           ) : null}
         </div>
 
-        <div className="space-y-2">
-          <p className="text-xs uppercase tracking-wide text-stone-500">
-            Duration
-          </p>
-          <select
-            value={durationFilter}
-            onChange={(e) => {
-              setDurationFilter(e.target.value);
-              setIsLoadingList(true);
-              resetPagination();
-            }}
-            className="w-full rounded-xl border border-stone-200 bg-white px-4 py-2 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-rose-300 focus:border-rose-300"
-          >
-            {Object.entries(durationRanges).map(([key, range]) => (
-              <option key={key} value={key}>
-                {range.label}
-              </option>
-            ))}
-          </select>
+        <div className="flex items-end gap-2">
+          <label className="min-w-0 flex-1">
+            <select
+              value={durationFilter}
+              onChange={(e) => {
+                setDurationFilter(e.target.value);
+                setIsLoadingList(true);
+                resetPagination();
+              }}
+              className="w-full rounded-xl border border-stone-200 bg-white px-4 py-2 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-rose-300 focus:border-rose-300"
+            >
+              {Object.entries(durationRanges).map(([key, range]) => (
+                <option key={key} value={key}>
+                  {range.label}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          {visibleMantras.length > 1 ? (
+            <div className="flex gap-2 pb-[1px]">
+              <button
+                type="button"
+                onClick={() => playCollection(visibleMantras)}
+                aria-label="Play all maha mantras"
+                title="Play all"
+                className="flex h-10 w-10 items-center justify-center rounded-full border border-[#ead8d2] bg-white text-stone-700 shadow-sm hover:bg-[#fff7f3]"
+              >
+                <SFIcon icon={sfPlaySquareStackFill} className="h-4 w-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => playCollection(visibleMantras, { shuffle: true })}
+                aria-label="Shuffle maha mantras"
+                title="Shuffle"
+                className="flex h-10 w-10 items-center justify-center rounded-full border border-[#ead8d2] bg-white text-stone-700 shadow-sm hover:bg-[#fff7f3]"
+              >
+                <SFIcon icon={sfShuffleCircle} className="h-4 w-4" />
+              </button>
+            </div>
+          ) : null}
         </div>
 
         <ul className="space-y-3">
