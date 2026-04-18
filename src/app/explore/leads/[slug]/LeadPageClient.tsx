@@ -37,6 +37,8 @@ export default function LeadPageClient({
     enqueue,
     dequeueById,
     isQueued,
+    toggleFavorite,
+    isFavorited,
     select,
   } = useAudioPlayer();
 
@@ -161,6 +163,8 @@ export default function LeadPageClient({
               onEnqueue={enqueue}
               onDequeue={dequeueById}
               isQueued={isQueued(featuredKirtan.id)}
+              onToggleFavorite={toggleFavorite}
+              isFavorited={isFavorited(featuredKirtan.id)}
             />
           </div>
         ) : null}
@@ -249,6 +253,8 @@ export default function LeadPageClient({
                   onEnqueue={enqueue}
                   onDequeue={dequeueById}
                   isQueued={isQueued(k.id)}
+                  onToggleFavorite={toggleFavorite}
+                  isFavorited={isFavorited(k.id)}
                 />
               ))}
             </ul>

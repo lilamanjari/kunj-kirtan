@@ -3,7 +3,12 @@ import { formatKirtanTitle } from "@/lib/kirtanTitle";
 import { formatDateShort } from "@/lib/utils/date";
 import { KirtanSummary } from "@/types/kirtan";
 import { SFIcon } from "@bradleyhodges/sfsymbols-react";
-import { sfPauseFill, sfPlayFill } from "@bradleyhodges/sfsymbols";
+import {
+  sfPauseFill,
+  sfPlayFill,
+  sfSuitHeart,
+  sfSuitHeartFill,
+} from "@bradleyhodges/sfsymbols";
 
 type FeaturedKirtanCardProps = {
   kirtan: KirtanSummary;
@@ -14,6 +19,8 @@ type FeaturedKirtanCardProps = {
   onEnqueue?: (kirtan: KirtanSummary) => void;
   onDequeue?: (id: string) => void;
   isQueued?: boolean;
+  onToggleFavorite?: (kirtan: KirtanSummary) => void;
+  isFavorited?: boolean;
   tone?: "default" | "home";
   contextLine?: string;
 };
@@ -47,6 +54,8 @@ export default function FeaturedKirtanCard({
   onEnqueue,
   onDequeue,
   isQueued = false,
+  onToggleFavorite,
+  isFavorited = false,
   tone = "default",
   contextLine,
 }: FeaturedKirtanCardProps) {
@@ -119,26 +128,48 @@ export default function FeaturedKirtanCard({
             {durationLabel}
           </span>
         ) : null}
-        {onEnqueue ? (
-          <button
-            type="button"
-            onClick={() => {
-              if (isQueued && onDequeue) {
-                onDequeue(kirtan.id);
-                return;
-              }
-              onEnqueue(kirtan);
-            }}
-            className={`ml-auto flex h-7 w-7 items-center justify-center rounded-full border text-xs transition ${
-              isQueued
-                ? "cursor-pointer border-[#8fe1bf]/35 bg-[#8fe1bf]/12 text-[#c8f4e2]"
-                : "cursor-pointer border-[#e8b0b8]/40 bg-white/10 text-[#ffe7ea] hover:bg-white/20"
-            }`}
-            aria-label="Add to queue"
-            title="Add to queue"
-          >
-            {isQueued ? "✓" : "+"}
-          </button>
+        {onToggleFavorite || onEnqueue ? (
+          <div className="ml-auto flex items-center gap-2">
+            {onToggleFavorite ? (
+              <button
+                type="button"
+                onClick={() => onToggleFavorite(kirtan)}
+                className={`flex h-7 w-7 items-center justify-center rounded-full border transition ${
+                  isFavorited
+                    ? "cursor-pointer border-[#f3c2ce]/60 bg-[#fff1f5]/12 text-[#ffd7e1]"
+                    : "cursor-pointer border-[#e8b0b8]/40 bg-white/10 text-[#ffe7ea] hover:bg-white/20"
+                }`}
+                aria-label={isFavorited ? "Remove from favorites" : "Add to favorites"}
+                title={isFavorited ? "Remove from favorites" : "Add to favorites"}
+              >
+                <SFIcon
+                  icon={isFavorited ? sfSuitHeartFill : sfSuitHeart}
+                  className="h-3.5 w-3.5"
+                />
+              </button>
+            ) : null}
+            {onEnqueue ? (
+              <button
+                type="button"
+                onClick={() => {
+                  if (isQueued && onDequeue) {
+                    onDequeue(kirtan.id);
+                    return;
+                  }
+                  onEnqueue(kirtan);
+                }}
+                className={`flex h-7 w-7 items-center justify-center rounded-full border text-xs transition ${
+                  isQueued
+                    ? "cursor-pointer border-[#8fe1bf]/35 bg-[#8fe1bf]/12 text-[#c8f4e2]"
+                    : "cursor-pointer border-[#e8b0b8]/40 bg-white/10 text-[#ffe7ea] hover:bg-white/20"
+                }`}
+                aria-label={isQueued ? "Remove from queue" : "Add to queue"}
+                title={isQueued ? "Remove from queue" : "Add to queue"}
+              >
+                {isQueued ? "✓" : "+"}
+              </button>
+            ) : null}
+          </div>
         ) : null}
       </div>
 

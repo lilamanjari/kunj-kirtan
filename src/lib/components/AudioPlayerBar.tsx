@@ -50,6 +50,8 @@ export default function AudioPlayerBar() {
     queue,
     clearQueue,
     dequeueById,
+    toggleFavorite,
+    isFavorited,
     duration,
     currentTime,
     isBuffering,
@@ -188,6 +190,8 @@ export default function AudioPlayerBar() {
                             play(current);
                           }
                         }}
+                        onToggleFavorite={toggleFavorite}
+                        isFavorited={isFavorited(current.id)}
                       />
                     </ul>
                   </div>
@@ -208,6 +212,8 @@ export default function AudioPlayerBar() {
                             onToggle={() => playQueuedItem(item)}
                             onDequeue={dequeueById}
                             isQueued={true}
+                            onToggleFavorite={toggleFavorite}
+                            isFavorited={isFavorited(item.id)}
                           />
                         ))}
                       </ul>

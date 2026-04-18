@@ -30,7 +30,9 @@ const BHJ_FOLDER =
 const MEDIA_BASE_URL =
   process.env.MEDIA_BASE_URL || "https://media.kunjkirtan.com";
 const REVALIDATE_BASE_URL =
-  process.env.REVALIDATE_BASE_URL || process.env.NEXT_PUBLIC_SITE_URL || "";
+  process.env.REVALIDATE_BASE_URL ||
+  process.env.NEXT_PUBLIC_SITE_URL ||
+  "https://www.kunjkirtan.com";
 const REVALIDATE_SECRET = process.env.REVALIDATE_SECRET || "";
 
 const SUPABASE_URL = process.env.SUPABASE_URL;

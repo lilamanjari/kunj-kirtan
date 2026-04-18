@@ -5,6 +5,7 @@ import { useAudioPlayer } from "@/lib/audio/AudioPlayerContext";
 import type { HomeData } from "@/types/home";
 import type { KirtanSummary } from "@/types/kirtan";
 import FeaturedKirtanCard from "@/lib/components/FeaturedKirtanCard";
+import HomeFavoritesStrip from "@/lib/components/HomeFavoritesStrip";
 import KirtanListItem from "@/lib/components/KirtanListItem";
 import KirtanDeepLinkHandler from "@/lib/components/KirtanDeepLinkHandler";
 import Link from "next/link";
@@ -19,12 +20,14 @@ export default function HomeClient({ data }: { data: HomeData }) {
     enqueue,
     dequeueById,
     isQueued,
+    toggleFavorite,
+    isFavorited,
+    favorites,
+    favoritesLoaded,
     select,
   } = useAudioPlayer();
   const primaryAction = data.primary_action;
-  const [recentlyAdded, setRecentlyAdded] = useState(
-    () => data.recently_added ?? [],
-  );
+  const [recentlyAdded] = useState(() => data.recently_added ?? []);
   const [pinnedKirtan, setPinnedKirtan] = useState<KirtanSummary | null>(null);
   const entryPointLinks: Record<string, string> = {
     MM: "/explore/maha-mantras",
@@ -69,6 +72,8 @@ export default function HomeClient({ data }: { data: HomeData }) {
               onEnqueue={enqueue}
               onDequeue={dequeueById}
               isQueued={isQueued(primaryAction.kirtan.id)}
+              onToggleFavorite={toggleFavorite}
+              isFavorited={isFavorited(primaryAction.kirtan.id)}
               tone="home"
             />
           )}
@@ -118,6 +123,8 @@ export default function HomeClient({ data }: { data: HomeData }) {
             </div>
           </section>
 
+          <HomeFavoritesStrip favorites={favorites} loaded={favoritesLoaded} />
+
           <section>
             <h2 className="text-xs uppercase tracking-wide text-stone-500">
               Recently Added
@@ -136,6 +143,8 @@ export default function HomeClient({ data }: { data: HomeData }) {
                     onEnqueue={enqueue}
                     onDequeue={dequeueById}
                     isQueued={isQueued(k.id)}
+                    onToggleFavorite={toggleFavorite}
+                    isFavorited={isFavorited(k.id)}
                   />
                 );
               })}

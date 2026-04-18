@@ -2,6 +2,8 @@ import Equalizer from "@/lib/components/Equalizer";
 import { formatKirtanTitle } from "@/lib/kirtanTitle";
 import { formatDateLong } from "@/lib/utils/date";
 import { KirtanSummary } from "@/types/kirtan";
+import { SFIcon } from "@bradleyhodges/sfsymbols-react";
+import { sfSuitHeart, sfSuitHeartFill } from "@bradleyhodges/sfsymbols";
 
 type KirtanListItemProps = {
   kirtan: KirtanSummary;
@@ -12,6 +14,8 @@ type KirtanListItemProps = {
   onEnqueue?: (kirtan: KirtanSummary) => void;
   onDequeue?: (id: string) => void;
   isQueued?: boolean;
+  onToggleFavorite?: (kirtan: KirtanSummary) => void;
+  isFavorited?: boolean;
 };
 
 function formatDuration(seconds?: number | null) {
@@ -51,6 +55,8 @@ export default function KirtanListItem({
   onEnqueue,
   onDequeue,
   isQueued = false,
+  onToggleFavorite,
+  isFavorited = false,
 }: KirtanListItemProps) {
   const durationLabel = formatDuration(kirtan.duration_seconds);
   const sequenceLabel = kirtan.sequence_num ? `#${kirtan.sequence_num}` : null;
@@ -128,6 +134,27 @@ export default function KirtanListItem({
       </div>
 
       <div className="ml-4 flex items-center gap-2">
+        {onToggleFavorite ? (
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+              onToggleFavorite(kirtan);
+            }}
+            className={`flex h-7 w-7 items-center justify-center rounded-full border transition ${
+              isFavorited
+                ? "cursor-pointer border-[#f3c2ce] bg-[#fff1f5] text-[#c45d74]"
+                : "cursor-pointer border-[#efd4cb] bg-white text-[#cc7680] hover:bg-[#fff7f3]"
+            }`}
+            aria-label={isFavorited ? "Remove from favorites" : "Add to favorites"}
+            title={isFavorited ? "Remove from favorites" : "Add to favorites"}
+          >
+            <SFIcon
+              icon={isFavorited ? sfSuitHeartFill : sfSuitHeart}
+              className="h-3.5 w-3.5"
+            />
+          </button>
+        ) : null}
         {onEnqueue || onDequeue ? (
           <button
             type="button"

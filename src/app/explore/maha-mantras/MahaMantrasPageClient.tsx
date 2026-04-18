@@ -51,6 +51,8 @@ export default function MahaMantrasPageClient({
     enqueue,
     dequeueById,
     isQueued,
+    toggleFavorite,
+    isFavorited,
     select,
   } = useAudioPlayer();
   const [pinnedKirtan, setPinnedKirtan] = useState<KirtanSummary | null>(null);
@@ -210,6 +212,8 @@ export default function MahaMantrasPageClient({
               onEnqueue={enqueue}
               onDequeue={dequeueById}
               isQueued={isQueued(featured.id)}
+              onToggleFavorite={toggleFavorite}
+              isFavorited={isFavorited(featured.id)}
             />
           </div>
         ) : null}
@@ -321,6 +325,8 @@ export default function MahaMantrasPageClient({
                 onEnqueue={enqueue}
                 onDequeue={dequeueById}
                 isQueued={isQueued(m.id)}
+                onToggleFavorite={toggleFavorite}
+                isFavorited={isFavorited(m.id)}
               />
             ))
           )}

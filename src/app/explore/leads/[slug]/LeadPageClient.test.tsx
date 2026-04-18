@@ -17,6 +17,8 @@ vi.mock("@/lib/audio/AudioPlayerContext", () => ({
     enqueue: vi.fn(),
     dequeueById: vi.fn(),
     isQueued: () => false,
+    toggleFavorite: vi.fn(),
+    isFavorited: () => false,
     select: vi.fn(),
   }),
 }));

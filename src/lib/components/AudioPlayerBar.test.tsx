@@ -46,6 +46,8 @@ vi.mock("@/lib/audio/AudioPlayerContext", () => ({
     queue: [queuedKirtan],
     clearQueue: vi.fn(),
     dequeueById: dequeueByIdMock,
+    toggleFavorite: vi.fn(),
+    isFavorited: () => false,
     duration: currentKirtan.duration_seconds ?? 0,
     currentTime: 0,
     isBuffering: false,

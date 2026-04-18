@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { usePlayback } from "./usePlayback";
 import { useQueue } from "./useQueue";
+import { useFavorites } from "./useFavorites";
 import { KirtanSummary } from "@/types/kirtan";
 import { formatKirtanTitle } from "@/lib/kirtanTitle";
 import { markOffline, recordRequestSuccess } from "@/lib/net/offlineStore";
@@ -43,6 +44,7 @@ function shuffleKirtans(items: KirtanSummary[]) {
 function useAudioPlayerInternal() {
   const playback = usePlayback();
   const queueApi = useQueue();
+  const favoritesApi = useFavorites();
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const historyRef = useRef<KirtanSummary[]>([]);
   const lastCurrentRef = useRef<KirtanSummary | null>(null);
@@ -457,6 +459,13 @@ function useAudioPlayerInternal() {
     clearQueue: queueApi.clearQueue,
     queueNotice: queueApi.notice,
     isQueued: queueApi.isQueued,
+    favorites: favoritesApi.favorites,
+    favoritesLoaded: favoritesApi.loaded,
+    toggleFavorite: favoritesApi.toggleFavorite,
+    removeFavorite: favoritesApi.removeFavorite,
+    clearFavorites: favoritesApi.clearFavorites,
+    isFavorited: favoritesApi.isFavorited,
+    favoritesNotice: favoritesApi.notice,
   };
 }
 

@@ -46,6 +46,8 @@ export default function BhajansPageClient({
     enqueue,
     dequeueById,
     isQueued,
+    toggleFavorite,
+    isFavorited,
     select,
   } = useAudioPlayer();
   const [pinnedKirtan, setPinnedKirtan] = useState<KirtanSummary | null>(null);
@@ -140,6 +142,8 @@ export default function BhajansPageClient({
               onEnqueue={enqueue}
               onDequeue={dequeueById}
               isQueued={isQueued(featured.id)}
+              onToggleFavorite={toggleFavorite}
+              isFavorited={isFavorited(featured.id)}
             />
           </div>
         ) : null}
@@ -207,6 +211,8 @@ export default function BhajansPageClient({
                 onEnqueue={enqueue}
                 onDequeue={dequeueById}
                 isQueued={isQueued(b.id)}
+                onToggleFavorite={toggleFavorite}
+                isFavorited={isFavorited(b.id)}
               />
             ))
           )}

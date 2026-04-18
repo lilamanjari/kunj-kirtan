@@ -28,6 +28,8 @@ export default function OccasionDetailClient({
     enqueue,
     dequeueById,
     isQueued,
+    toggleFavorite,
+    isFavorited,
     select,
   } = useAudioPlayer();
   const [pinnedKirtan, setPinnedKirtan] = useState<KirtanSummary | null>(null);
@@ -62,6 +64,8 @@ export default function OccasionDetailClient({
             onEnqueue={enqueue}
             onDequeue={dequeueById}
             isQueued={isQueued(k.id)}
+            onToggleFavorite={toggleFavorite}
+            isFavorited={isFavorited(k.id)}
           />
         ))}
       </ul>
@@ -96,6 +100,8 @@ export default function OccasionDetailClient({
               onEnqueue={enqueue}
               onDequeue={dequeueById}
               isQueued={isQueued(featured.id)}
+              onToggleFavorite={toggleFavorite}
+              isFavorited={isFavorited(featured.id)}
               contextLine={
                 isPersonFocusedOccasion && featured.person_tag
                   ? `In honor of ${featured.person_tag}`
