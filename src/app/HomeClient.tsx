@@ -90,7 +90,7 @@ export default function HomeClient({ data }: { data: HomeData }) {
             </section>
           )}
           <section>
-            <h2 className="text-xs uppercase tracking-wide text-stone-500">
+            <h2 className="text-sm font-semibold uppercase tracking-[0.16em] text-stone-500">
               Explore
             </h2>
 
@@ -126,7 +126,7 @@ export default function HomeClient({ data }: { data: HomeData }) {
           <HomeFavoritesStrip favorites={favorites} loaded={favoritesLoaded} />
 
           <section>
-            <h2 className="text-xs uppercase tracking-wide text-stone-500">
+            <h2 className="text-sm font-semibold uppercase tracking-[0.16em] text-stone-500">
               Recently Added
             </h2>
 
