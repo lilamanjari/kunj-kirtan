@@ -2,8 +2,6 @@ import LeadPageClient from "./LeadPageClient";
 import { notFound } from "next/navigation";
 import { getLeadPageData } from "@/lib/server/leadPage";
 
-export const revalidate = 86400;
-
 export default async function LeadPage({
   params,
 }: {

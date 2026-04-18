@@ -1,13 +1,16 @@
 // @vitest-environment jsdom
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, waitFor } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { AudioPlayerProvider, useAudioPlayer } from "./AudioPlayerContext";
 import type { KirtanSummary } from "@/types/kirtan";
+
+const setQueueMock = vi.fn();
 
 vi.mock("./useQueue", () => ({
   useQueue: () => ({
     queue: [],
     enqueue: vi.fn(),
+    setQueue: setQueueMock,
     dequeue: vi.fn(),
     dequeueById: vi.fn(),
     clearQueue: vi.fn(),
@@ -27,17 +30,47 @@ const testKirtan: KirtanSummary = {
   sanga: "Test",
 };
 
+const secondKirtan: KirtanSummary = {
+  id: "kirtan-2",
+  audio_url: "https://example.com/test-2.mp3",
+  type: "BHJ",
+  title: "Second Bhajan",
+  lead_singer: "Singer",
+  recorded_date: "2020-01-02",
+  sanga: "Test",
+};
+
 function TestHarness() {
   const player = useAudioPlayer();
   return (
-    <button type="button" onClick={() => player.select(testKirtan)}>
-      Select
-    </button>
+    <div>
+      <button type="button" onClick={() => player.select(testKirtan)}>
+        Select
+      </button>
+      <button
+        type="button"
+        onClick={() =>
+          player.playCollection([
+            testKirtan,
+            secondKirtan,
+            testKirtan,
+          ])
+        }
+      >
+        Play collection
+      </button>
+      <div data-testid="current-id">{player.current?.id ?? "none"}</div>
+    </div>
   );
 }
 
 describe("AudioPlayerContext resume behavior", () => {
+  afterEach(() => {
+    cleanup();
+  });
+
   beforeEach(() => {
+    setQueueMock.mockReset();
     const store = new Map<string, string>();
     const mockStorage = {
       getItem: (key: string) => (store.has(key) ? store.get(key)! : null),
@@ -65,6 +98,10 @@ describe("AudioPlayerContext resume behavior", () => {
       configurable: true,
       value: vi.fn(),
     });
+    Object.defineProperty(HTMLMediaElement.prototype, "load", {
+      configurable: true,
+      value: vi.fn(),
+    });
   });
 
   it("does not overwrite restored position with 0 on next render", async () => {
@@ -86,5 +123,18 @@ describe("AudioPlayerContext resume behavior", () => {
         time: 20,
       });
     });
+  });
+
+  it("replaces the queue and starts from the first deduped kirtan when playing a collection", () => {
+    render(
+      <AudioPlayerProvider>
+        <TestHarness />
+      </AudioPlayerProvider>,
+    );
+
+    fireEvent.click(screen.getByText("Play collection"));
+
+    expect(screen.getByTestId("current-id").textContent).toBe("kirtan-1");
+    expect(setQueueMock).toHaveBeenCalledWith([secondKirtan]);
   });
 });

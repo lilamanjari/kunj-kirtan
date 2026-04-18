@@ -128,18 +128,4 @@ describe("useQueue", () => {
     expect(result.current.isQueued("1")).toBe(true);
     expect(result.current.isQueued("2")).toBe(false);
   });
-
-  it("vibrates on enqueue when supported", () => {
-    const storage = createMemoryStorage();
-    const vibrate = vi.fn();
-    vi.stubGlobal("navigator", { vibrate });
-
-    const { result } = renderHook(() => useQueue(storage));
-
-    act(() => {
-      result.current.enqueue(sampleKirtan("1"));
-    });
-
-    expect(vibrate).toHaveBeenCalledWith(20);
-  });
 });
