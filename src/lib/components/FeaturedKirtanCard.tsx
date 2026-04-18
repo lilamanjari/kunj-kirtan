@@ -85,7 +85,9 @@ export default function FeaturedKirtanCard({
       `}
       style={cardToneStyle}
     >
-      <p className="text-xs tracking-widest text-stone-400">FEATURED</p>
+      <p className="text-xs font-medium uppercase tracking-[0.16em] text-white/58">
+        Featured
+      </p>
       {contextLine ? (
         <p className="mt-2 text-sm font-medium text-[#e4b6a7]">
           {contextLine}
