@@ -44,7 +44,7 @@ export default function HomeClient({ data }: { data: HomeData }) {
       <main className="relative z-10 mx-auto max-w-md space-y-6">
         <div className="relative">
           <Image
-            src="/Kunj%20Kirtan%20Header.jpg"
+            src="/KunjKirtan-SrilaGurudeva-Header.jpeg"
             alt="Kunj Kirtan header artwork"
             width={1200}
             height={520}
