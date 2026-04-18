@@ -1,20 +1,30 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useAudioPlayer } from "@/lib/audio/AudioPlayerContext";
 import { formatKirtanTitle } from "@/lib/kirtanTitle";
 import { formatDateLong } from "@/lib/utils/date";
 import type { KirtanSummary } from "@/types/kirtan";
 import { SFIcon } from "@bradleyhodges/sfsymbols-react";
-import {
-  sfPlayFill,
-  sfSuitHeartFill,
-} from "@bradleyhodges/sfsymbols";
+import { sfPlayFill, sfSuitHeartFill } from "@bradleyhodges/sfsymbols";
 import Equalizer from "@/lib/components/Equalizer";
 
 type HomeFavoritesStripProps = {
   favorites: KirtanSummary[];
   loaded: boolean;
+};
+
+const FAVORITES_BG_IMAGE_OPACITY = 1;
+const FAVORITES_HEADER_OVERLAY = {
+  start: 0.62,
+  middle: 0.34,
+  end: 0,
+};
+const FAVORITES_CARDS_OVERLAY = {
+  start: 0,
+  middle: 0,
+  end: 0,
 };
 
 function formatDuration(seconds?: number | null) {
@@ -58,31 +68,61 @@ export default function HomeFavoritesStrip({
   const previewFavorites = favorites.slice(0, 4);
 
   return (
-    <section>
-      <div className="flex items-center justify-between gap-3">
+    <section className="relative -mx-5 mt-2 px-5 py-5">
+      <div aria-hidden="true" className="absolute inset-0">
+        <Image
+          src="/Favorites Background.jpeg"
+          alt=""
+          fill
+          sizes="(max-width: 768px) 100vw, 480px"
+          className="object-cover object-[38%_22%]"
+          style={{ opacity: FAVORITES_BG_IMAGE_OPACITY }}
+        />
+      </div>
+      <div
+        aria-hidden="true"
+        className="absolute inset-x-0 top-0 h-28"
+        style={{
+          background: `linear-gradient(180deg, rgba(49,28,35,${FAVORITES_HEADER_OVERLAY.start}) 0%, rgba(49,28,35,${FAVORITES_HEADER_OVERLAY.middle}) 55%, rgba(49,28,35,${FAVORITES_HEADER_OVERLAY.end}) 100%)`,
+        }}
+      />
+      <div
+        aria-hidden="true"
+        className="absolute inset-x-0 bottom-0 top-20"
+        style={{
+          background: `linear-gradient(180deg, rgba(255,248,245,${FAVORITES_CARDS_OVERLAY.start}) 0%, rgba(255,250,248,${FAVORITES_CARDS_OVERLAY.middle}) 24%, rgba(255,252,250,${FAVORITES_CARDS_OVERLAY.end}) 100%)`,
+        }}
+      />
+
+      <div className="relative flex items-center justify-between gap-3">
         <div>
-          <h2 className="text-xs uppercase tracking-wide text-stone-500">
+          <h2 className="text-sm font-semibold uppercase tracking-[0.16em] text-white/92">
             Favorites
           </h2>
-          <p className="mt-1 text-sm text-stone-600">
+          <p className="mt-1 text-sm text-white/82">
             Your saved kirtans, ready to play.
           </p>
         </div>
-        <Link
-          href="/favorites"
-          className="shrink-0 rounded-full border border-rose-200 bg-white/80 px-3 py-1.5 text-xs font-medium text-[#9b5e52] shadow-sm transition hover:bg-rose-50"
-        >
-          View all
-        </Link>
+        <div className="shrink-0">
+          <Link
+            href="/favorites"
+            className="rounded-full border border-rose-200/90 bg-white/88 px-3 py-1.5 text-xs font-medium text-[#9b5e52] shadow-sm transition hover:bg-rose-50"
+          >
+            View all
+          </Link>
+        </div>
       </div>
 
-      <div className="mt-3 -mx-5 overflow-x-auto px-5 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div className="relative mt-4 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         <div className="flex gap-3 overflow-y-visible py-1 pr-8">
           {previewFavorites.map((kirtan) => {
             const durationLabel = formatDuration(kirtan.duration_seconds);
-            const sequenceLabel = kirtan.sequence_num ? `#${kirtan.sequence_num}` : null;
+            const sequenceLabel = kirtan.sequence_num
+              ? `#${kirtan.sequence_num}`
+              : null;
             const baseHue = hashHue(kirtan.id);
-            const tintHue = kirtan.type === "BHJ" ? (baseHue + 340) % 360 : baseHue;
+            const tintHue =
+              kirtan.type === "BHJ" ? (baseHue + 340) % 360 : baseHue;
             const borderTint = kirtan.is_rare_gem
               ? "rgba(251, 191, 36, 0.65)"
               : `hsla(${tintHue}, 72%, 82%, 1)`;
