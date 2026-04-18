@@ -1,28 +1,11 @@
 import HomeClient from "./HomeClient";
-import type { HomeData } from "@/types/home";
-import { headers } from "next/headers";
+import { getHomePageData } from "@/lib/server/homePage";
 
-async function getHomeData(): Promise<HomeData> {
-  const headerList = await headers();
-  const host = headerList.get("host");
-  const proto = headerList.get("x-forwarded-proto") ?? "http";
-  const baseUrl = host ? `${proto}://${host}` : "http://localhost:3000";
-
-  const res = await fetch(`${baseUrl}/api/home`, {
-    next: {
-      revalidate: 86400,
-      tags: ["home"],
-    },
-  });
-
-  if (!res.ok) {
+export default async function Home() {
+  const result = await getHomePageData();
+  if (result.error || !result.data) {
     throw new Error("Failed to fetch home data");
   }
 
-  return res.json();
-}
-
-export default async function Home() {
-  const data = await getHomeData();
-  return <HomeClient data={data} />;
+  return <HomeClient data={result.data} />;
 }
