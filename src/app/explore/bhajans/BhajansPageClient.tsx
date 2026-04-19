@@ -148,40 +148,42 @@ export default function BhajansPageClient({
           </div>
         ) : null}
 
-        <input
-          type="text"
-          placeholder="Search bhajans…"
-          value={search}
-          onChange={(e) => {
-            setIsLoadingList(true);
-            resetPagination();
-            setSearch(e.target.value);
-          }}
-          className="w-full rounded-xl border border-stone-200 bg-white px-4 py-2 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-rose-300 focus:border-rose-300"
-        />
+        <div className="flex items-center gap-2">
+          <input
+            type="text"
+            placeholder="Search bhajans…"
+            value={search}
+            onChange={(e) => {
+              setIsLoadingList(true);
+              resetPagination();
+              setSearch(e.target.value);
+            }}
+            className="min-w-0 flex-1 rounded-xl border border-stone-200 bg-white px-4 py-2 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-rose-300 focus:border-rose-300"
+          />
 
-        {bhajans.length > 1 ? (
-          <div className="flex justify-end gap-2">
-            <button
-              type="button"
-              onClick={() => playCollection(bhajans)}
-              aria-label="Play all bhajans"
-              title="Play all"
-              className="flex h-8 w-8 items-center justify-center rounded-full border border-[#ead8d2] bg-white text-stone-700 shadow-sm hover:bg-[#fff7f3]"
-            >
-              <SFIcon icon={sfPlaySquareStackFill} className="h-4 w-4" />
-            </button>
-            <button
-              type="button"
-              onClick={() => playCollection(bhajans, { shuffle: true })}
-              aria-label="Shuffle bhajans"
-              title="Shuffle"
-              className="flex h-8 w-8 items-center justify-center rounded-full border border-[#ead8d2] bg-white text-stone-700 shadow-sm hover:bg-[#fff7f3]"
-            >
-              <SFIcon icon={sfShuffleCircle} className="h-4 w-4" />
-            </button>
-          </div>
-        ) : null}
+          {bhajans.length > 1 ? (
+            <div className="flex shrink-0 gap-2">
+              <button
+                type="button"
+                onClick={() => playCollection(bhajans)}
+                aria-label="Play all bhajans"
+                title="Play all"
+                className="flex h-8 w-8 items-center justify-center rounded-full border border-[#ead8d2] bg-white text-stone-700 shadow-sm hover:bg-[#fff7f3]"
+              >
+                <SFIcon icon={sfPlaySquareStackFill} className="h-4 w-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => playCollection(bhajans, { shuffle: true })}
+                aria-label="Shuffle bhajans"
+                title="Shuffle"
+                className="flex h-8 w-8 items-center justify-center rounded-full border border-[#ead8d2] bg-white text-stone-700 shadow-sm hover:bg-[#fff7f3]"
+              >
+                <SFIcon icon={sfShuffleCircle} className="h-4 w-4" />
+              </button>
+            </div>
+          ) : null}
+        </div>
 
         <ul className="space-y-3">
           {isLoadingList ? (

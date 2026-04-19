@@ -76,7 +76,7 @@ export async function GET(req: Request) {
 
   const bhajans: KirtanSummary[] = rows.map((k) => ({
     id: k.id,
-    audio_url: k.audio_url,
+    audio_url: k.audio_url ?? "",
     type: k.type,
     title: k.title,
     lead_singer: k.lead_singer,
@@ -92,7 +92,7 @@ export async function GET(req: Request) {
   const featuredKirtan: KirtanSummary | null = featured.kirtan
     ? {
         id: featured.kirtan.id,
-        audio_url: featured.kirtan.audio_url,
+        audio_url: featured.kirtan.audio_url ?? "",
         type: featured.kirtan.type,
         title: featured.kirtan.title,
         lead_singer: featured.kirtan.lead_singer,

@@ -79,7 +79,7 @@ const getCachedOccasionPageData = unstable_cache(
     const payload: KirtanSummary[] =
       kirtans?.map((k) => ({
         id: k.id,
-        audio_url: k.audio_url,
+        audio_url: k.audio_url ?? "",
         type: k.type as KirtanType,
         title: formatKirtanTitle(k.type as KirtanType, k.title),
         lead_singer: k.lead_singer,
@@ -96,7 +96,7 @@ const getCachedOccasionPageData = unstable_cache(
     const featuredKirtan: KirtanSummary | null = featured.kirtan
       ? {
           id: featured.kirtan.id,
-          audio_url: featured.kirtan.audio_url,
+          audio_url: featured.kirtan.audio_url ?? "",
           type: featured.kirtan.type as KirtanType,
           title: formatKirtanTitle(
             featured.kirtan.type as KirtanType,

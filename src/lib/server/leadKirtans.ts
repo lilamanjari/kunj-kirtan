@@ -284,7 +284,7 @@ export async function fetchTaggedLeadKirtansPage({
 
   const kirtans: KirtanSummary[] = rows.map((k) => ({
     id: k.id,
-    audio_url: k.audio_url,
+    audio_url: k.audio_url ?? "",
     type: k.type as KirtanType,
     title: formatKirtanTitle(k.type as KirtanType, k.title),
     lead_singer: k.lead_singer,

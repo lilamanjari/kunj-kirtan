@@ -104,7 +104,7 @@ export async function GET(req: Request) {
 
   const mantras: KirtanSummary[] = page.map((k) => ({
     id: k.id,
-    audio_url: k.audio_url,
+    audio_url: k.audio_url ?? "",
     type: "MM",
     title: formatKirtanTitle("MM", k.title),
     lead_singer: k.lead_singer,
@@ -120,7 +120,7 @@ export async function GET(req: Request) {
   const featuredKirtan: KirtanSummary | null = featured.kirtan
     ? {
         id: featured.kirtan.id,
-        audio_url: featured.kirtan.audio_url,
+        audio_url: featured.kirtan.audio_url ?? "",
         type: "MM",
         title: formatKirtanTitle("MM", featured.kirtan.title),
         lead_singer: featured.kirtan.lead_singer,

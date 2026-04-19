@@ -1,4 +1,3 @@
-import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 import type { KirtanSummary, KirtanType } from "@/types/kirtan";
 import { fetchKirtanTagFlags } from "@/lib/server/kirtanTags";
@@ -84,7 +83,7 @@ export async function GET(
   const payload: KirtanSummary[] =
     kirtans?.map((k) => ({
       id: k.id,
-      audio_url: k.audio_url,
+      audio_url: k.audio_url ?? "",
       type: k.type as KirtanType,
       title: formatKirtanTitle(k.type as KirtanType, k.title),
       lead_singer: k.lead_singer,
