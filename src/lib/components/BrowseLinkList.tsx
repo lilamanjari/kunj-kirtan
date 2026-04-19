@@ -16,14 +16,14 @@ type BrowseLinkListProps = {
 
 const BROWSE_TINTS = [
   {
-    border: "rgba(228, 185, 192, 0.82)",
+    border: "rgba(220, 150, 140, 0.84)",
     background:
-      "linear-gradient(135deg, rgba(255,250,248,0.98) 0%, rgba(252,236,239,0.98) 100%)",
+      "linear-gradient(135deg, rgba(255, 249, 246, 0.98) 0%, rgba(252, 226, 220, 0.98) 100%)",
   },
   {
-    border: "rgba(220, 195, 172, 0.82)",
+    border: "rgba(230, 170, 160, 0.84)",
     background:
-      "linear-gradient(135deg, rgba(255,251,247,0.98) 0%, rgba(246,234,244,0.98) 100%)",
+      "linear-gradient(135deg, rgba(255, 250, 247, 0.98) 0%, rgba(244, 231, 239, 0.98) 100%)",
   },
 ] as const;
 
@@ -64,7 +64,7 @@ export default function BrowseLinkList({
                   </p>
                 ) : null}
               </div>
-              <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[rgba(167,110,93,0.22)] bg-white/82 text-lg text-[rgb(147,96,81)] shadow-[0_8px_18px_rgba(84,38,27,0.12)] backdrop-blur-sm transition group-hover:translate-x-0.5">
+              <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[rgba(180,100,80,0.18)] bg-white/82 text-lg text-[rgb(138,88,72)] shadow-[0_8px_18px_rgba(84,38,27,0.12)] backdrop-blur-sm transition group-hover:translate-x-0.5">
                 →
               </span>
             </Link>
