@@ -259,6 +259,10 @@ function matchKeyFor(type, filename) {
   return `${type}::${filename}`;
 }
 
+function canFallbackMatchBySourceFile(parsed) {
+  return Boolean(String(parsed.date ?? "").trim());
+}
+
 function getDurationSeconds(filePath) {
   const result = spawnSync(
     "ffprobe",
@@ -380,7 +384,7 @@ async function main() {
 
   for (const parsed of scannedByKey.values()) {
     let existingIndex = fileIdIndex.get(parsed.file_id);
-    if (existingIndex === undefined) {
+    if (existingIndex === undefined && canFallbackMatchBySourceFile(parsed)) {
       existingIndex = sourceFileIndex.get(
         matchKeyFor(parsed.type, parsed.source_file),
       );
