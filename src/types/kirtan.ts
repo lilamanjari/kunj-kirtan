@@ -1,6 +1,20 @@
 export type KirtanType = "MM" | "BHJ" | "HK";
 export type RecordedDatePrecision = "day" | "month" | "year";
 
+export type PlayableKirtanRow = {
+  id: string;
+  audio_url: string | null;
+  type: KirtanType;
+  title: string;
+  lead_singer: string | null;
+  lead_singer_id?: string | null;
+  recorded_date: string | null;
+  recorded_date_precision?: RecordedDatePrecision | null;
+  sanga: string;
+  duration_seconds?: number | null;
+  sequence_num?: number | null;
+};
+
 export type KirtanSummary = {
   id: string;
   audio_url: string;

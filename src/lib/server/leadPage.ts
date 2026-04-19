@@ -4,7 +4,7 @@ import { fetchKirtanTagFlags } from "@/lib/server/kirtanTags";
 import { getDailyRareGem } from "@/lib/server/featured";
 import type {
   KirtanSummary,
-  KirtanType,
+  PlayableKirtanRow,
   RecordedDatePrecision,
 } from "@/types/kirtan";
 import { formatKirtanTitle } from "@/lib/kirtanTitle";
@@ -31,18 +31,7 @@ function normalizeRecordedDatePrecision(
 }
 
 function mapFeaturedKirtan(
-  featuredData: {
-    id: string;
-    audio_url: string;
-    type: string;
-    title: string;
-    lead_singer: string | null;
-    recorded_date: string | null;
-    recorded_date_precision?: string | null;
-    sanga: string;
-    duration_seconds?: number | null;
-    sequence_num?: number | null;
-  } | null,
+  featuredData: PlayableKirtanRow | null,
   harmoniumIds: Set<string>,
   rareGemIds: Set<string>,
 ): KirtanSummary | null {
@@ -50,10 +39,10 @@ function mapFeaturedKirtan(
 
   return {
     id: featuredData.id,
-    audio_url: featuredData.audio_url,
-    type: featuredData.type as KirtanType,
+    audio_url: featuredData.audio_url ?? "",
+    type: featuredData.type,
     title: formatKirtanTitle(
-      featuredData.type as KirtanType,
+      featuredData.type,
       featuredData.title,
     ),
     lead_singer: featuredData.lead_singer,
@@ -70,26 +59,15 @@ function mapFeaturedKirtan(
 }
 
 function mapLeadKirtans(
-  rows: Array<{
-    id: string;
-    audio_url: string;
-    type: string;
-    title: string;
-    lead_singer: string | null;
-    recorded_date: string | null;
-    recorded_date_precision?: string | null;
-    sanga: string;
-    duration_seconds?: number | null;
-    sequence_num?: number | null;
-  }>,
+  rows: PlayableKirtanRow[],
   harmoniumIds: Set<string>,
   rareGemIds: Set<string>,
 ): KirtanSummary[] {
   return rows.map((k) => ({
     id: k.id,
-    audio_url: k.audio_url,
-    type: k.type as KirtanType,
-    title: formatKirtanTitle(k.type as KirtanType, k.title),
+    audio_url: k.audio_url ?? "",
+    type: k.type,
+    title: formatKirtanTitle(k.type, k.title),
     lead_singer: k.lead_singer,
     recorded_date: k.recorded_date,
     recorded_date_precision: normalizeRecordedDatePrecision(

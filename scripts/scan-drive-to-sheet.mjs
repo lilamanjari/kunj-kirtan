@@ -124,6 +124,9 @@ function parseFilename(name, fileId, parentFolderName) {
   } else if (parentIndicatesHK) {
     record.type = "HK";
     if (tokens.length > 0) {
+      record.title = tokens.shift() || "";
+    }
+    if (tokens.length > 0) {
       record.singer = tokens.shift() || "";
     }
   } else {

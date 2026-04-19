@@ -1,6 +1,6 @@
 import { unstable_cache } from "next/cache";
 import { supabase } from "@/lib/supabase";
-import type { KirtanType } from "@/types/kirtan";
+import type { KirtanType, PlayableKirtanRow } from "@/types/kirtan";
 
 type FeaturedResult<T> = {
   kirtan: T | null;
@@ -18,7 +18,7 @@ function dailyIndex(length: number, salt = "") {
 }
 
 type FeaturedFilters = {
-  type?: KirtanType;
+  types?: KirtanType[];
   leadSingerId?: string;
   leadSingerIds?: string[];
   kirtanIds?: string[];
@@ -64,8 +64,8 @@ const getRareGemCandidates = unstable_cache(
 
 export async function getDailyRareGem(
   filters: FeaturedFilters = {},
-): Promise<FeaturedResult<any>> {
-  const { type, leadSingerId, leadSingerIds, kirtanIds } = filters;
+): Promise<FeaturedResult<PlayableKirtanRow>> {
+  const { types, leadSingerId, leadSingerIds, kirtanIds } = filters;
   const { rows, error } = await getRareGemCandidates();
   if (error) {
     return { kirtan: null, error };
@@ -75,9 +75,10 @@ export async function getDailyRareGem(
   }
 
   const allowedKirtanIds = kirtanIds ? new Set(kirtanIds) : null;
+  const allowedTypes = types ? new Set(types) : null;
 
   const filteredRows = rows.filter((row) => {
-    if (type && row.type !== type) {
+    if (allowedTypes && !allowedTypes.has(row.type)) {
       return false;
     }
     if (leadSingerId && row.lead_singer_id !== leadSingerId) {
@@ -93,7 +94,7 @@ export async function getDailyRareGem(
   });
 
   const salt = [
-    type ?? "ALL",
+    types?.slice().sort().join(",") ?? "ALL_TYPES",
     leadSingerId ?? "ANY",
     leadSingerIds?.slice().sort().join(",") ?? "ANY_GROUP",
     kirtanIds?.slice().sort().join(",") ?? "ANY_KIRTANS",

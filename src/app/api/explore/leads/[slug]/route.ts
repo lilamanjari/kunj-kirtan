@@ -1,5 +1,5 @@
 import { getDailyRareGem } from "@/lib/server/featured";
-import type { KirtanSummary, KirtanType } from "@/types/kirtan";
+import type { KirtanSummary } from "@/types/kirtan";
 import { ServerTiming, jsonWithServerTiming } from "@/lib/server/serverTiming";
 import { formatKirtanTitle } from "@/lib/kirtanTitle";
 import {
@@ -133,10 +133,10 @@ export async function GET(
 
     featured = {
       id: featuredData.id,
-      audio_url: featuredData.audio_url,
-      type: featuredData.type as KirtanType,
+      audio_url: featuredData.audio_url ?? "",
+      type: featuredData.type,
       title: formatKirtanTitle(
-        featuredData.type as KirtanType,
+        featuredData.type,
         featuredData.title,
       ),
       lead_singer: featuredData.lead_singer,

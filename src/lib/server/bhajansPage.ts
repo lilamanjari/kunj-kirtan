@@ -7,7 +7,7 @@ import type { BhajansResponse } from "@/types/bhajans";
 
 const getCachedBhajansPageData = unstable_cache(
   async () => {
-    const featured = await getDailyRareGem({ type: "BHJ" });
+    const featured = await getDailyRareGem({ types: ["BHJ"] });
     if (featured.error) {
       return { data: null, error: featured.error, status: 500 };
     }

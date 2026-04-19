@@ -1,4 +1,3 @@
-import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 import type { KirtanSummary } from "@/types/kirtan";
 import { fetchKirtanTagFlags } from "@/lib/server/kirtanTags";
@@ -27,7 +26,7 @@ export async function GET(req: Request) {
   }
 
   const featured = await timing.measure("featured", () =>
-    getDailyRareGem({ type: "BHJ" }),
+    getDailyRareGem({ types: ["BHJ"] }),
   );
 
   if (featured.error) {

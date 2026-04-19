@@ -28,6 +28,7 @@ vi.mock("@/lib/server/featured", () => ({
 type MockResult = { data: unknown; error: null | { message: string } };
 type MockBuilder = {
   select: ReturnType<typeof vi.fn>;
+  in: ReturnType<typeof vi.fn>;
   eq: ReturnType<typeof vi.fn>;
   limit: ReturnType<typeof vi.fn>;
   order: ReturnType<typeof vi.fn>;
@@ -51,6 +52,7 @@ function createMockBuilder(result: MockResult): MockBuilder {
   const chain = () => self;
 
   self.select = vi.fn(chain);
+  self.in = vi.fn(chain);
   self.eq = vi.fn(chain);
   self.limit = vi.fn(chain);
   self.order = vi.fn(chain);

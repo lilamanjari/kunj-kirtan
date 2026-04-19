@@ -1,6 +1,6 @@
 import { unstable_cache } from "next/cache";
 import { supabase } from "@/lib/supabase";
-import type { KirtanSummary } from "@/types/kirtan";
+import type { KirtanSummary, PlayableKirtanRow } from "@/types/kirtan";
 import { fetchKirtanTagFlags } from "@/lib/server/kirtanTags";
 import { getDailyRareGem } from "@/lib/server/featured";
 import { formatKirtanTitle } from "@/lib/kirtanTitle";
@@ -8,7 +8,7 @@ import type { MahaMantrasResponse } from "@/types/maha-mantras";
 
 const getCachedMahaMantrasPageData = unstable_cache(
   async () => {
-    const featured = await getDailyRareGem({ type: "MM" });
+    const featured = await getDailyRareGem({ types: ["MM"] });
     if (featured.error) {
       return { data: null, error: featured.error, status: 500 };
     }
@@ -27,7 +27,7 @@ const getCachedMahaMantrasPageData = unstable_cache(
       return { data: null, error: error.message, status: 500 };
     }
 
-    const rows = data ?? [];
+    const rows: PlayableKirtanRow[] = data ?? [];
     const hasMore = rows.length > 20;
     const page = hasMore ? rows.slice(0, 20) : rows;
     const last = page[page.length - 1];
@@ -45,7 +45,7 @@ const getCachedMahaMantrasPageData = unstable_cache(
 
     const mantras: KirtanSummary[] = page.map((k) => ({
       id: k.id,
-      audio_url: k.audio_url,
+      audio_url: k.audio_url ?? "",
       type: "MM",
       title: formatKirtanTitle("MM", k.title),
       lead_singer: k.lead_singer,
@@ -61,7 +61,7 @@ const getCachedMahaMantrasPageData = unstable_cache(
     const featuredKirtan: KirtanSummary | null = featured.kirtan
       ? {
           id: featured.kirtan.id,
-          audio_url: featured.kirtan.audio_url,
+          audio_url: featured.kirtan.audio_url ?? "",
           type: "MM",
           title: formatKirtanTitle("MM", featured.kirtan.title),
           lead_singer: featured.kirtan.lead_singer,

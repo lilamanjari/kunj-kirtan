@@ -26,6 +26,9 @@ const MM_FOLDER =
 const BHJ_FOLDER =
   process.env.BHJ_FOLDER ||
   "/Users/lailafrotjold/Documents/Radhe Kunj Kirtan/Bhajans";
+const HK_FOLDER =
+  process.env.HK_FOLDER ||
+  "/Users/lailafrotjold/Documents/Radhe Kunj Kirtan/Hari Katha";
 
 const MEDIA_BASE_URL =
   process.env.MEDIA_BASE_URL || "https://media.kunjkirtan.com";
@@ -183,6 +186,30 @@ function parseRecordedDate(value) {
 function getFileExtension(filename) {
   const match = String(filename || "").match(/\.([^.]+)$/);
   return match ? match[1].toLowerCase() : "mp3";
+}
+
+function resolveKirtanStorageFolder(type) {
+  switch (type) {
+    case "MM":
+      return "mm";
+    case "HK":
+      return "hk";
+    case "BHJ":
+    default:
+      return "bhajans";
+  }
+}
+
+function resolveLocalBaseFolder(type) {
+  switch (type) {
+    case "MM":
+      return MM_FOLDER;
+    case "HK":
+      return HK_FOLDER;
+    case "BHJ":
+    default:
+      return BHJ_FOLDER;
+  }
 }
 
 function contentTypeForExt(ext) {
@@ -478,8 +505,8 @@ async function main() {
       let existingKirtan = null;
 
       const ext = getFileExtension(sourceFile);
-      const folder = type === "MM" ? "mm" : "bhajans";
-      const localBase = type === "MM" ? MM_FOLDER : BHJ_FOLDER;
+      const folder = resolveKirtanStorageFolder(type);
+      const localBase = resolveLocalBaseFolder(type);
       const localPath = path.join(localBase, sourceFile);
 
       if (!fs.existsSync(localPath)) {

@@ -4,10 +4,10 @@ import { fetchKirtanTagFlags } from "@/lib/server/kirtanTags";
 import { getDailyRareGem } from "@/lib/server/featured";
 import { formatKirtanTitle } from "@/lib/kirtanTitle";
 import type { HomeData } from "@/types/home";
-import type { KirtanSummary, KirtanType } from "@/types/kirtan";
+import type { KirtanSummary, PlayableKirtanRow } from "@/types/kirtan";
 
 async function buildHomePageData() {
-    const featured = await getDailyRareGem();
+    const featured = await getDailyRareGem({ types: ["MM", "BHJ"] });
 
     if (featured.error) {
       return { data: null, error: featured.error, status: 500 };
@@ -17,9 +17,9 @@ async function buildHomePageData() {
       ? {
           id: featured.kirtan.id,
           audio_url: featured.kirtan.audio_url ?? "",
-          type: featured.kirtan.type as KirtanType,
+          type: featured.kirtan.type,
           title: formatKirtanTitle(
-            featured.kirtan.type as KirtanType,
+            featured.kirtan.type,
             featured.kirtan.title,
           ),
           lead_singer: featured.kirtan.lead_singer,
@@ -36,6 +36,7 @@ async function buildHomePageData() {
     const { data: recentlyAdded, error: recentlyAddedError } = await supabase
       .from("playable_kirtans")
       .select("*")
+      .in("type", ["MM", "BHJ"])
       .order("created_at", { ascending: false })
       .order("recorded_date", { ascending: false })
       .limit(10);
@@ -44,7 +45,8 @@ async function buildHomePageData() {
       return { data: null, error: recentlyAddedError.message, status: 500 };
     }
 
-    const recentIds = (recentlyAdded ?? []).map((k) => k.id);
+    const recentRows: PlayableKirtanRow[] = recentlyAdded ?? [];
+    const recentIds = recentRows.map((k) => k.id);
     const featuredId = featured.kirtan?.id ?? null;
     const harmoniumLookupIds = featuredId ? [featuredId, ...recentIds] : recentIds;
 
@@ -61,11 +63,11 @@ async function buildHomePageData() {
     }
 
     const recentlyAddedKirtans: KirtanSummary[] =
-      recentlyAdded?.map((k) => ({
+      recentRows.map((k) => ({
         id: k.id,
-        audio_url: k.audio_url,
-        type: k.type as KirtanType,
-        title: formatKirtanTitle(k.type as KirtanType, k.title),
+        audio_url: k.audio_url ?? "",
+        type: k.type,
+        title: formatKirtanTitle(k.type, k.title),
         lead_singer: k.lead_singer,
         recorded_date: k.recorded_date,
         recorded_date_precision: k.recorded_date_precision ?? null,
@@ -74,7 +76,7 @@ async function buildHomePageData() {
         sequence_num: k.sequence_num ?? null,
         has_harmonium: harmoniumIds.has(k.id),
         is_rare_gem: rareGemIds.has(k.id),
-      })) ?? [];
+      }));
 
     const data = {
       primary_action: featuredKirtan
