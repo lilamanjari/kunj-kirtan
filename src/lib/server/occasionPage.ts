@@ -41,7 +41,10 @@ const getCachedOccasionPageData = unstable_cache(
       };
     }
 
-    const featured = await getDailyRareGem({ kirtanIds: ids });
+    const featured = await getDailyRareGem({
+      kirtanIds: ids,
+      types: ["MM", "BHJ"],
+    });
     if (featured.error) {
       return { data: null, error: featured.error, status: 500 };
     }
@@ -50,6 +53,7 @@ const getCachedOccasionPageData = unstable_cache(
       .from("playable_kirtans")
       .select("*")
       .in("id", ids)
+      .in("type", ["MM", "BHJ"])
       .order("recorded_date", { ascending: false, nullsFirst: false })
       .order("created_at", { ascending: false })
       .order("id", { ascending: false });

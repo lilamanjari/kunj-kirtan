@@ -55,6 +55,7 @@ export async function GET(
       .from("playable_kirtans")
       .select("*")
       .in("id", ids)
+      .in("type", ["MM", "BHJ"])
       .order("recorded_date", { ascending: false, nullsFirst: false })
       .order("created_at", { ascending: false })
       .order("id", { ascending: false }),
