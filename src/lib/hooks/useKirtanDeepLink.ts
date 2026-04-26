@@ -50,7 +50,9 @@ export function useKirtanDeepLink({
         const kirtan = json.kirtan as KirtanSummary | null;
         if (kirtan) {
           onPin?.(kirtan);
-          onSelect(kirtan);
+          if (!isActive || !isActive(kirtan)) {
+            onSelect(kirtan);
+          }
         }
       })
       .catch(() => {})

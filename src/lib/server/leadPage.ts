@@ -21,6 +21,18 @@ import {
   OTHER_LEAD_SLUG,
 } from "@/lib/server/leadDirectory";
 
+function isTransientFetchFailure(error: unknown) {
+  if (!(error instanceof Error)) return false;
+  return error.message.includes("fetch failed");
+}
+
+function errorMessage(error: unknown) {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  return "Unknown error";
+}
+
 function normalizeRecordedDatePrecision(
   value: string | null | undefined,
 ): RecordedDatePrecision | null {
@@ -100,9 +112,8 @@ const getCachedOtherLeadPageData = unstable_cache(
     const activeType = firstAvailableLeadType(otherCounts);
     const { kirtan: featuredData, error: featuredError } =
       await getDailyRareGem({ leadSingerIds: otherLeadIds });
-
     if (featuredError) {
-      return { data: null, error: featuredError, status: 500 };
+      console.error("Lead page featured lookup failed for others:", featuredError);
     }
 
     const {
@@ -133,9 +144,8 @@ const getCachedOtherLeadPageData = unstable_cache(
       rareGemIds,
       error: tagError,
     } = await fetchKirtanTagFlags(ids);
-
     if (tagError) {
-      return { data: null, error: tagError, status: 500 };
+      console.error("Lead page tag flag lookup failed for others:", tagError);
     }
 
     const data: LeadResponse = {
@@ -147,8 +157,16 @@ const getCachedOtherLeadPageData = unstable_cache(
       active_type: activeType,
       has_more: hasMore,
       next_cursor: nextCursor,
-      kirtans: mapLeadKirtans(rows, harmoniumIds, rareGemIds),
-      featured: mapFeaturedKirtan(featuredData, harmoniumIds, rareGemIds),
+      kirtans: mapLeadKirtans(
+        rows,
+        tagError ? new Set() : harmoniumIds,
+        tagError ? new Set() : rareGemIds,
+      ),
+      featured: mapFeaturedKirtan(
+        featuredError ? null : featuredData,
+        tagError ? new Set() : harmoniumIds,
+        tagError ? new Set() : rareGemIds,
+      ),
     };
 
     return {
@@ -176,7 +194,7 @@ const getCachedSingleLeadPageData = unstable_cache(
       await getDailyRareGem({ leadSingerId: leadId });
 
     if (featuredError) {
-      return { data: null, error: featuredError, status: 500 };
+      console.error(`Lead page featured lookup failed for ${leadId}:`, featuredError);
     }
 
     const {
@@ -207,9 +225,8 @@ const getCachedSingleLeadPageData = unstable_cache(
       rareGemIds,
       error: tagError,
     } = await fetchKirtanTagFlags(ids);
-
     if (tagError) {
-      return { data: null, error: tagError, status: 500 };
+      console.error(`Lead page tag flag lookup failed for ${leadId}:`, tagError);
     }
 
     const data: LeadResponse = {
@@ -221,8 +238,16 @@ const getCachedSingleLeadPageData = unstable_cache(
       active_type: activeType,
       has_more: hasMore,
       next_cursor: nextCursor,
-      kirtans: mapLeadKirtans(rows, harmoniumIds, rareGemIds),
-      featured: mapFeaturedKirtan(featuredData, harmoniumIds, rareGemIds),
+      kirtans: mapLeadKirtans(
+        rows,
+        tagError ? new Set() : harmoniumIds,
+        tagError ? new Set() : rareGemIds,
+      ),
+      featured: mapFeaturedKirtan(
+        featuredError ? null : featuredData,
+        tagError ? new Set() : harmoniumIds,
+        tagError ? new Set() : rareGemIds,
+      ),
     };
 
     return {
@@ -238,7 +263,7 @@ const getCachedSingleLeadPageData = unstable_cache(
   },
 );
 
-export async function getLeadPageData(slug: string): Promise<{
+async function loadLeadPageData(slug: string): Promise<{
   data: LeadResponse | null;
   error: string | null;
   status: number;
@@ -260,4 +285,38 @@ export async function getLeadPageData(slug: string): Promise<{
   }
 
   return getCachedSingleLeadPageData(lead.id, lead.display_name);
+}
+
+export async function getLeadPageData(slug: string): Promise<{
+  data: LeadResponse | null;
+  error: string | null;
+  status: number;
+}> {
+  try {
+    return await loadLeadPageData(slug);
+  } catch (error) {
+    console.error(`Lead page load failed for slug="${slug}" on first attempt:`, error);
+
+    if (isTransientFetchFailure(error)) {
+      try {
+        return await loadLeadPageData(slug);
+      } catch (retryError) {
+        console.error(
+          `Lead page load failed for slug="${slug}" on retry:`,
+          retryError,
+        );
+        return {
+          data: null,
+          error: "Temporary network issue while loading this lead page.",
+          status: 500,
+        };
+      }
+    }
+
+    return {
+      data: null,
+      error: errorMessage(error),
+      status: 500,
+    };
+  }
 }

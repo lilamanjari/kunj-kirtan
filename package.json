@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "scan-drive": "node scripts/scan-drive-to-sheet.mjs",
+    "transcode-audio": "node scripts/transcode-quicktime-audio.mjs",
     "ingest": "node scripts/ingest-kirtans.mjs",
     "test": "vitest",
     "test:watch": "vitest --watch"

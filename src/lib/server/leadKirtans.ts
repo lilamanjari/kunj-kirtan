@@ -28,28 +28,23 @@ export function firstAvailableLeadType(counts: LeadCounts): KirtanType | null {
 }
 
 export async function fetchLeadCounts(leadSingerId: string) {
-  const countResults = await Promise.all(
-    LEAD_TYPE_ORDER.map(async (type) => {
-      const { count, error } = await supabase
-        .from("playable_kirtans")
-        .select("id", { count: "exact", head: true })
-        .eq("lead_singer_id", leadSingerId)
-        .eq("type", type);
+  const { data, error } = await supabase
+    .from("lead_kirtan_counts")
+    .select("type, count")
+    .eq("lead_singer_id", leadSingerId);
 
-      return { type, count: count ?? 0, error };
-    }),
-  );
-
-  const countError = countResults.find((result) => result.error);
-  if (countError?.error) {
+  if (error) {
     return {
       counts: emptyLeadCounts(),
-      error: countError.error.message,
+      error: error.message,
     };
   }
 
-  const counts = countResults.reduce<LeadCounts>((acc, result) => {
-    acc[result.type] = result.count;
+  const counts = ((data ?? []) as Array<{
+    type: KirtanType;
+    count: number | string | null;
+  }>).reduce<LeadCounts>((acc, row) => {
+    acc[row.type] = Number(row.count ?? 0);
     return acc;
   }, emptyLeadCounts());
 
