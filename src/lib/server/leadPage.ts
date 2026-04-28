@@ -21,6 +21,10 @@ import {
   OTHER_LEAD_SLUG,
 } from "@/lib/server/leadDirectory";
 
+class LeadPageNotFoundError extends Error {}
+
+class LeadPageDataError extends Error {}
+
 function isTransientFetchFailure(error: unknown) {
   if (!(error instanceof Error)) return false;
   return error.message.includes("fetch failed");
@@ -102,11 +106,11 @@ const getCachedOtherLeadPageData = unstable_cache(
     } = await fetchLeadDirectory();
 
     if (directoryError) {
-      return { data: null, error: directoryError, status: 500 };
+      throw new LeadPageDataError(directoryError);
     }
 
     if (otherLeadIds.length === 0) {
-      return { data: null, error: "Lead singer not found", status: 404 };
+      throw new LeadPageNotFoundError("Lead singer not found");
     }
 
     const activeType = firstAvailableLeadType(otherCounts);
@@ -131,7 +135,7 @@ const getCachedOtherLeadPageData = unstable_cache(
     });
 
     if (kirtanError) {
-      return { data: null, error: kirtanError, status: 500 };
+      throw new LeadPageDataError(kirtanError);
     }
 
     const ids = rows.map((k) => k.id);
@@ -169,11 +173,7 @@ const getCachedOtherLeadPageData = unstable_cache(
       ),
     };
 
-    return {
-      data,
-      error: null,
-      status: 200,
-    };
+    return data;
   },
   ["lead-page-data-others"],
   {
@@ -186,7 +186,7 @@ const getCachedSingleLeadPageData = unstable_cache(
   async (leadId: string, displayName: string) => {
     const { counts, error: countsError } = await fetchLeadCounts(leadId);
     if (countsError) {
-      return { data: null, error: countsError, status: 500 };
+      throw new LeadPageDataError(countsError);
     }
 
     const activeType = firstAvailableLeadType(counts);
@@ -212,7 +212,7 @@ const getCachedSingleLeadPageData = unstable_cache(
     });
 
     if (kirtanError) {
-      return { data: null, error: kirtanError, status: 500 };
+      throw new LeadPageDataError(kirtanError);
     }
 
     const ids = rows.map((k) => k.id);
@@ -250,11 +250,7 @@ const getCachedSingleLeadPageData = unstable_cache(
       ),
     };
 
-    return {
-      data,
-      error: null,
-      status: 200,
-    };
+    return data;
   },
   ["lead-page-data-single"],
   {
@@ -269,7 +265,15 @@ async function loadLeadPageData(slug: string): Promise<{
   status: number;
 }> {
   if (slug === OTHER_LEAD_SLUG) {
-    return getCachedOtherLeadPageData();
+    try {
+      const data = await getCachedOtherLeadPageData();
+      return { data, error: null, status: 200 };
+    } catch (error) {
+      if (error instanceof LeadPageNotFoundError) {
+        return { data: null, error: error.message, status: 404 };
+      }
+      throw error;
+    }
   }
 
   // Resolve slug existence outside the cache so newly created or renamed leads
@@ -284,7 +288,8 @@ async function loadLeadPageData(slug: string): Promise<{
     return { data: null, error: "Lead singer not found", status: 404 };
   }
 
-  return getCachedSingleLeadPageData(lead.id, lead.display_name);
+  const data = await getCachedSingleLeadPageData(lead.id, lead.display_name);
+  return { data, error: null, status: 200 };
 }
 
 export async function getLeadPageData(slug: string): Promise<{

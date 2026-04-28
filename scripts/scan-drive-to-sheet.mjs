@@ -18,15 +18,15 @@ const SERVICE_ACCOUNT_FILE =
   process.env.SHEETS_SERVICE_ACCOUNT_FILE ||
   path.join(__dirname, "..", "secrets", "sheets-service-account.json");
 
-const MM_FOLDER =
-  process.env.MM_FOLDER ||
-  "/Users/lailafrotjold/Documents/Radhe Kunj Kirtan/Maha Mantra";
-const BHJ_FOLDER =
-  process.env.BHJ_FOLDER ||
-  "/Users/lailafrotjold/Documents/Radhe Kunj Kirtan/Bhajans";
-const HK_FOLDER =
-  process.env.HK_FOLDER ||
-  "/Users/lailafrotjold/Documents/Radhe Kunj Kirtan/Hari Katha";
+const INBOX_ROOT =
+  process.env.KIRTAN_INBOX_ROOT ||
+  "/Users/lailafrotjold/Documents/Radhe Kunj Kirtan/Inbox";
+const MM_INBOX_FOLDER =
+  process.env.MM_INBOX_FOLDER || path.join(INBOX_ROOT, "Maha Mantra");
+const BHJ_INBOX_FOLDER =
+  process.env.BHJ_INBOX_FOLDER || path.join(INBOX_ROOT, "Bhajans");
+const HK_INBOX_FOLDER =
+  process.env.HK_INBOX_FOLDER || path.join(INBOX_ROOT, "Hari Katha");
 
 const DRY_RUN =
   process.env.DRY_RUN === "true" || process.argv.includes("--dry-run");
@@ -307,11 +307,11 @@ function scanLocalFolder(folderPath, folderName, type) {
   for (const name of files) {
     if (
       FIND_TERMS.length > 0 &&
-      FIND_TERMS.some((term) =>
-        name.toLowerCase().includes(term.toLowerCase()),
-      )
+      FIND_TERMS.some((term) => name.toLowerCase().includes(term.toLowerCase()))
     ) {
-      console.log(`[FIND] folder="${folderName}" name="${name}" path="${path.join(folderPath, name)}"`);
+      console.log(
+        `[FIND] folder="${folderName}" name="${name}" path="${path.join(folderPath, name)}"`,
+      );
     }
 
     const localFileId = buildLocalFileId(type, name);
@@ -337,12 +337,14 @@ async function main() {
   }
 
   const headers = values[0];
-  const rows = values.slice(1).map((row) =>
-    headers.map((_, index) => row[index] ?? ""),
-  );
+  const rows = values
+    .slice(1)
+    .map((row) => headers.map((_, index) => row[index] ?? ""));
   const fileIdIndex = new Map();
   const sourceFileIndex = new Map();
-  const col = Object.fromEntries(headers.map((header, index) => [header, index]));
+  const col = Object.fromEntries(
+    headers.map((header, index) => [header, index]),
+  );
 
   for (let i = 0; i < rows.length; i += 1) {
     const row = rows[i];
@@ -358,9 +360,9 @@ async function main() {
   }
 
   const folders = [
-    { path: HK_FOLDER, name: "Hari Katha", type: "HK" },
-    { path: BHJ_FOLDER, name: "Bhajans", type: "BHJ" },
-    { path: MM_FOLDER, name: "Maha Mantra", type: "MM" },
+    { path: HK_INBOX_FOLDER, name: "Hari Katha", type: "HK" },
+    { path: BHJ_INBOX_FOLDER, name: "Bhajans", type: "BHJ" },
+    { path: MM_INBOX_FOLDER, name: "Maha Mantra", type: "MM" },
   ];
 
   const folderCounts = new Map();

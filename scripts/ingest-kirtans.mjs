@@ -29,6 +29,15 @@ const BHJ_FOLDER =
 const HK_FOLDER =
   process.env.HK_FOLDER ||
   "/Users/lailafrotjold/Documents/Radhe Kunj Kirtan/Hari Katha";
+const INBOX_ROOT =
+  process.env.KIRTAN_INBOX_ROOT ||
+  "/Users/lailafrotjold/Documents/Radhe Kunj Kirtan/Inbox";
+const MM_INBOX_FOLDER =
+  process.env.MM_INBOX_FOLDER || path.join(INBOX_ROOT, "Maha Mantra");
+const BHJ_INBOX_FOLDER =
+  process.env.BHJ_INBOX_FOLDER || path.join(INBOX_ROOT, "Bhajans");
+const HK_INBOX_FOLDER =
+  process.env.HK_INBOX_FOLDER || path.join(INBOX_ROOT, "Hari Katha");
 
 const MEDIA_BASE_URL =
   process.env.MEDIA_BASE_URL || "https://media.kunjkirtan.com";
@@ -200,7 +209,19 @@ function resolveKirtanStorageFolder(type) {
   }
 }
 
-function resolveLocalBaseFolder(type) {
+function resolveInboxFolder(type) {
+  switch (type) {
+    case "MM":
+      return MM_INBOX_FOLDER;
+    case "HK":
+      return HK_INBOX_FOLDER;
+    case "BHJ":
+    default:
+      return BHJ_INBOX_FOLDER;
+  }
+}
+
+function resolveArchiveFolder(type) {
   switch (type) {
     case "MM":
       return MM_FOLDER;
@@ -210,6 +231,30 @@ function resolveLocalBaseFolder(type) {
     default:
       return BHJ_FOLDER;
   }
+}
+
+function moveFileToArchive(sourcePath, archiveFolder) {
+  const destinationPath = path.join(archiveFolder, path.basename(sourcePath));
+
+  if (DRY_RUN) {
+    console.log(`[DRY_RUN] Move ${sourcePath} -> ${destinationPath}`);
+    return destinationPath;
+  }
+
+  fs.mkdirSync(archiveFolder, { recursive: true });
+
+  try {
+    fs.renameSync(sourcePath, destinationPath);
+  } catch (error) {
+    if (error?.code !== "EXDEV") {
+      throw error;
+    }
+
+    fs.copyFileSync(sourcePath, destinationPath);
+    fs.unlinkSync(sourcePath);
+  }
+
+  return destinationPath;
 }
 
 function contentTypeForExt(ext) {
@@ -506,8 +551,8 @@ async function main() {
 
       const ext = getFileExtension(sourceFile);
       const folder = resolveKirtanStorageFolder(type);
-      const localBase = resolveLocalBaseFolder(type);
-      const localPath = path.join(localBase, sourceFile);
+      const localPath = path.join(resolveInboxFolder(type), sourceFile);
+      const archiveFolder = resolveArchiveFolder(type);
 
       if (!fs.existsSync(localPath)) {
         throw new Error(`File not found: ${localPath}`);
@@ -668,6 +713,9 @@ async function main() {
             data: updates,
           },
         });
+
+        const archivedPath = moveFileToArchive(localPath, archiveFolder);
+        logStep(`Archived source file: ${archivedPath}`);
       }
     } catch (err) {
       failures += 1;
