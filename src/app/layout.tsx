@@ -35,7 +35,7 @@ export const metadata: Metadata = {
     siteName: "Kunj Kirtan",
     images: [
       {
-        url: "/og-kunj-kirtan.jpg",
+        url: "/KunjKirtan-SrilaGurudeva-Header.jpeg",
         width: 512,
         height: 512,
         alt: "Sri Caitanya Mahaprabhu and Nityananda dancing in kirtan painting by Syamarani Dasi",
@@ -47,7 +47,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Kunj Kirtan",
     description: "Sacred sounds, lovingly curated.",
-    images: ["/og-kunj-kirtan.jpg"],
+    images: ["/KunjKirtan-SrilaGurudeva-Header.jpeg"],
   },
   icons: {
     icon: "/kirtan-icon.svg",
