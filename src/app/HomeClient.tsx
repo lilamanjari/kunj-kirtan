@@ -150,6 +150,15 @@ export default function HomeClient({ data }: { data: HomeData }) {
               })}
             </ul>
           </section>
+
+          <section className="pb-5 text-center">
+            <Link
+              href="/about"
+              className="mt-3 inline-flex rounded-md border border-white/70 bg-white/78 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#9b6a5f] shadow-sm backdrop-blur-sm transition hover:bg-white"
+            >
+              About Kunj Kirtan
+            </Link>
+          </section>
         </div>
       </main>
     </div>
