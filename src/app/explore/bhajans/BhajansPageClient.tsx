@@ -1,5 +1,35 @@
 "use client";
 
+/*
+ * Alphabet rail browse model
+ * --------------------------
+ * The Bhajans page behaves like a hybrid between infinite scroll and an
+ * alphabet jump browser:
+ *
+ * 1. We keep the currently loaded bhajans in a Map keyed by id. That lets us
+ *    merge newly fetched slices from above, below, or a jumped-to letter
+ *    without duplicating rows.
+ * 2. The rendered list is always derived from that Map and sorted by
+ *    title/id, so merged slices settle back into one alphabetical list.
+ * 3. `loadedWindow` tracks the currently loaded alphabetical range
+ *    (start/end cursor plus whether there is more above/below). That range is
+ *    updated as we scroll-load upward or downward.
+ * 4. Rail taps have two paths:
+ *    - if the letter is already loaded, scroll directly to that header
+ *    - otherwise fetch a slice starting at that letter, merge it, then scroll
+ *      to the newly inserted header
+ * 5. Programmatic jumps temporarily block "load earlier" auto-loading until
+ *    the target letter has actually reached the top of the viewport. This
+ *    prevents cascade-loading while smooth scrolling is still in progress.
+ * 6. The rail highlight is driven by the letter header currently nearest the
+ *    top of the viewport, so it updates naturally as we scroll up and down.
+ * 7. `topPageSnapshot` remembers the canonical first-page window so "back to
+ *    top" can restore the same browse state, not just the scroll position.
+ *
+ * The remaining complexity in this file is mostly orchestration between
+ * scrolling, merging, and rail state, so it is intentionally kept page-local.
+ */
+
 import {
   Fragment,
   Suspense,
@@ -141,9 +171,13 @@ export default function BhajansPageClient({
   const [activeBrowseLetter, setActiveBrowseLetter] = useState<string | null>(
     null,
   );
+  // Tracks the current alphabetical window that is loaded in memory. Up/down
+  // loaders move this range outward as we merge more rows.
   const [loadedWindow, setLoadedWindow] = useState<LoadedBhajanWindow | null>(
     initialTopPageSnapshot.window,
   );
+  // Lets "back to top" restore the first-page browse window instead of only
+  // scrolling upward into a stale jumped-to state.
   const [topPageSnapshot, setTopPageSnapshot] = useState<TopPageSnapshot>(
     initialTopPageSnapshot,
   );
@@ -153,8 +187,8 @@ export default function BhajansPageClient({
   const [isRailVisible, setIsRailVisible] = useState(false);
   const hasInitializedSearch = useRef(false);
 
-  const loadMoreRef = useRef<HTMLDivElement | null>(null);
-  const loadPreviousRef = useRef<HTMLDivElement | null>(null);
+  const loadMoreRef = useRef<HTMLLIElement | null>(null);
+  const loadPreviousRef = useRef<HTMLLIElement | null>(null);
   const listSectionRef = useRef<HTMLDivElement | null>(null);
   const listContentRef = useRef<HTMLUListElement | null>(null);
   const letterRefs = useRef<Record<string, HTMLLIElement | null>>({});
@@ -203,6 +237,8 @@ export default function BhajansPageClient({
   const loadPreviousPage = useCallback(async () => {
     if (!loadedWindow || !hasBefore || isLoadingPrevious || !prevCursor) return;
 
+    // Render the loading marker just above the current window start so the
+    // newly fetched titles appear to populate upward into that gap.
     setLoadingBeforeLetter(getBrowseLetter(loadedWindow.start.title));
     setIsLoadingPrevious(true);
 
@@ -273,11 +309,15 @@ export default function BhajansPageClient({
         setAlphabetIndex(data.alphabet_index ?? {});
         setLoadedWindow(nextTopPageSnapshot.window);
         setTopPageSnapshot(nextTopPageSnapshot);
+        // Search results define a fresh browse universe, so we reset the
+        // top-page snapshot to that new first page as well.
       })
       .finally(() => setIsLoadingList(false));
   }, [search]);
 
   const syncVisibleLetter = useCallback(() => {
+    // The rail highlight follows the letter header nearest the top of the
+    // viewport, rather than staying stuck on the last clicked letter.
     const visibleEntries = Object.entries(letterRefs.current).filter(
       ([, node]) => node,
     );
@@ -312,6 +352,9 @@ export default function BhajansPageClient({
     const resumeNode = letterRefs.current[resumeLetter];
     if (!resumeNode) return;
 
+    // Programmatic rail jumps re-enable upward auto-load only after the target
+    // letter has actually arrived near the top. This prevents jump-triggered
+    // cascade loads from pulling the viewport away from the chosen letter.
     const top = resumeNode.getBoundingClientRect().top;
     if (top >= -24 && top <= 64) {
       resumeAutoLoad();
@@ -346,6 +389,8 @@ export default function BhajansPageClient({
       updateRailVisibility();
       syncVisibleLetter();
 
+      // Upward loading is scroll-driven rather than observer-driven so we can
+      // require a real upward motion before fetching more letters above.
       if (
         !autoLoadBlockedRef.current &&
         scrollDirectionRef.current === "up" &&
@@ -382,6 +427,8 @@ export default function BhajansPageClient({
         if (scrollDirectionRef.current === "up") return;
         if (!nextCursor) return;
 
+        // Downward infinite scroll keeps the same merged-list model as the
+        // alphabet jump browser: fetch a slice, merge it, extend the window.
         setIsLoadingMore(true);
 
         const params = new URLSearchParams();
@@ -466,6 +513,9 @@ export default function BhajansPageClient({
     if (!node) return;
 
     requestAnimationFrame(() => {
+      // We block upward auto-load while the smooth scroll is traveling to the
+      // target letter, otherwise the temporary upward motion can trigger
+      // cascading loads from letters above.
       pauseAutoLoadUntilLetter(pendingLetterScroll);
       node.scrollIntoView({ behavior: "smooth", block: "start" });
       setPendingLetterScroll(null);
@@ -476,6 +526,8 @@ export default function BhajansPageClient({
     const node = letterRefs.current[letter];
     if (!node) return false;
     setActiveBrowseLetter(letter);
+    // Loaded-letter jumps are still programmatic scrolls, so they also need
+    // the same auto-load pause as freshly fetched jumps.
     pauseAutoLoadUntilLetter(letter);
     node.scrollIntoView({ behavior: "smooth", block: "start" });
     return true;
@@ -489,6 +541,8 @@ export default function BhajansPageClient({
     setPrevCursor(topPageSnapshot.prevCursor);
     setNextCursor(topPageSnapshot.nextCursor);
     resumeAutoLoad();
+    // Returning to the top should feel like restoring the first browse window,
+    // not like a reload from scratch.
     listSectionRef.current?.scrollIntoView({
       behavior: "smooth",
       block: "start",
@@ -518,6 +572,9 @@ export default function BhajansPageClient({
       );
       const data = (await res.json()) as BhajansResponse;
       const items = data.bhajans ?? [];
+      // Jump loads merge into the same canonical map, then narrow the active
+      // window to the fetched slice so subsequent up/down loading grows from
+      // that letter naturally.
       setBhajanMap((prev) => mergeBhajans(prev, items));
       setHasBefore(Boolean(data.has_before));
       setHasMore(Boolean(data.has_more));
