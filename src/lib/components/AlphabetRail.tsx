@@ -1,0 +1,75 @@
+"use client";
+
+type AlphabetRailProps = {
+  letters: string[];
+  availableLetters: Set<string>;
+  onSelectLetter: (letter: string) => void;
+  currentLetter?: string | null;
+  onReset?: (() => void) | null;
+  visible?: boolean;
+};
+
+export default function AlphabetRail({
+  letters,
+  availableLetters,
+  onSelectLetter,
+  currentLetter = null,
+  onReset = null,
+  visible = true,
+}: AlphabetRailProps) {
+  return (
+    <div
+      className={`fixed right-2 top-1/2 z-20 -translate-y-1/2 transition-opacity duration-300 sm:right-4 ${
+        visible ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0"
+      }`}
+    >
+      <div className="rounded-full border border-white/75 bg-white/82 px-1.5 py-2 shadow-md backdrop-blur-sm">
+        <div className="flex flex-col items-center gap-0.5">
+          {onReset ? (
+            <button
+              type="button"
+              onClick={onReset}
+              className="mb-1 flex h-4 w-4 items-center justify-center rounded-full text-[0.62rem] font-semibold leading-none text-[#9b6a5f] transition hover:bg-[#f7e7df] hover:text-[#7f5146]"
+              aria-label="Back to top"
+              title="Back to top"
+            >
+              <svg viewBox="0 0 16 16" className="h-3 w-3" aria-hidden="true">
+                <path
+                  d="M4 4.5h8M8 12V5.75M5.5 8.25 8 5.75l2.5 2.5"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </button>
+          ) : null}
+          {letters.map((letter) => {
+            const isAvailable = availableLetters.has(letter);
+            const isCurrent = currentLetter === letter;
+            return (
+              <button
+                key={letter}
+                type="button"
+                onClick={() => onSelectLetter(letter)}
+                disabled={!isAvailable}
+                className={`flex h-3.5 w-3.5 items-center justify-center rounded-full text-[0.58rem] font-semibold leading-none transition ${
+                  isAvailable
+                    ? isCurrent
+                      ? "bg-[#9b6a5f] text-white shadow-sm"
+                      : "text-[#9b6a5f] hover:bg-[#f7e7df] hover:text-[#7f5146]"
+                    : "cursor-default text-stone-300"
+                }`}
+                aria-label={`Jump to ${letter}`}
+                aria-pressed={isCurrent}
+              >
+                {letter}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}

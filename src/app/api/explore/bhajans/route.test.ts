@@ -89,6 +89,7 @@ describe("GET /api/explore/bhajans", () => {
     expect(json.has_more).toBe(false);
     expect(json.next_cursor).toBeNull();
     expect(json.featured).toBeNull();
+    expect(json.alphabet_index).toBeDefined();
   });
 
   it("applies search filter", async () => {

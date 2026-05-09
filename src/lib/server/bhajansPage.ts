@@ -1,15 +1,36 @@
-import { unstable_cache } from "next/cache";
 import { supabase } from "@/lib/supabase";
 import type { KirtanSummary } from "@/types/kirtan";
+import type { BhajanAlphabetIndex, BhajansResponse } from "@/types/bhajans";
 import { fetchKirtanTagFlags } from "@/lib/server/kirtanTags";
 import { getDailyRareGem } from "@/lib/server/featured";
-import type { BhajansResponse } from "@/types/bhajans";
+import { unstable_cache } from "next/cache";
+import { buildBhajanAlphabetIndex } from "@/lib/server/bhajanAlphabet";
+
+const getCachedBhajanAlphabetIndex = unstable_cache(
+  async () => buildBhajanAlphabetIndex(null),
+  ["bhajan-alphabet-index"],
+  {
+    revalidate: 86400,
+    tags: ["explore-bhajans"],
+  },
+);
 
 const getCachedBhajansPageData = unstable_cache(
   async () => {
     const featured = await getDailyRareGem({ types: ["BHJ"] });
     if (featured.error) {
       return { data: null, error: featured.error, status: 500 };
+    }
+
+    let alphabetIndex: BhajanAlphabetIndex;
+    try {
+      alphabetIndex = await getCachedBhajanAlphabetIndex();
+    } catch (error) {
+      return {
+        data: null,
+        error: error instanceof Error ? error.message : "Failed to build alphabet index",
+        status: 500,
+      };
     }
 
     const { data, error } = await supabase
@@ -78,8 +99,11 @@ const getCachedBhajansPageData = unstable_cache(
       data: {
         bhajans,
         has_more: hasMore,
+        has_before: false,
         next_cursor: nextCursor,
+        prev_cursor: null,
         featured: featuredKirtan,
+        alphabet_index: alphabetIndex,
       } satisfies BhajansResponse,
       error: null,
       status: 200,
