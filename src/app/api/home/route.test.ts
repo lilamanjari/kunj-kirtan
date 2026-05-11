@@ -84,6 +84,22 @@ describe("GET /api/home", () => {
         ],
         error: null,
       },
+      {
+        data: [
+          {
+            id: "k3",
+            audio_url: "a3",
+            type: "MM",
+            title: "Popular Kirtan",
+            lead_singer: "S3",
+            recorded_date: "2020-03-01",
+            sanga: "Z",
+            duration_seconds: 180,
+            play_count: 12,
+          },
+        ],
+        error: null,
+      },
     ];
 
     fromMock.mockImplementation(() => {
@@ -96,6 +112,12 @@ describe("GET /api/home", () => {
     const json = await res.json();
 
     expect(json.primary_action).toBeTruthy();
+    expect(json.popular).toHaveLength(1);
+    expect(json.popular[0]).toMatchObject({
+      id: "k3",
+      title: "Maha Mantra Popular Kirtan",
+      duration_seconds: 180,
+    });
     expect(json.recently_added).toHaveLength(1);
     expect(json.recently_added[0]).toMatchObject({
       id: "k2",
@@ -123,6 +145,7 @@ describe("GET /api/home", () => {
 
   it("returns error when recently added lookup fails", async () => {
     const sequence: MockResult[] = [
+      { data: [], error: null },
       { data: null, error: { message: "Recent error" } },
     ];
 
@@ -137,5 +160,70 @@ describe("GET /api/home", () => {
 
     expect(res.status).toBe(500);
     expect(json.error).toBe("Recent error");
+  });
+
+  it("returns error when popular lookup fails", async () => {
+    const sequence: MockResult[] = [
+      { data: [], error: null },
+      { data: null, error: { message: "Popular error" } },
+    ];
+
+    fromMock.mockImplementation(() => {
+      const result = sequence.shift() ?? { data: [], error: null };
+      builder = createMockBuilder(result);
+      return builder;
+    });
+
+    const res = await GET();
+    const json = await res.json();
+
+    expect(res.status).toBe(500);
+    expect(json.error).toBe("Popular error");
+  });
+
+  it("filters the featured kirtan out of popular", async () => {
+    const sequence: MockResult[] = [
+      { data: [], error: null },
+      {
+        data: [
+          {
+            id: "k1",
+            audio_url: "a1",
+            type: "MM",
+            title: "Maha Mantra",
+            lead_singer: "S1",
+            recorded_date: "2020-01-01",
+            sanga: "X",
+            duration_seconds: 120,
+            play_count: 99,
+          },
+          {
+            id: "k4",
+            audio_url: "a4",
+            type: "BHJ",
+            title: "Bhajan Two",
+            lead_singer: "S4",
+            recorded_date: "2020-04-01",
+            sanga: "Q",
+            duration_seconds: 210,
+            play_count: 40,
+          },
+        ],
+        error: null,
+      },
+    ];
+
+    fromMock.mockImplementation(() => {
+      const result = sequence.shift() ?? { data: [], error: null };
+      builder = createMockBuilder(result);
+      return builder;
+    });
+
+    const res = await GET();
+    const json = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(json.popular).toHaveLength(1);
+    expect(json.popular[0].id).toBe("k4");
   });
 });

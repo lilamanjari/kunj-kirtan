@@ -1,5 +1,9 @@
 import Equalizer from "@/lib/components/Equalizer";
 import { formatKirtanTitle } from "@/lib/kirtanTitle";
+import {
+  formatKirtanDuration,
+  getKirtanSequenceLabel,
+} from "@/lib/kirtanPresentation";
 import { formatDateShort } from "@/lib/utils/date";
 import { KirtanSummary } from "@/types/kirtan";
 import { SFIcon } from "@bradleyhodges/sfsymbols-react";
@@ -25,26 +29,6 @@ type FeaturedKirtanCardProps = {
   contextLine?: string;
 };
 
-function formatDuration(seconds?: number | null) {
-  if (seconds === null || seconds === undefined || !Number.isFinite(seconds)) {
-    return "";
-  }
-
-  const total = Math.max(0, Math.round(seconds));
-  const hrs = Math.floor(total / 3600);
-  const mins = Math.floor((total % 3600) / 60);
-  const secs = total % 60;
-
-  if (hrs > 0) {
-    return `${hrs}:${String(mins).padStart(2, "0")}:${String(secs).padStart(
-      2,
-      "0",
-    )}`;
-  }
-
-  return `${mins}:${String(secs).padStart(2, "0")}`;
-}
-
 export default function FeaturedKirtanCard({
   kirtan,
   isActive,
@@ -59,8 +43,8 @@ export default function FeaturedKirtanCard({
   tone = "default",
   contextLine,
 }: FeaturedKirtanCardProps) {
-  const sequenceLabel = kirtan.sequence_num ? `#${kirtan.sequence_num}` : null;
-  const durationLabel = formatDuration(kirtan.duration_seconds);
+  const sequenceLabel = getKirtanSequenceLabel(kirtan.sequence_num);
+  const durationLabel = formatKirtanDuration(kirtan.duration_seconds);
   const displayTitle = formatKirtanTitle(kirtan.type, kirtan.title);
   const cardToneClass =
     tone === "home"

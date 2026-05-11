@@ -1,5 +1,10 @@
 import Equalizer from "@/lib/components/Equalizer";
 import { formatKirtanTitle } from "@/lib/kirtanTitle";
+import {
+  formatKirtanDuration,
+  getKirtanSequenceLabel,
+  getListItemBorderTint,
+} from "@/lib/kirtanPresentation";
 import { formatDateLong } from "@/lib/utils/date";
 import { KirtanSummary } from "@/types/kirtan";
 import { SFIcon } from "@bradleyhodges/sfsymbols-react";
@@ -18,34 +23,6 @@ type KirtanListItemProps = {
   isFavorited?: boolean;
 };
 
-function formatDuration(seconds?: number | null) {
-  if (seconds === null || seconds === undefined || !Number.isFinite(seconds)) {
-    return "";
-  }
-
-  const total = Math.max(0, Math.round(seconds));
-  const hrs = Math.floor(total / 3600);
-  const mins = Math.floor((total % 3600) / 60);
-  const secs = total % 60;
-
-  if (hrs > 0) {
-    return `${hrs}:${String(mins).padStart(2, "0")}:${String(secs).padStart(
-      2,
-      "0",
-    )}`;
-  }
-
-  return `${mins}:${String(secs).padStart(2, "0")}`;
-}
-
-function hashHue(id: string) {
-  let hash = 0;
-  for (let i = 0; i < id.length; i += 1) {
-    hash = (hash * 31 + id.charCodeAt(i)) % 360;
-  }
-  return hash;
-}
-
 export default function KirtanListItem({
   kirtan,
   isActive,
@@ -58,14 +35,10 @@ export default function KirtanListItem({
   onToggleFavorite,
   isFavorited = false,
 }: KirtanListItemProps) {
-  const durationLabel = formatDuration(kirtan.duration_seconds);
-  const sequenceLabel = kirtan.sequence_num ? `#${kirtan.sequence_num}` : null;
+  const durationLabel = formatKirtanDuration(kirtan.duration_seconds);
+  const sequenceLabel = getKirtanSequenceLabel(kirtan.sequence_num);
   const displayTitle = formatKirtanTitle(kirtan.type, kirtan.title);
-  const baseHue = hashHue(kirtan.id);
-  const tintHue = kirtan.type === "BHJ" ? (baseHue + 340) % 360 : baseHue;
-  const borderTint = kirtan.is_rare_gem
-    ? "rgba(251, 191, 36, 0.65)"
-    : `hsla(${tintHue}, 70%, 85%, 1)`;
+  const borderTint = getListItemBorderTint(kirtan);
   const cardBackground = kirtan.is_rare_gem
     ? "bg-[linear-gradient(180deg,rgba(255,251,245,1)_0%,rgba(255,255,255,1)_36%,rgba(255,249,244,1)_100%)]"
     : isActive
@@ -87,7 +60,7 @@ export default function KirtanListItem({
         ${isActive && !isPlaying ? "opacity-90" : ""}
       `}
       style={{
-        borderColor: borderTint || "rgba(226,232,240,0.7)",
+        borderColor: borderTint,
       }}
     >
       <div className="min-w-0 flex-1">

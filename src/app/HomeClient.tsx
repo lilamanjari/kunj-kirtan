@@ -6,6 +6,7 @@ import type { HomeData } from "@/types/home";
 import type { KirtanSummary } from "@/types/kirtan";
 import FeaturedKirtanCard from "@/lib/components/FeaturedKirtanCard";
 import HomeFavoritesStrip from "@/lib/components/HomeFavoritesStrip";
+import HomePopularStrip from "@/lib/components/HomePopularStrip";
 import KirtanListItem from "@/lib/components/KirtanListItem";
 import KirtanDeepLinkHandler from "@/lib/components/KirtanDeepLinkHandler";
 import Link from "next/link";
@@ -124,6 +125,7 @@ export default function HomeClient({ data }: { data: HomeData }) {
           </section>
 
           <HomeFavoritesStrip favorites={favorites} loaded={favoritesLoaded} />
+          <HomePopularStrip kirtans={data.popular ?? []} />
 
           <section>
             <h2 className="text-sm font-semibold uppercase tracking-[0.16em] text-stone-500">

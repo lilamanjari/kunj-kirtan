@@ -11,5 +11,7 @@ export type HomeData = {
 
   entry_points: { id: string; label: string }[];
 
+  popular: KirtanSummary[];
+
   recently_added: KirtanSummary[];
 };
