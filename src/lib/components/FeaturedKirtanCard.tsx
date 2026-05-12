@@ -30,6 +30,9 @@ type FeaturedKirtanCardProps = {
   contextLine?: string;
 };
 
+type FeaturedKirtanCardTone = NonNullable<FeaturedKirtanCardProps["tone"]>;
+type FeaturedPaletteTone = Exclude<FeaturedKirtanCardTone, "default">;
+
 type FeaturedCardPalette = {
   cardClassName: string;
   cardStyle?: CSSProperties;
@@ -49,10 +52,7 @@ type FeaturedCardPalette = {
 const LIGHT_ACTION_CLASS =
   "cursor-pointer border-[#ecd5cf] bg-white/80 text-[#bc7b84] hover:bg-white";
 
-const featuredCardPalettes: Record<
-  Exclude<FeaturedKirtanCardProps["tone"], "default">,
-  FeaturedCardPalette
-> = {
+const featuredCardPalettes: Record<FeaturedPaletteTone, FeaturedCardPalette> = {
   home: {
     cardClassName:
       "border border-[#f2b79d] text-[#5e433a] shadow-[0_20px_42px_rgba(164,112,87,0.16)] backdrop-blur-sm",
