@@ -13,5 +13,7 @@ export type HomeData = {
 
   popular: KirtanSummary[];
 
+  recommended: KirtanSummary[];
+
   recently_added: KirtanSummary[];
 };

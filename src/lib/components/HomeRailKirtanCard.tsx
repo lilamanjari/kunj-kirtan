@@ -48,7 +48,7 @@ export default function HomeRailKirtanCard({
       tabIndex={0}
       onClick={onActivate}
       onKeyDown={handleKeyDown}
-      className={`group flex h-[12.5rem] w-[10rem] shrink-0 flex-col rounded-[1.2rem] border p-3.5 text-left shadow-[0_16px_36px_rgba(120,53,15,0.12)] transition hover:-translate-y-0.5 hover:shadow-[0_20px_42px_rgba(120,53,15,0.16)] ${
+      className={`group flex h-[12.5rem] w-[10rem] shrink-0 flex-col rounded-[1.05rem] border p-3.5 text-left shadow-[0_16px_36px_rgba(120,53,15,0.12)] transition hover:-translate-y-0.5 hover:shadow-[0_20px_42px_rgba(120,53,15,0.16)] ${
         isActive && isPlaying ? "animate-breathe" : ""
       }`}
       style={{

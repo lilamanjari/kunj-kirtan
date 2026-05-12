@@ -90,7 +90,7 @@ export default function OccasionDetailClient({
         />
 
         {featured ? (
-          <div className="relative z-20 -mt-10">
+          <div className="relative z-20 -mt-6">
             <FeaturedKirtanCard
               kirtan={featured}
               isActive={isActive(featured)}
@@ -107,6 +107,7 @@ export default function OccasionDetailClient({
                   ? `In honor of ${featured.person_tag}`
                   : undefined
               }
+              tone="occasion"
             />
           </div>
         ) : null}
@@ -123,7 +124,7 @@ export default function OccasionDetailClient({
                   onClick={() => playCollection(visible)}
                   aria-label="Play all kirtans for this occasion"
                   title="Play all"
-                  className="flex h-8 w-8 items-center justify-center rounded-full border border-[#ead8d2] bg-white text-stone-700 shadow-sm hover:bg-[#fff7f3]"
+                  className="flex h-8 w-8 items-center justify-center rounded-full border border-[#e7d7ce] bg-white text-[#9a7566] shadow-sm hover:bg-[#fff8f4]"
                 >
                   <SFIcon icon={sfPlaySquareStackFill} className="h-4 w-4" />
                 </button>
@@ -132,7 +133,7 @@ export default function OccasionDetailClient({
                   onClick={() => playCollection(visible, { shuffle: true })}
                   aria-label="Shuffle kirtans for this occasion"
                   title="Shuffle"
-                  className="flex h-8 w-8 items-center justify-center rounded-full border border-[#ead8d2] bg-white text-stone-700 shadow-sm hover:bg-[#fff7f3]"
+                  className="flex h-8 w-8 items-center justify-center rounded-full border border-[#d7e7d8] bg-white text-[#739675] shadow-sm hover:bg-[#f5fbf5]"
                 >
                   <SFIcon icon={sfShuffleCircle} className="h-4 w-4" />
                 </button>
@@ -150,7 +151,7 @@ export default function OccasionDetailClient({
           ) : null}
 
           {visible.length === 0 ? (
-            <p className="mt-4 text-sm text-stone-500">
+            <p className="mt-4 rounded-xl border border-dashed border-[#e7d7ce] bg-white/88 px-4 py-6 text-center text-sm text-[#96786b]">
               No kirtans found for this occasion.
             </p>
           ) : isPersonFocusedOccasion && hasGroupedPeople ? (

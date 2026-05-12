@@ -49,7 +49,7 @@ export default function HomeFavoritesStrip({
   const previewFavorites = favorites.slice(0, 4);
 
   return (
-    <section className="relative -mx-5 mt-2 px-5 py-5">
+    <section className="relative -mx-5 px-5 py-5">
       <div aria-hidden="true" className="absolute inset-0">
         <Image
           src="/Favorites Background.jpeg"

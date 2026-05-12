@@ -609,7 +609,7 @@ export default function BhajansPageClient({
         <SubpageHeader title="Bhajans" backLabel="Home" backHref="/" />
 
         {featured ? (
-          <div className="-mt-10">
+          <div className="-mt-6">
             <FeaturedKirtanCard
               kirtan={featured}
               isActive={isActive(featured)}
@@ -621,6 +621,7 @@ export default function BhajansPageClient({
               isQueued={isQueued(featured.id)}
               onToggleFavorite={toggleFavorite}
               isFavorited={isFavorited(featured.id)}
+              tone="bhajans"
             />
           </div>
         ) : null}
@@ -635,7 +636,7 @@ export default function BhajansPageClient({
               resetPagination();
               setSearch(e.target.value);
             }}
-            className="min-w-0 flex-1 rounded-xl border border-stone-200 bg-white px-4 py-2 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-rose-300 focus:border-rose-300"
+            className="min-w-0 flex-1 rounded-xl border border-[#ead5db] bg-white/92 px-4 py-2 text-sm text-[#67474f] shadow-sm focus:border-[#d8a8b6] focus:outline-none focus:ring-1 focus:ring-[#d8a8b6]"
           />
 
           {sortedBhajans.length > 1 ? (
@@ -645,7 +646,7 @@ export default function BhajansPageClient({
                 onClick={() => playCollection(renderedBhajans)}
                 aria-label="Play all bhajans"
                 title="Play all"
-                className="flex h-8 w-8 items-center justify-center rounded-full border border-[#ead8d2] bg-white text-stone-700 shadow-sm hover:bg-[#fff7f3]"
+                className="flex h-8 w-8 items-center justify-center rounded-full border border-[#ead5db] bg-white text-[#8f6774] shadow-sm hover:bg-[#fff6f8]"
               >
                 <SFIcon icon={sfPlaySquareStackFill} className="h-4 w-4" />
               </button>
@@ -656,7 +657,7 @@ export default function BhajansPageClient({
                 }
                 aria-label="Shuffle bhajans"
                 title="Shuffle"
-                className="flex h-8 w-8 items-center justify-center rounded-full border border-[#ead8d2] bg-white text-stone-700 shadow-sm hover:bg-[#fff7f3]"
+                className="flex h-8 w-8 items-center justify-center rounded-full border border-[#ead5db] bg-white text-[#8f6774] shadow-sm hover:bg-[#fff6f8]"
               >
                 <SFIcon icon={sfShuffleCircle} className="h-4 w-4" />
               </button>
@@ -679,18 +680,18 @@ export default function BhajansPageClient({
           <div className="flex items-start gap-3">
             <ul ref={listContentRef} className="min-w-0 flex-1 space-y-3">
               {isLoadingList ? (
-                <li className="rounded-xl border border-dashed border-stone-200 bg-white px-4 py-6">
+                <li className="rounded-xl border border-dashed border-[#ead5db] bg-white/88 px-4 py-6">
                   <div className="space-y-3">
                     {Array.from({ length: 4 }).map((_, idx) => (
                       <div
                         key={`bhj-loading-${idx}`}
-                        className="h-12 rounded-lg bg-stone-100 animate-pulse"
+                        className="h-12 rounded-lg bg-[#f8eef1] animate-pulse"
                       />
                     ))}
                   </div>
                 </li>
               ) : renderedBhajans.length === 0 && hasFetchedOnce ? (
-                <li className="rounded-xl border border-dashed border-stone-200 bg-white px-4 py-6 text-center text-sm text-stone-500">
+                <li className="rounded-xl border border-dashed border-[#ead5db] bg-white/88 px-4 py-6 text-center text-sm text-[#98727e]">
                   No Bhajans match your search.
                 </li>
               ) : (
@@ -704,7 +705,7 @@ export default function BhajansPageClient({
                           ref={loadPreviousRef}
                           className={
                             isLoadingPrevious
-                              ? "mb-3 rounded-xl border border-dashed border-stone-200 bg-white/75 px-3 py-2 text-center text-[0.68rem] uppercase tracking-[0.18em] text-stone-400"
+                              ? "mb-3 rounded-xl border border-dashed border-[#ead5db] bg-white/80 px-3 py-2 text-center text-[0.68rem] uppercase tracking-[0.18em] text-[#aa8591]"
                               : "mb-3 h-px overflow-hidden opacity-0"
                           }
                           aria-hidden={!isLoadingPrevious}
@@ -740,7 +741,7 @@ export default function BhajansPageClient({
                       {loadedWindow && row.bhajan.id === loadedWindow.end.id ? (
                         <li
                           ref={loadMoreRef}
-                          className="mt-3 rounded-xl border border-dashed border-stone-200 bg-white/75 px-3 py-2 text-center text-[0.68rem] uppercase tracking-[0.18em] text-stone-400"
+                          className="mt-3 rounded-xl border border-dashed border-[#ead5db] bg-white/80 px-3 py-2 text-center text-[0.68rem] uppercase tracking-[0.18em] text-[#aa8591]"
                         >
                           {isLoadingMore
                             ? "Loading more…"

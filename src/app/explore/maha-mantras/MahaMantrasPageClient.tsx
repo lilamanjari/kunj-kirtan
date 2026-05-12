@@ -202,7 +202,7 @@ export default function MahaMantrasPageClient({
         <SubpageHeader title="Maha Mantra" backLabel="Home" backHref="/" />
 
         {featured ? (
-          <div className="-mt-10">
+          <div className="-mt-6">
             <FeaturedKirtanCard
               kirtan={featured}
               isActive={isActive(featured)}
@@ -214,6 +214,7 @@ export default function MahaMantrasPageClient({
               isQueued={isQueued(featured.id)}
               onToggleFavorite={toggleFavorite}
               isFavorited={isFavorited(featured.id)}
+              tone="maha_mantras"
             />
           </div>
         ) : null}
@@ -228,11 +229,11 @@ export default function MahaMantrasPageClient({
               setTimeout(() => setShowSuggestions(false), 150);
             }}
             onFocus={() => setShowSuggestions(true)}
-            className="w-full rounded-xl border border-stone-200 bg-white px-4 py-2 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-rose-300 focus:border-rose-300"
+            className="w-full rounded-xl border border-[#ead8cf] bg-white/92 px-4 py-2 text-sm text-[#6b4d43] shadow-sm focus:border-[#dfb19c] focus:outline-none focus:ring-1 focus:ring-[#dfb19c]"
           />
 
           {showSuggestions && suggestions.length > 0 ? (
-            <div className="absolute z-10 mt-1 w-full overflow-hidden rounded-xl border border-stone-200 bg-white shadow-lg">
+            <div className="absolute z-10 mt-1 w-full overflow-hidden rounded-xl border border-[#ead8cf] bg-white shadow-lg">
               {suggestions.map((s) => (
                 <button
                   key={s}
@@ -245,7 +246,7 @@ export default function MahaMantrasPageClient({
                     resetPagination();
                     setShowSuggestions(false);
                   }}
-                  className="block w-full px-4 py-2 text-left text-sm hover:bg-stone-50"
+                  className="block w-full px-4 py-2 text-left text-sm text-[#6b4d43] hover:bg-[#fff8f4]"
                 >
                   {s}
                 </button>
@@ -263,7 +264,7 @@ export default function MahaMantrasPageClient({
                 setIsLoadingList(true);
                 resetPagination();
               }}
-              className="w-full rounded-xl border border-stone-200 bg-white px-4 py-2 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-rose-300 focus:border-rose-300"
+              className="w-full rounded-xl border border-[#ead8cf] bg-white/92 px-4 py-2 text-sm text-[#6b4d43] shadow-sm focus:border-[#dfb19c] focus:outline-none focus:ring-1 focus:ring-[#dfb19c]"
             >
               {Object.entries(durationRanges).map(([key, range]) => (
                 <option key={key} value={key}>
@@ -280,7 +281,7 @@ export default function MahaMantrasPageClient({
                 onClick={() => playCollection(visibleMantras)}
                 aria-label="Play all maha mantras"
                 title="Play all"
-                className="flex h-10 w-10 items-center justify-center rounded-full border border-[#ead8d2] bg-white text-stone-700 shadow-sm hover:bg-[#fff7f3]"
+                className="flex h-10 w-10 items-center justify-center rounded-full border border-[#ead8cf] bg-white text-[#8b6657] shadow-sm hover:bg-[#fff8f4]"
               >
                 <SFIcon icon={sfPlaySquareStackFill} className="h-4 w-4" />
               </button>
@@ -289,7 +290,7 @@ export default function MahaMantrasPageClient({
                 onClick={() => playCollection(visibleMantras, { shuffle: true })}
                 aria-label="Shuffle maha mantras"
                 title="Shuffle"
-                className="flex h-10 w-10 items-center justify-center rounded-full border border-[#ead8d2] bg-white text-stone-700 shadow-sm hover:bg-[#fff7f3]"
+                className="flex h-10 w-10 items-center justify-center rounded-full border border-[#ead8cf] bg-white text-[#8b6657] shadow-sm hover:bg-[#fff8f4]"
               >
                 <SFIcon icon={sfShuffleCircle} className="h-4 w-4" />
               </button>
@@ -299,18 +300,18 @@ export default function MahaMantrasPageClient({
 
         <ul className="space-y-3">
           {isLoadingList ? (
-            <li className="rounded-xl border border-dashed border-stone-200 bg-white px-4 py-6">
+            <li className="rounded-xl border border-dashed border-[#ead8cf] bg-white/88 px-4 py-6">
               <div className="space-y-3">
                 {Array.from({ length: 4 }).map((_, idx) => (
                   <div
                     key={`mm-loading-${idx}`}
-                    className="h-12 rounded-lg bg-stone-100 animate-pulse"
+                    className="h-12 rounded-lg bg-[#f8eeea] animate-pulse"
                   />
                 ))}
               </div>
             </li>
           ) : renderedMantras.length === 0 && hasFetchedOnce ? (
-            <li className="rounded-xl border border-dashed border-stone-200 bg-white px-4 py-6 text-center text-sm text-stone-500">
+            <li className="rounded-xl border border-dashed border-[#ead8cf] bg-white/88 px-4 py-6 text-center text-sm text-[#9b7a6c]">
               No Maha Mantras match your filters.
             </li>
           ) : (
@@ -335,10 +336,10 @@ export default function MahaMantrasPageClient({
         {hasMore ? (
           <div
             ref={loadMoreRef}
-            className="py-4 text-center text-xs text-stone-500"
+            className="py-4 text-center text-xs text-[#9b7a6c]"
           >
             {isLoadingMore ? (
-              <span className="mx-auto block h-4 w-4 animate-spin rounded-full border-2 border-stone-300 border-t-stone-600" />
+              <span className="mx-auto block h-4 w-4 animate-spin rounded-full border-2 border-[#e5c9bc] border-t-[#b98473]" />
             ) : (
               ""
             )}

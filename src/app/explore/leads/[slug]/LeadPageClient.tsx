@@ -153,7 +153,7 @@ export default function LeadPageClient({
         />
 
         {featuredKirtan ? (
-          <div className="-mt-10">
+          <div className="-mt-6">
             <FeaturedKirtanCard
               kirtan={featuredKirtan}
               isActive={isActive(featuredKirtan)}
@@ -165,6 +165,7 @@ export default function LeadPageClient({
               isQueued={isQueued(featuredKirtan.id)}
               onToggleFavorite={toggleFavorite}
               isFavorited={isFavorited(featuredKirtan.id)}
+              tone="lead"
             />
           </div>
         ) : null}
@@ -184,8 +185,8 @@ export default function LeadPageClient({
                     rounded-full px-4 py-1.5 text-xs font-medium transition
                     ${
                       active
-                        ? "bg-[#8f4350] text-white shadow-sm"
-                        : "border border-[#ead8d2] bg-white text-stone-600 hover:bg-[#fff7f3]"
+                        ? "bg-gradient-to-r from-[#d4937d] to-[#86b489] text-white shadow-sm"
+                        : "border border-[#e5d7cf] bg-white text-[#7e665c] hover:bg-[#fff8f4]"
                     }
                   `}
                 >
@@ -208,7 +209,7 @@ export default function LeadPageClient({
                   onClick={() => playCollection(visible)}
                   aria-label="Play all kirtans"
                   title="Play all"
-                  className="flex h-8 w-8 items-center justify-center rounded-full border border-[#ead8d2] bg-white text-stone-700 shadow-sm hover:bg-[#fff7f3]"
+                  className="flex h-8 w-8 items-center justify-center rounded-full border border-[#e5d7cf] bg-white text-[#9b7466] shadow-sm hover:bg-[#fff8f4]"
                 >
                   <SFIcon icon={sfPlaySquareStackFill} className="h-4 w-4" />
                 </button>
@@ -217,7 +218,7 @@ export default function LeadPageClient({
                   onClick={() => playCollection(visible, { shuffle: true })}
                   aria-label="Shuffle kirtans"
                   title="Shuffle"
-                  className="flex h-8 w-8 items-center justify-center rounded-full border border-[#ead8d2] bg-white text-stone-700 shadow-sm hover:bg-[#fff7f3]"
+                  className="flex h-8 w-8 items-center justify-center rounded-full border border-[#d7e7d8] bg-white text-[#6f9873] shadow-sm hover:bg-[#f5fbf5]"
                 >
                   <SFIcon icon={sfShuffleCircle} className="h-4 w-4" />
                 </button>
@@ -226,18 +227,18 @@ export default function LeadPageClient({
           </div>
 
           {isListLoading ? (
-            <div className="mt-3 rounded-xl border border-dashed border-stone-200 bg-white px-4 py-6">
+            <div className="mt-3 rounded-xl border border-dashed border-[#e5d7cf] bg-white/88 px-4 py-6">
               <div className="space-y-3">
                 {Array.from({ length: 4 }).map((_, idx) => (
                   <div
                     key={`lead-kirtan-loading-${idx}`}
-                    className="h-12 rounded-lg bg-stone-100 animate-pulse"
+                    className="h-12 rounded-lg bg-[#f7efea] animate-pulse"
                   />
                 ))}
               </div>
             </div>
           ) : renderedKirtans.length === 0 ? (
-            <p className="mt-4 text-sm text-stone-500">
+            <p className="mt-4 text-sm text-[#95786a]">
               No kirtans found.
             </p>
           ) : (
@@ -260,7 +261,7 @@ export default function LeadPageClient({
             </ul>
           )}
           {isLoadingMore ? (
-            <div className="mt-3 rounded-xl border border-dashed border-stone-200 bg-white px-4 py-4 text-center text-sm text-stone-500">
+            <div className="mt-3 rounded-xl border border-dashed border-[#e5d7cf] bg-white/88 px-4 py-4 text-center text-sm text-[#95786a]">
               Loading more…
             </div>
           ) : null}
