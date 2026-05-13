@@ -94,7 +94,7 @@ export default function KirtanListItem({
             {kirtan.sanga ? ` • ${kirtan.sanga}` : ""}
           </p>
         </div>
-        <div className="mt-1.5 flex items-end justify-between gap-3 text-xs text-stone-500">
+        <div className="mt-1 flex items-end justify-between gap-3 text-xs text-stone-500">
           <div className="min-w-0 flex-1">
             {kirtan.recorded_date ? (
               <span className="truncate">
