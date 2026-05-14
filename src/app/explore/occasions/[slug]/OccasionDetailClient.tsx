@@ -13,6 +13,7 @@ import type { OccasionPersonGroup, OccasionResponse } from "@/types/occasions";
 import KirtanDeepLinkHandler from "@/lib/components/KirtanDeepLinkHandler";
 import SubpageHeader from "@/lib/components/SubpageHeader";
 import FeaturedKirtanCard from "@/lib/components/FeaturedKirtanCard";
+import { occasionsPalette } from "@/lib/theme/pagePalettes";
 
 export default function OccasionDetailClient({
   initialData,
@@ -107,7 +108,7 @@ export default function OccasionDetailClient({
                   ? `In honor of ${featured.person_tag}`
                   : undefined
               }
-              tone="occasion"
+              palette={occasionsPalette.featuredCard}
             />
           </div>
         ) : null}

@@ -13,6 +13,13 @@ import {
   sfSuitHeart,
   sfSuitHeartFill,
 } from "@bradleyhodges/sfsymbols";
+import {
+  iconButtonInactiveClassName,
+  durationPillClassName,
+  favoriteActiveClassName,
+  harmoniumPillClassName,
+  queueActiveClassName,
+} from "@/lib/theme/componentThemes";
 
 type KirtanListItemProps = {
   kirtan: KirtanSummary;
@@ -99,12 +106,16 @@ export default function KirtanListItem({
           </div>
           <div className="flex shrink-0 items-center gap-2">
             {kirtan.has_harmonium ? (
-              <span className="shrink-0 rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700">
+              <span
+                className={`shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${harmoniumPillClassName}`}
+              >
                 H
               </span>
             ) : null}
             {durationLabel ? (
-              <span className="shrink-0 rounded-full bg-[#edf7e1] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#5c7a3c]">
+              <span
+                className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${durationPillClassName}`}
+              >
                 {durationLabel}
               </span>
             ) : null}
@@ -117,8 +128,8 @@ export default function KirtanListItem({
                 }}
                 className={`flex h-7 w-7 items-center justify-center rounded-full border transition ${
                   isFavorited
-                    ? "cursor-pointer border-[#f3c2ce] bg-[#fff1f5] text-[#c45d74]"
-                    : "cursor-pointer border-[#efd4cb] bg-white text-[#cc7680] hover:bg-[#fff7f3]"
+                    ? favoriteActiveClassName
+                    : iconButtonInactiveClassName
                 }`}
                 aria-label={
                   isFavorited ? "Remove from favorites" : "Add to favorites"
@@ -147,8 +158,8 @@ export default function KirtanListItem({
                 }}
                 className={`flex h-7 w-7 items-center justify-center rounded-full border transition ${
                   isQueued
-                    ? "cursor-pointer border-[#93c45e] bg-[#dce6d1] text-[#5c7a3c]"
-                    : "cursor-pointer border-[#efd4cb] bg-white text-[#cc7680] hover:bg-[#fff7f3]"
+                    ? queueActiveClassName
+                    : iconButtonInactiveClassName
                 }`}
                 aria-label={isQueued ? "Remove from queue" : "Add to queue"}
                 title={isQueued ? "Remove from queue" : "Add to queue"}

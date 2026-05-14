@@ -3,6 +3,35 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --theme-player-green: #5c7a3c;
+  --theme-player-green-soft: #dce6d1;
+  --theme-player-green-mid: #79a14f;
+  --theme-player-green-hover: #80ab52;
+  --theme-player-green-bright: #93c45e;
+  --theme-featured-play-start: var(--theme-player-green);
+  --theme-featured-play-end: var(--theme-player-green-mid);
+  --theme-featured-play-hover-start: var(--theme-player-green-hover);
+  --theme-featured-play-hover-end: var(--theme-player-green-bright);
+  --theme-cool-rose: #d49897;
+  --theme-duration-pill-bg: #edf7e1;
+  --theme-duration-pill-text: #5c7a3c;
+  --theme-harmonium-pill-bg: #fef3c7;
+  --theme-harmonium-pill-text: #b45309;
+  --theme-icon-button-border-rest: #efd4cb;
+  --theme-icon-button-bg-rest: #ffffff;
+  --theme-icon-button-bg-rest-hover: #fff7f3;
+  --theme-icon-button-text-rest: #cc7680;
+  --theme-favorite-border-active: #f3c2ce;
+  --theme-favorite-bg-active: #fff1f5;
+  --theme-favorite-text-active: #c45d74;
+  --theme-queue-border-active: #93c45e;
+  --theme-queue-bg-active: #dce6d1;
+  --theme-queue-text-active: #5c7a3c;
+  --theme-audio-track: var(--theme-player-green-soft);
+  --theme-audio-thumb: var(--theme-player-green);
+  --theme-audio-progress: var(--theme-player-green);
+  --theme-audio-queue-pill-bg: var(--theme-player-green-soft);
+  --theme-audio-queue-pill-text: var(--theme-player-green);
 }
 
 @theme inline {
@@ -87,12 +116,12 @@ body {
 input[type="range"] {
   -webkit-appearance: none;
   appearance: none;
-  accent-color: #5c7a3c;
+  accent-color: var(--theme-audio-progress);
   background: transparent;
 }
 
 input[type="range"]::-webkit-slider-runnable-track {
-  background: #dce6d1;
+  background: var(--theme-audio-track);
   height: 4px;
   border-radius: 999px;
 }
@@ -104,11 +133,11 @@ input[type="range"]::-webkit-slider-thumb {
   height: 16px;
   width: 16px;
   border-radius: 999px;
-  background: #5c7a3c;
+  background: var(--theme-audio-thumb);
 }
 
 input[type="range"]::-moz-range-track {
-  background: #dce6d1;
+  background: var(--theme-audio-track);
   height: 4px;
   border-radius: 999px;
 }
@@ -118,5 +147,5 @@ input[type="range"]::-moz-range-thumb {
   width: 16px;
   border-radius: 999px;
   border: none;
-  background: #5c7a3c;
+  background: var(--theme-audio-thumb);
 }

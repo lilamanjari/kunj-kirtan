@@ -14,6 +14,7 @@ import { fetchWithStatus } from "@/lib/net/fetchWithStatus";
 import FeaturedKirtanCard from "@/lib/components/FeaturedKirtanCard";
 import SubpageHeader from "@/lib/components/SubpageHeader";
 import type { MahaMantrasResponse } from "@/types/maha-mantras";
+import { mahaMantrasPalette } from "@/lib/theme/pagePalettes";
 
 export default function MahaMantrasPageClient({
   initialData,
@@ -214,7 +215,7 @@ export default function MahaMantrasPageClient({
               isQueued={isQueued(featured.id)}
               onToggleFavorite={toggleFavorite}
               isFavorited={isFavorited(featured.id)}
-              tone="maha_mantras"
+              palette={mahaMantrasPalette.featuredCard}
             />
           </div>
         ) : null}

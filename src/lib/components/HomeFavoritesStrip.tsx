@@ -7,6 +7,10 @@ import { formatKirtanDuration } from "@/lib/kirtanPresentation";
 import type { KirtanSummary } from "@/types/kirtan";
 import HomeRailKirtanCard from "@/lib/components/HomeRailKirtanCard";
 import HomeRailActionButtons from "@/lib/components/HomeRailActionButtons";
+import {
+  durationPillClassName,
+  harmoniumPillClassName,
+} from "@/lib/theme/componentThemes";
 
 type HomeFavoritesStripProps = {
   favorites: KirtanSummary[];
@@ -127,12 +131,16 @@ export default function HomeFavoritesStrip({
                 trailingTopSlot={
                   <>
                     {kirtan.has_harmonium ? (
-                      <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700">
+                      <span
+                        className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${harmoniumPillClassName}`}
+                      >
                         H
                       </span>
                     ) : null}
                     {durationLabel ? (
-                      <span className="rounded-full bg-[#edf7e1] px-2.5 py-1 text-[11px] font-semibold tracking-wide text-[#5c7a3c]">
+                      <span
+                        className={`rounded-full px-2.5 py-1 text-[11px] font-semibold tracking-wide ${durationPillClassName}`}
+                      >
                         {durationLabel}
                       </span>
                     ) : null}

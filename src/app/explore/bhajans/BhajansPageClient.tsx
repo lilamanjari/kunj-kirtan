@@ -56,6 +56,7 @@ import KirtanDeepLinkHandler from "@/lib/components/KirtanDeepLinkHandler";
 import { fetchWithStatus } from "@/lib/net/fetchWithStatus";
 import FeaturedKirtanCard from "@/lib/components/FeaturedKirtanCard";
 import SubpageHeader from "@/lib/components/SubpageHeader";
+import { bhajansPalette } from "@/lib/theme/pagePalettes";
 import AlphabetRail from "@/lib/components/AlphabetRail";
 import { ALPHABET } from "@/lib/alphabets";
 
@@ -621,7 +622,7 @@ export default function BhajansPageClient({
               isQueued={isQueued(featured.id)}
               onToggleFavorite={toggleFavorite}
               isFavorited={isFavorited(featured.id)}
-              tone="bhajans"
+              palette={bhajansPalette.featuredCard}
             />
           </div>
         ) : null}

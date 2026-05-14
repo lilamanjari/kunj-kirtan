@@ -14,6 +14,10 @@ import {
 } from "@bradleyhodges/sfsymbols";
 import type { KirtanSummary } from "@/types/kirtan";
 import KirtanListItem from "@/lib/components/KirtanListItem";
+import {
+  audioProgressColor,
+  audioQueuePillClassName,
+} from "@/lib/theme/componentThemes";
 
 function formatTime(seconds: number) {
   if (!Number.isFinite(seconds) || seconds < 0) return "0:00";
@@ -363,8 +367,8 @@ export default function AudioPlayerBar() {
             step={0.001}
             value={progress}
             onChange={(e) => seekTo(Number(e.target.value))}
-            style={{ accentColor: "#5c7a3c" }}
-            className="w-full text-[#5c7a3c]"
+            style={{ accentColor: audioProgressColor }}
+            className="w-full text-[var(--theme-player-green)]"
           />
           <div className="mt-1 flex items-center justify-between text-[10px] leading-none text-stone-400 tabular-nums">
             <span>{formatTime(currentTime)}</span>
@@ -397,12 +401,22 @@ export default function AudioPlayerBar() {
                   onClick={openQueue}
                   className="flex min-w-0 items-center gap-2 truncate rounded-full px-1 py-0.5 hover:bg-stone-50"
                 >
-                  <div className="inline-flex items-center gap-1 rounded-full bg-[#dce6d1] px-2 py-0.5">
-                    <span className="inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#dce6d1] px-1.5 text-[10px] font-semibold text-[#5c7a3c]">
+                  <div
+                    className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 ${audioQueuePillClassName}`}
+                  >
+                    <span
+                      className={`inline-flex h-4 min-w-[16px] items-center justify-center rounded-full px-1.5 text-[10px] font-semibold ${audioQueuePillClassName}`}
+                    >
                       {queue.length}
                     </span>
                     {fullQueueDurationLabel ? (
-                      <span className="text-[10px] font-medium text-[#5c7a3c]/85">
+                      <span
+                        className="text-[10px] font-medium"
+                        style={{
+                          color:
+                            "color-mix(in srgb, var(--theme-player-green) 85%, transparent)",
+                        }}
+                      >
                         {fullQueueDurationLabel}
                       </span>
                     ) : null}

@@ -14,6 +14,7 @@ import KirtanDeepLinkHandler from "@/lib/components/KirtanDeepLinkHandler";
 import { fetchWithStatus } from "@/lib/net/fetchWithStatus";
 import FeaturedKirtanCard from "@/lib/components/FeaturedKirtanCard";
 import SubpageHeader from "@/lib/components/SubpageHeader";
+import { leadsPalette } from "@/lib/theme/pagePalettes";
 
 const FILTERS: { key: KirtanType; label: string }[] = [
   { key: "MM", label: "Maha Mantra" },
@@ -165,7 +166,7 @@ export default function LeadPageClient({
               isQueued={isQueued(featuredKirtan.id)}
               onToggleFavorite={toggleFavorite}
               isFavorited={isFavorited(featuredKirtan.id)}
-              tone="lead"
+              palette={leadsPalette.featuredCard}
             />
           </div>
         ) : null}

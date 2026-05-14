@@ -10,6 +10,7 @@ import HomePopularStrip from "@/lib/components/HomePopularStrip";
 import HomeRecommendedStrip from "@/lib/components/HomeRecommendedStrip";
 import KirtanListItem from "@/lib/components/KirtanListItem";
 import KirtanDeepLinkHandler from "@/lib/components/KirtanDeepLinkHandler";
+import { homePalette } from "@/lib/theme/pagePalettes";
 import Link from "next/link";
 import Image from "next/image";
 
@@ -115,7 +116,7 @@ export default function HomeClient({ data }: { data: HomeData }) {
               isQueued={isQueued(primaryAction.kirtan.id)}
               onToggleFavorite={toggleFavorite}
               isFavorited={isFavorited(primaryAction.kirtan.id)}
-              tone="home"
+              palette={homePalette.featuredCard}
             />
           )}
 

@@ -3,6 +3,11 @@
 import { SFIcon } from "@bradleyhodges/sfsymbols-react";
 import { sfSuitHeart, sfSuitHeartFill } from "@bradleyhodges/sfsymbols";
 import type { KirtanSummary } from "@/types/kirtan";
+import {
+  iconButtonInactiveClassName,
+  favoriteActiveClassName,
+  queueActiveClassName,
+} from "@/lib/theme/componentThemes";
 
 type HomeRailActionButtonsProps = {
   kirtan: KirtanSummary;
@@ -24,8 +29,11 @@ export default function HomeRailActionButtons({
   mutedBackground = true,
 }: HomeRailActionButtonsProps) {
   const baseButtonClass = mutedBackground
-    ? "border-[#efd4cb] bg-white/82 text-[#cc7680] hover:bg-[#fff7f3]"
-    : "border-[#efd4cb] bg-white text-[#cc7680] hover:bg-[#fff7f3]";
+    ? iconButtonInactiveClassName.replace(
+        "bg-[var(--theme-icon-button-bg-rest)]",
+        "bg-white/82",
+      )
+    : iconButtonInactiveClassName;
 
   return (
     <div className="flex items-center gap-2">
@@ -36,9 +44,7 @@ export default function HomeRailActionButtons({
           onToggleFavorite(kirtan);
         }}
         className={`inline-flex h-7 w-7 items-center justify-center rounded-full border transition ${
-          isFavorited
-            ? "border-[#f3c2ce] bg-[#fff1f5] text-[#c45d74]"
-            : baseButtonClass
+          isFavorited ? favoriteActiveClassName : baseButtonClass
         }`}
         aria-label={isFavorited ? "Remove from favorites" : "Add to favorites"}
         title={isFavorited ? "Remove from favorites" : "Add to favorites"}
@@ -55,9 +61,7 @@ export default function HomeRailActionButtons({
           onToggleQueue(kirtan);
         }}
         className={`inline-flex h-7 w-7 items-center justify-center rounded-full border transition ${
-          isQueued
-            ? "border-[#d2eadf] bg-[#eef8f3] text-[#2e8c6f]"
-            : baseButtonClass
+          isQueued ? queueActiveClassName : baseButtonClass
         }`}
         aria-label={isQueued ? "Remove from queue" : "Add to queue"}
         title={isQueued ? "Remove from queue" : "Add to queue"}
