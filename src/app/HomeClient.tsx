@@ -23,31 +23,31 @@ const exploreTileStyles: Record<
   }
 > = {
   MM: {
-    backgroundImage: "url('/Popular-background-2.jpg')",
+    backgroundImage: "none", //"url('/Popular-background-2.jpg')",
     overlay:
-      "linear-gradient(180deg, rgba(255,250,245,0.88) 0%, rgba(250,239,232,0.84) 100%)",
-    accent: "rgba(197, 154, 123, 0.35)",
+      "linear-gradient(145deg, rgba(255,251,246,0.94) 0%, rgba(252,243,236,0.92) 56%, rgba(222,199,194,0.9) 100%)",
+    accent: "rgba(230, 213, 209, 0.32)",
     title: "Maha Mantra",
   },
   BHJ: {
-    backgroundImage: "url('/Favorites Background.jpeg')",
+    backgroundImage: "none", //"url('/Favorites Background.jpeg')",
     overlay:
-      "linear-gradient(180deg, rgba(255,248,246,0.9) 0%, rgba(248,236,238,0.86) 100%)",
-    accent: "rgba(194, 145, 158, 0.36)",
+      "linear-gradient(145deg, rgba(255, 250, 246,0.94) 0%, rgba(241,231,213,0.92) 56%, rgba(187,137,45,0.4) 100%)",
+    accent: "rgba(235, 220, 192, 0.34)",
     title: "Bhajans",
   },
   LEADS: {
-    backgroundImage: "url('/Favorites Background.jpeg')",
+    backgroundImage: "none", //"url('/Favorites Background.jpeg')",
     overlay:
-      "linear-gradient(180deg, rgba(255,248,246,0.9) 0%, rgba(248,236,238,0.86) 100%)",
-    accent: "rgba(194, 145, 158, 0.36)",
+      "linear-gradient(145deg, rgba(255,255,255,0.95) 0%, rgba(253,243,218,0.72) 56%, rgba(245,196,72,0.5) 100%)",
+    accent: "rgba(253, 243, 218, 0.34)",
     title: "Lead Singers",
   },
   OCCASIONS: {
-    backgroundImage: "url('/Popular-background-2.jpg')",
+    backgroundImage: "none", //"url('/Popular-background-2.jpg')",
     overlay:
-      "linear-gradient(180deg, rgba(255,250,245,0.88) 0%, rgba(250,239,232,0.84) 100%)",
-    accent: "rgba(197, 154, 123, 0.35)",
+      "linear-gradient(145deg, rgba(250,236,236,0.75) 0%, rgba(253,243,218,0.5) 56%, rgba(206,69,69,0.2) 100%)",
+    accent: "rgba(245, 218, 218, 0.32)",
     title: "Occasions",
   },
 };
@@ -119,17 +119,6 @@ export default function HomeClient({ data }: { data: HomeData }) {
             />
           )}
 
-          {data.continue_listening && (
-            <section>
-              <h2 className="text-sm uppercase opacity-60">
-                Continue Listening
-              </h2>
-              <div className="mt-2">
-                {data.continue_listening.type} —{" "}
-                {data.continue_listening.lead_singer}
-              </div>
-            </section>
-          )}
           <section>
             <h2 className="px-5 text-sm font-semibold uppercase tracking-[0.16em] text-stone-500">
               Discover
@@ -150,7 +139,8 @@ export default function HomeClient({ data }: { data: HomeData }) {
                         backgroundImage: `${tileStyle?.overlay ?? "linear-gradient(180deg, rgba(255,250,246,0.9) 0%, rgba(247,239,235,0.86) 100%)"}, ${tileStyle?.backgroundImage ?? "none"}`,
                         backgroundSize: "cover",
                         backgroundPosition: "center",
-                        borderColor: tileStyle?.accent ?? "rgba(214, 185, 170, 0.38)",
+                        borderColor:
+                          tileStyle?.accent ?? "rgba(214, 185, 170, 0.38)",
                       }}
                     >
                       <div
@@ -160,14 +150,8 @@ export default function HomeClient({ data }: { data: HomeData }) {
                             "radial-gradient(circle at top, rgba(255,255,255,0.3), transparent 45%)",
                         }}
                       />
-                      <div
-                        aria-hidden="true"
-                        className="absolute inset-x-5 bottom-4 h-px"
-                        style={{
-                          background: `linear-gradient(90deg, rgba(255,255,255,0), ${tileStyle?.accent ?? "rgba(214,185,170,0.44)"} 50%, rgba(255,255,255,0))`,
-                        }}
-                      />
-                      <span className="relative max-w-[8ch] text-[1.65rem] font-semibold leading-[1.05] text-[#5a443d]">
+
+                      <span className="relative max-w-[8ch] text-[1.48rem] font-semibold leading-[1.05] text-[#5a443d]">
                         {tileStyle?.title ?? e.label}
                       </span>
                     </Link>
@@ -178,7 +162,7 @@ export default function HomeClient({ data }: { data: HomeData }) {
                   <button
                     key={e.id}
                     disabled
-                    className="flex min-h-[8.75rem] items-center justify-center rounded-[1.3rem] border border-[#e6d4cc] bg-white/75 px-4 py-4 text-center text-lg font-semibold text-[#9d8a84]"
+                    className="flex min-h-[8.75rem] items-center justify-center rounded-[1.3rem] border border-[#e6d4cc] bg-white/75 px-4 py-4 text-center text-[1.48rem] font-semibold text-[#9d8a84]"
                   >
                     {e.label}
                   </button>
@@ -188,7 +172,10 @@ export default function HomeClient({ data }: { data: HomeData }) {
           </section>
 
           <div className="space-y-0">
-            <HomeFavoritesStrip favorites={favorites} loaded={favoritesLoaded} />
+            <HomeFavoritesStrip
+              favorites={favorites}
+              loaded={favoritesLoaded}
+            />
             <HomeRecommendedStrip kirtans={data.recommended ?? []} />
             <HomePopularStrip kirtans={data.popular ?? []} />
           </div>

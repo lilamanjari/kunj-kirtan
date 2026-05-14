@@ -70,18 +70,10 @@ export default function KirtanListItem({
       <div className="min-w-0 flex-1">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
-            <p
-              className="truncate text-sm font-medium"
-              title={displayTitle}
-            >
+            <p className="truncate text-sm font-medium" title={displayTitle}>
               {displayTitle}
             </p>
           </div>
-          {kirtan.has_harmonium ? (
-            <span className="mt-0.5 shrink-0 rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700">
-              H
-            </span>
-          ) : null}
         </div>
         <div className="mt-px flex items-center gap-1">
           {sequenceLabel ? (
@@ -106,8 +98,13 @@ export default function KirtanListItem({
             ) : null}
           </div>
           <div className="flex shrink-0 items-center gap-2">
+            {kirtan.has_harmonium ? (
+              <span className="shrink-0 rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700">
+                H
+              </span>
+            ) : null}
             {durationLabel ? (
-              <span className="shrink-0 rounded-full bg-[#e8f6ef] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#2e8c6f]">
+              <span className="shrink-0 rounded-full bg-[#edf7e1] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#5c7a3c]">
                 {durationLabel}
               </span>
             ) : null}
@@ -123,8 +120,12 @@ export default function KirtanListItem({
                     ? "cursor-pointer border-[#f3c2ce] bg-[#fff1f5] text-[#c45d74]"
                     : "cursor-pointer border-[#efd4cb] bg-white text-[#cc7680] hover:bg-[#fff7f3]"
                 }`}
-                aria-label={isFavorited ? "Remove from favorites" : "Add to favorites"}
-                title={isFavorited ? "Remove from favorites" : "Add to favorites"}
+                aria-label={
+                  isFavorited ? "Remove from favorites" : "Add to favorites"
+                }
+                title={
+                  isFavorited ? "Remove from favorites" : "Add to favorites"
+                }
               >
                 <SFIcon
                   icon={isFavorited ? sfSuitHeartFill : sfSuitHeart}
@@ -146,7 +147,7 @@ export default function KirtanListItem({
                 }}
                 className={`flex h-7 w-7 items-center justify-center rounded-full border transition ${
                   isQueued
-                    ? "cursor-pointer border-[#d2eadf] bg-[#eef8f3] text-[#2e8c6f]"
+                    ? "cursor-pointer border-[#93c45e] bg-[#dce6d1] text-[#5c7a3c]"
                     : "cursor-pointer border-[#efd4cb] bg-white text-[#cc7680] hover:bg-[#fff7f3]"
                 }`}
                 aria-label={isQueued ? "Remove from queue" : "Add to queue"}

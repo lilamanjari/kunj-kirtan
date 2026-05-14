@@ -55,7 +55,7 @@ const LIGHT_ACTION_CLASS =
 const featuredCardPalettes: Record<FeaturedPaletteTone, FeaturedCardPalette> = {
   home: {
     cardClassName:
-      "border border-[#f2b79d] text-[#5e433a] shadow-[0_20px_42px_rgba(164,112,87,0.16)] backdrop-blur-sm",
+      "border border-[#f2b79d] text-[#5e433a] shadow-[0_20px_42px_rgba(164,112,87,0.26)] backdrop-blur-sm",
     cardStyle: {
       backgroundColor: "rgba(255, 248, 243, 0.9)",
       backgroundImage:
@@ -67,22 +67,22 @@ const featuredCardPalettes: Record<FeaturedPaletteTone, FeaturedCardPalette> = {
     metaColor: "text-[#9c7b72]",
     bodyColor: "text-[#87675f]",
     harmoniumClassName: "bg-amber-100 text-amber-700",
-    durationClassName: "bg-[#e4f5ee] text-[#39866d]",
+    durationClassName: "bg-[#edf7e1] text-[#5c7a3c]",
     inactiveActionClassName: LIGHT_ACTION_CLASS,
     activeFavoriteClassName:
       "cursor-pointer border-[#f0c8d1] bg-[#fff2f5] text-[#c46a7f]",
     activeQueueClassName:
       "cursor-pointer border-[#cfe9de] bg-[#eff8f3] text-[#2e8c6f]",
     buttonClassName:
-      "bg-gradient-to-r from-[#64bf98] to-[#72c8a6] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.25)] hover:from-[#56b38c] hover:to-[#67bc9a]",
+      "bg-gradient-to-r from-[#5c7a3c] to-[#79a14f] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.25)] hover:from-[#80ab52] hover:to-[#93c45e]",
   },
   maha_mantras: {
     cardClassName:
-      "border border-[#eed9c9] text-[#5f4037] shadow-[0_20px_42px_rgba(175,129,93,0.14)] backdrop-blur-sm",
+      "border border-[#e6d5d1] text-[#5f4037] shadow-[0_20px_42px_rgba(156,104,93,0.26)] backdrop-blur-sm",
     cardStyle: {
       backgroundColor: "rgba(255, 249, 243, 0.92)",
       backgroundImage:
-        "linear-gradient(145deg, rgba(255,251,246,0.94) 0%, rgba(252,243,236,0.92) 56%, rgba(247,234,225,0.9) 100%)",
+        "linear-gradient(145deg, rgba(255,251,246,0.94) 0%, rgba(252,243,236,0.92) 56%, rgba(222,199,194,0.9) 100%)",
     },
     ringColor: "ring-[#e1c2a8]/65",
     labelColor: "text-[#a17968]",
@@ -90,7 +90,7 @@ const featuredCardPalettes: Record<FeaturedPaletteTone, FeaturedCardPalette> = {
     metaColor: "text-[#9f7d6e]",
     bodyColor: "text-[#866257]",
     harmoniumClassName: "bg-amber-100 text-amber-700",
-    durationClassName: "bg-[#e4f5ee] text-[#39866d]",
+    durationClassName: "bg-[#edf7e1] text-[#5c7a3c]",
     inactiveActionClassName:
       "cursor-pointer border-[#ead8cf] bg-white/82 text-[#b67772] hover:bg-white",
     activeFavoriteClassName:
@@ -98,15 +98,15 @@ const featuredCardPalettes: Record<FeaturedPaletteTone, FeaturedCardPalette> = {
     activeQueueClassName:
       "cursor-pointer border-[#d3eadf] bg-[#eef8f3] text-[#2e8c6f]",
     buttonClassName:
-      "bg-gradient-to-r from-[#67bf95] to-[#79c9a4] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.25)] hover:from-[#58b287] hover:to-[#6cbd98]",
+      "bg-gradient-to-r from-[#5c7a3c] to-[#79a14f] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.25)] hover:from-[#80ab52] hover:to-[#93c45e]",
   },
   bhajans: {
     cardClassName:
-      "border border-[#efd6df] text-[#5b3f48] shadow-[0_20px_42px_rgba(164,114,130,0.14)] backdrop-blur-sm",
+      "border border-[#ebdcc0] text-[#5b3f48] shadow-[0_20px_42px_rgba(168,123,41,0.26)] backdrop-blur-sm",
     cardStyle: {
       backgroundColor: "rgba(255, 248, 247, 0.92)",
       backgroundImage:
-        "linear-gradient(145deg, rgba(255,250,249,0.94) 0%, rgba(251,241,242,0.92) 56%, rgba(246,232,236,0.9) 100%)",
+        "linear-gradient(145deg, rgba(255, 250, 246,0.94) 0%, rgba(241,231,213,0.92) 56%, rgba(187,137,45,0.4) 100%)",
     },
     ringColor: "ring-[#e2bfd0]/65",
     labelColor: "text-[#9f7381]",
@@ -114,7 +114,7 @@ const featuredCardPalettes: Record<FeaturedPaletteTone, FeaturedCardPalette> = {
     metaColor: "text-[#9a7681]",
     bodyColor: "text-[#82606a]",
     harmoniumClassName: "bg-amber-100 text-amber-700",
-    durationClassName: "bg-[#e4f5ee] text-[#39866d]",
+    durationClassName: "bg-[#edf7e1] text-[#5c7a3c]",
     inactiveActionClassName:
       "cursor-pointer border-[#ead5db] bg-white/82 text-[#b97886] hover:bg-white",
     activeFavoriteClassName:
@@ -122,15 +122,15 @@ const featuredCardPalettes: Record<FeaturedPaletteTone, FeaturedCardPalette> = {
     activeQueueClassName:
       "cursor-pointer border-[#d3eadf] bg-[#eef8f3] text-[#2e8c6f]",
     buttonClassName:
-      "bg-gradient-to-r from-[#69bd97] to-[#79c6a5] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.25)] hover:from-[#5daf89] hover:to-[#6fbb9b]",
+      "bg-gradient-to-r from-[#5c7a3c] to-[#79a14f] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.25)] hover:from-[#80ab52] hover:to-[#93c45e]",
   },
   lead: {
     cardClassName:
-      "border border-[#e7d6c8] text-[#5c463e] shadow-[0_20px_42px_rgba(155,124,99,0.13)] backdrop-blur-sm",
+      "border border-[#fdf3da] text-[#5c463e] shadow-[0_20px_42px_rgba(196,157,58,0.26)] backdrop-blur-sm",
     cardStyle: {
       backgroundColor: "rgba(255, 249, 244, 0.92)",
       backgroundImage:
-        "linear-gradient(145deg, rgba(255,251,247,0.95) 0%, rgba(248,241,235,0.92) 56%, rgba(238,246,238,0.9) 100%)",
+        "linear-gradient(145deg, rgba(255,255,255,0.95) 0%, rgba(253,243,218,0.72) 56%, rgba(245,196,72,0.5) 100%)",
     },
     ringColor: "ring-[#dbbfac]/65",
     labelColor: "text-[#9e7b69]",
@@ -138,7 +138,7 @@ const featuredCardPalettes: Record<FeaturedPaletteTone, FeaturedCardPalette> = {
     metaColor: "text-[#96786a]",
     bodyColor: "text-[#7d665a]",
     harmoniumClassName: "bg-amber-100 text-amber-700",
-    durationClassName: "bg-[#e4f5ee] text-[#39866d]",
+    durationClassName: "bg-[#edf7e1] text-[#5c7a3c]",
     inactiveActionClassName:
       "cursor-pointer border-[#e5d7cf] bg-white/82 text-[#b07d6f] hover:bg-white",
     activeFavoriteClassName:
@@ -146,15 +146,15 @@ const featuredCardPalettes: Record<FeaturedPaletteTone, FeaturedCardPalette> = {
     activeQueueClassName:
       "cursor-pointer border-[#d3eadf] bg-[#eef8f3] text-[#2e8c6f]",
     buttonClassName:
-      "bg-gradient-to-r from-[#84ba8b] to-[#9cc4a0] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.25)] hover:from-[#76ad7d] hover:to-[#8eb894]",
+      "bg-gradient-to-r from-[#5c7a3c] to-[#79a14f] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.25)] hover:from-[#80ab52] hover:to-[#93c45e]",
   },
   occasion: {
     cardClassName:
-      "border border-[#e8d8cb] text-[#5b463c] shadow-[0_20px_42px_rgba(157,124,95,0.13)] backdrop-blur-sm",
+      "border border-[#f5dada] text-[#5b463c] shadow-[0_20px_42px_rgba(165,55,55,0.20)] backdrop-blur-sm",
     cardStyle: {
       backgroundColor: "rgba(255, 249, 244, 0.92)",
       backgroundImage:
-        "linear-gradient(145deg, rgba(255,251,247,0.95) 0%, rgba(250,242,236,0.92) 56%, rgba(245,234,226,0.9) 100%)",
+        "linear-gradient(145deg, rgba(250,236,236,0.75) 0%, rgba(253,243,218,0.5) 56%, rgba(206,69,69,0.2) 100%)",
     },
     ringColor: "ring-[#dec2ae]/65",
     labelColor: "text-[#9b7a69]",
@@ -162,7 +162,7 @@ const featuredCardPalettes: Record<FeaturedPaletteTone, FeaturedCardPalette> = {
     metaColor: "text-[#95786c]",
     bodyColor: "text-[#7d665b]",
     harmoniumClassName: "bg-amber-100 text-amber-700",
-    durationClassName: "bg-[#e4f5ee] text-[#39866d]",
+    durationClassName: "bg-[#edf7e1] text-[#5c7a3c]",
     inactiveActionClassName:
       "cursor-pointer border-[#e7d7ce] bg-white/82 text-[#b17a6d] hover:bg-white",
     activeFavoriteClassName:
@@ -170,7 +170,7 @@ const featuredCardPalettes: Record<FeaturedPaletteTone, FeaturedCardPalette> = {
     activeQueueClassName:
       "cursor-pointer border-[#d3eadf] bg-[#eef8f3] text-[#2e8c6f]",
     buttonClassName:
-      "bg-gradient-to-r from-[#8bb88d] to-[#a4c8a3] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.25)] hover:from-[#7dac80] hover:to-[#96bd95]",
+      "bg-gradient-to-r from-[#5c7a3c] to-[#79a14f] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.25)] hover:from-[#80ab52] hover:to-[#93c45e]",
   },
 };
 
@@ -191,8 +191,7 @@ export default function FeaturedKirtanCard({
   const sequenceLabel = getKirtanSequenceLabel(kirtan.sequence_num);
   const durationLabel = formatKirtanDuration(kirtan.duration_seconds);
   const displayTitle = formatKirtanTitle(kirtan.type, kirtan.title);
-  const palette =
-    tone === "default" ? null : featuredCardPalettes[tone];
+  const palette = tone === "default" ? null : featuredCardPalettes[tone];
   const cardToneClass =
     palette?.cardClassName ??
     "bg-gradient-to-br from-[#241a18] via-[#2f201d] to-[#5d1b33] text-white shadow-[0_18px_36px_rgba(120,53,15,0.18)]";
@@ -281,13 +280,17 @@ export default function FeaturedKirtanCard({
                 onClick={() => onToggleFavorite(kirtan)}
                 className={`flex h-7 w-7 items-center justify-center rounded-full border transition ${
                   isFavorited
-                    ? palette?.activeFavoriteClassName ??
-                      "cursor-pointer border-[#f3c2ce]/60 bg-[#fff1f5]/12 text-[#ffd7e1]"
-                    : palette?.inactiveActionClassName ??
-                      "cursor-pointer border-[#e8b0b8]/40 bg-white/10 text-[#ffe7ea] hover:bg-white/20"
+                    ? (palette?.activeFavoriteClassName ??
+                      "cursor-pointer border-[#f3c2ce]/60 bg-[#fff1f5]/12 text-[#ffd7e1]")
+                    : (palette?.inactiveActionClassName ??
+                      "cursor-pointer border-[#e8b0b8]/40 bg-white/10 text-[#ffe7ea] hover:bg-white/20")
                 }`}
-                aria-label={isFavorited ? "Remove from favorites" : "Add to favorites"}
-                title={isFavorited ? "Remove from favorites" : "Add to favorites"}
+                aria-label={
+                  isFavorited ? "Remove from favorites" : "Add to favorites"
+                }
+                title={
+                  isFavorited ? "Remove from favorites" : "Add to favorites"
+                }
               >
                 <SFIcon
                   icon={isFavorited ? sfSuitHeartFill : sfSuitHeart}
@@ -307,10 +310,10 @@ export default function FeaturedKirtanCard({
                 }}
                 className={`flex h-7 w-7 items-center justify-center rounded-full border text-xs transition ${
                   isQueued
-                    ? palette?.activeQueueClassName ??
-                      "cursor-pointer border-[#8fe1bf]/35 bg-[#8fe1bf]/12 text-[#c8f4e2]"
-                    : palette?.inactiveActionClassName ??
-                      "cursor-pointer border-[#e8b0b8]/40 bg-white/10 text-[#ffe7ea] hover:bg-white/20"
+                    ? (palette?.activeQueueClassName ??
+                      "cursor-pointer border-[#8fe1bf]/35 bg-[#8fe1bf]/12 text-[#c8f4e2]")
+                    : (palette?.inactiveActionClassName ??
+                      "cursor-pointer border-[#e8b0b8]/40 bg-white/10 text-[#ffe7ea] hover:bg-white/20")
                 }`}
                 aria-label={isQueued ? "Remove from queue" : "Add to queue"}
                 title={isQueued ? "Remove from queue" : "Add to queue"}

@@ -55,8 +55,7 @@ export default function AudioPlayerBar() {
     duration,
     currentTime,
     isBuffering,
-  } =
-    useAudioPlayer();
+  } = useAudioPlayer();
   const shareKirtan = useKirtanShare();
   const [shareNotice, setShareNotice] = useState<string | null>(null);
   const [isQueueOpen, setIsQueueOpen] = useState(false);
@@ -133,7 +132,8 @@ export default function AudioPlayerBar() {
               }}
               onTouchMove={(event) => {
                 if (touchStartY === null) return;
-                const delta = (event.touches[0]?.clientY ?? touchStartY) - touchStartY;
+                const delta =
+                  (event.touches[0]?.clientY ?? touchStartY) - touchStartY;
                 setSheetOffset(Math.max(0, delta));
               }}
               onTouchEnd={() => {
@@ -156,9 +156,14 @@ export default function AudioPlayerBar() {
               <div className="px-4 pb-4 pt-3">
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <h2 className="text-sm font-semibold text-stone-900">Play queue</h2>
+                    <h2 className="text-sm font-semibold text-stone-900">
+                      Play queue
+                    </h2>
                     <p className="text-xs text-stone-500">
-                      {queue.length} up next{fullQueueDurationLabel ? ` • ${fullQueueDurationLabel}` : ""}
+                      {queue.length} up next
+                      {fullQueueDurationLabel
+                        ? ` • ${fullQueueDurationLabel}`
+                        : ""}
                     </p>
                   </div>
                   {queue.length > 0 ? (
@@ -304,7 +309,10 @@ export default function AudioPlayerBar() {
               onClick={() => seekBy(15)}
               className="text-stone-900 active:opacity-80"
             >
-              <SFIcon icon={sf15ArrowTriangleheadClockwise} className="w-8 h-8" />
+              <SFIcon
+                icon={sf15ArrowTriangleheadClockwise}
+                className="w-8 h-8"
+              />
             </button>
             <button
               onClick={playNext}
@@ -323,7 +331,7 @@ export default function AudioPlayerBar() {
                   ? `#${current.sequence_num} by ${
                       current.lead_singer ?? "Unknown singer"
                     }`
-                  : current.lead_singer ?? "Unknown singer"}
+                  : (current.lead_singer ?? "Unknown singer")}
               </p>
             </div>
             <button
@@ -355,8 +363,8 @@ export default function AudioPlayerBar() {
             step={0.001}
             value={progress}
             onChange={(e) => seekTo(Number(e.target.value))}
-            style={{ accentColor: "#14946f" }}
-            className="w-full text-[#14946f]"
+            style={{ accentColor: "#5c7a3c" }}
+            className="w-full text-[#5c7a3c]"
           />
           <div className="mt-1 flex items-center justify-between text-[10px] leading-none text-stone-400 tabular-nums">
             <span>{formatTime(currentTime)}</span>
@@ -373,7 +381,11 @@ export default function AudioPlayerBar() {
                   aria-label="Open queue"
                   title="Open queue"
                 >
-                  <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
+                  <svg
+                    viewBox="0 0 24 24"
+                    className="h-4 w-4"
+                    aria-hidden="true"
+                  >
                     <path
                       d="M4.75 6.5a.75.75 0 0 1 .75-.75h13a.75.75 0 0 1 0 1.5h-13a.75.75 0 0 1-.75-.75Zm0 5a.75.75 0 0 1 .75-.75h13a.75.75 0 0 1 0 1.5h-13a.75.75 0 0 1-.75-.75Zm0 5a.75.75 0 0 1 .75-.75h13a.75.75 0 0 1 0 1.5h-13a.75.75 0 0 1-.75-.75Z"
                       fill="currentColor"
@@ -385,12 +397,12 @@ export default function AudioPlayerBar() {
                   onClick={openQueue}
                   className="flex min-w-0 items-center gap-2 truncate rounded-full px-1 py-0.5 hover:bg-stone-50"
                 >
-                  <div className="inline-flex items-center gap-1 rounded-full bg-[#e8f6ef] px-2 py-0.5">
-                    <span className="inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#d7efe5] px-1.5 text-[10px] font-semibold text-[#2e8c6f]">
+                  <div className="inline-flex items-center gap-1 rounded-full bg-[#dce6d1] px-2 py-0.5">
+                    <span className="inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#dce6d1] px-1.5 text-[10px] font-semibold text-[#5c7a3c]">
                       {queue.length}
                     </span>
                     {fullQueueDurationLabel ? (
-                      <span className="text-[10px] font-medium text-[#2e8c6f]/85">
+                      <span className="text-[10px] font-medium text-[#5c7a3c]/85">
                         {fullQueueDurationLabel}
                       </span>
                     ) : null}

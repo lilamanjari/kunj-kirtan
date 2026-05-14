@@ -66,7 +66,9 @@ export default function HomeCuratedKirtanStrip({
   return (
     <section
       className={`relative -mx-5 overflow-hidden px-5 py-5 ${sectionClassName}`.trim()}
-      style={backgroundGradient ? { background: backgroundGradient } : undefined}
+      style={
+        backgroundGradient ? { background: backgroundGradient } : undefined
+      }
     >
       {backgroundSrc ? (
         <div aria-hidden="true" className="absolute inset-0">
@@ -136,7 +138,7 @@ export default function HomeCuratedKirtanStrip({
                 }
                 trailingTopSlot={
                   durationLabel ? (
-                    <span className="rounded-full bg-[#edf7f1] px-2.5 py-1 text-[11px] font-semibold tracking-wide text-[#2e8c6f]">
+                    <span className="rounded-full bg-[#edf7e1] px-2.5 py-1 text-[11px] font-semibold tracking-wide text-[#5c7a3c]">
                       {durationLabel}
                     </span>
                   ) : null

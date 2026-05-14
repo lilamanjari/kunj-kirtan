@@ -3,9 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useAudioPlayer } from "@/lib/audio/AudioPlayerContext";
-import {
-  formatKirtanDuration,
-} from "@/lib/kirtanPresentation";
+import { formatKirtanDuration } from "@/lib/kirtanPresentation";
 import type { KirtanSummary } from "@/types/kirtan";
 import HomeRailKirtanCard from "@/lib/components/HomeRailKirtanCard";
 import HomeRailActionButtons from "@/lib/components/HomeRailActionButtons";
@@ -134,7 +132,7 @@ export default function HomeFavoritesStrip({
                       </span>
                     ) : null}
                     {durationLabel ? (
-                      <span className="rounded-full bg-[#e8f6ef] px-2.5 py-1 text-[11px] font-semibold tracking-wide text-[#2e8c6f]">
+                      <span className="rounded-full bg-[#edf7e1] px-2.5 py-1 text-[11px] font-semibold tracking-wide text-[#5c7a3c]">
                         {durationLabel}
                       </span>
                     ) : null}
