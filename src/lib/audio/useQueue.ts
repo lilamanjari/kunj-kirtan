@@ -3,6 +3,10 @@ import type { KirtanSummary } from "@/types/kirtan";
 
 const QUEUE_STORAGE_KEY = "kirtan_queue_v1";
 
+export type QueueNotice =
+  | { kind: "added"; title: string }
+  | { kind: "removed"; title: string };
+
 export type QueueApi = {
   queue: KirtanSummary[];
   enqueue: (kirtan: KirtanSummary) => void;
@@ -11,21 +15,22 @@ export type QueueApi = {
   dequeueById: (id: string) => void;
   clearQueue: () => void;
   isQueued: (id: string) => boolean;
-  notice: string | null;
+  notice: QueueNotice | null;
   loaded: boolean;
 };
 
 export function useQueue(storage?: Storage): QueueApi {
-  const store =
-    storage ?? (typeof window !== "undefined" ? localStorage : undefined);
+  const storeRef = useRef<Storage | undefined>(
+    storage ?? (typeof window !== "undefined" ? localStorage : undefined),
+  );
   const [queue, setQueue] = useState<KirtanSummary[]>([]);
-  const [notice, setNotice] = useState<string | null>(null);
+  const [notice, setNotice] = useState<QueueNotice | null>(null);
   const [loaded, setLoaded] = useState(false);
   const queueRef = useRef<KirtanSummary[]>([]);
 
   useEffect(() => {
     try {
-      const raw = store?.getItem(QUEUE_STORAGE_KEY);
+      const raw = storeRef.current?.getItem(QUEUE_STORAGE_KEY);
       if (raw) {
         const parsed = JSON.parse(raw);
         if (Array.isArray(parsed)) {
@@ -43,7 +48,7 @@ export function useQueue(storage?: Storage): QueueApi {
     queueRef.current = queue;
     if (!loaded) return;
     try {
-      store?.setItem(QUEUE_STORAGE_KEY, JSON.stringify(queue));
+      storeRef.current?.setItem(QUEUE_STORAGE_KEY, JSON.stringify(queue));
     } catch {
       // ignore storage failures
     }
@@ -51,7 +56,7 @@ export function useQueue(storage?: Storage): QueueApi {
 
   function enqueue(kirtan: KirtanSummary) {
     setQueue((prev) => [...prev, kirtan]);
-    setNotice(`Added "${kirtan.title}" to queue`);
+    setNotice({ kind: "added", title: kirtan.title });
   }
 
   function replaceQueue(kirtans: KirtanSummary[]) {
@@ -69,7 +74,7 @@ export function useQueue(storage?: Storage): QueueApi {
     const removed = queueRef.current.find((item) => item.id === id) ?? null;
     setQueue((prev) => prev.filter((item) => item.id !== id));
     if (removed) {
-      setNotice(`Removed "${removed.title}" from queue`);
+      setNotice({ kind: "removed", title: removed.title });
     }
   }
 

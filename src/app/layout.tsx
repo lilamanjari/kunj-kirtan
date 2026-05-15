@@ -2,10 +2,6 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { Geist, Geist_Mono, Dancing_Script } from "next/font/google";
 import "./globals.css";
-import { AudioPlayerProvider } from "@/lib/audio/AudioPlayerContext";
-import ClientAudioPlayerBar from "@/lib/components/ClientAudioPlayerBar";
-import QueueToast from "@/lib/components/QueueToast";
-import OfflineBanner from "@/lib/components/OfflineBanner";
 import { Analytics } from "@vercel/analytics/react";
 
 const geistSans = Geist({
@@ -56,7 +52,7 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
@@ -66,14 +62,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${dancingScript.variable} antialiased`}
       >
-        <AudioPlayerProvider>
-          {children}
-          <OfflineBanner />
-          <QueueToast />
-          <Suspense fallback={null}>
-            <ClientAudioPlayerBar />
-          </Suspense>
-        </AudioPlayerProvider>
+        <Suspense fallback={null}>{children}</Suspense>
         <Analytics />
       </body>
     </html>

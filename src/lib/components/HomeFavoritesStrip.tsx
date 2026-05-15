@@ -1,13 +1,14 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
 import { useAudioPlayer } from "@/lib/audio/AudioPlayerContext";
 import { formatKirtanDuration } from "@/lib/kirtanPresentation";
 import type { KirtanSummary } from "@/types/kirtan";
 import HomeRailKirtanCard from "@/lib/components/HomeRailKirtanCard";
 import HomeRailActionButtons from "@/lib/components/HomeRailActionButtons";
 import { durationPillClassName } from "@/lib/theme/componentThemes";
+import LocalizedLink from "@/lib/components/LocalizedLink";
+import { useDictionary } from "@/lib/i18n/LocaleProvider";
 
 type HomeFavoritesStripProps = {
   favorites: KirtanSummary[];
@@ -30,6 +31,7 @@ export default function HomeFavoritesStrip({
   favorites,
   loaded,
 }: HomeFavoritesStripProps) {
+  const dictionary = useDictionary();
   const {
     play,
     isActive,
@@ -77,19 +79,19 @@ export default function HomeFavoritesStrip({
       <div className="relative flex items-center justify-between gap-3">
         <div>
           <h2 className="text-sm font-semibold uppercase tracking-[0.16em] text-white/92">
-            Favorites
+            {dictionary.common.favorites}
           </h2>
           <p className="mt-1 text-sm text-white/82">
-            Your saved kirtans, ready to play.
+            {dictionary.home.favoritesSubtitle}
           </p>
         </div>
         <div className="shrink-0">
-          <Link
+          <LocalizedLink
             href="/favorites"
             className="rounded-full border border-rose-200/90 bg-white/88 px-3 py-1.5 text-xs font-medium text-[#9b5e52] shadow-sm transition hover:bg-rose-50"
           >
-            View all
-          </Link>
+            {dictionary.common.viewAll}
+          </LocalizedLink>
         </div>
       </div>
 

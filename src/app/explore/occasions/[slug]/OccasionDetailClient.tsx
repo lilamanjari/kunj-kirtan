@@ -14,12 +14,14 @@ import KirtanDeepLinkHandler from "@/lib/components/KirtanDeepLinkHandler";
 import SubpageHeader from "@/lib/components/SubpageHeader";
 import FeaturedKirtanCard from "@/lib/components/FeaturedKirtanCard";
 import { occasionsPalette } from "@/lib/theme/pagePalettes";
+import { useDictionary } from "@/lib/i18n/LocaleProvider";
 
 export default function OccasionDetailClient({
   initialData,
 }: {
   initialData: OccasionResponse;
 }) {
+  const dictionary = useDictionary();
   const {
     isActive,
     isPlaying,
@@ -86,7 +88,7 @@ export default function OccasionDetailClient({
         </Suspense>
         <SubpageHeader
           title={initialData.tag.name}
-          backLabel="Occasions"
+          backLabel={dictionary.explore.occasionsBackLabel}
           backHref="/explore/occasions"
         />
 
@@ -105,7 +107,7 @@ export default function OccasionDetailClient({
               isFavorited={isFavorited(featured.id)}
               contextLine={
                 isPersonFocusedOccasion && featured.person_tag
-                  ? `In honor of ${featured.person_tag}`
+                  ? `${dictionary.explore.inHonorOf} ${featured.person_tag}`
                   : undefined
               }
               palette={occasionsPalette.featuredCard}
@@ -116,15 +118,15 @@ export default function OccasionDetailClient({
         <section>
           <div className="flex items-center justify-between gap-3">
             <h2 className="text-xs uppercase tracking-wide text-stone-500">
-              Kirtans
+              {dictionary.explore.kirtans}
             </h2>
             {visible.length > 1 ? (
               <div className="flex items-center gap-2">
                 <button
                   type="button"
                   onClick={() => playCollection(visible)}
-                  aria-label="Play all kirtans for this occasion"
-                  title="Play all"
+                  aria-label={dictionary.actions.playAll}
+                  title={dictionary.actions.playAll}
                   className="flex h-8 w-8 items-center justify-center rounded-full border border-[#e7d7ce] bg-white text-[#9a7566] shadow-sm hover:bg-[#fff8f4]"
                 >
                   <SFIcon icon={sfPlaySquareStackFill} className="h-4 w-4" />
@@ -132,8 +134,8 @@ export default function OccasionDetailClient({
                 <button
                   type="button"
                   onClick={() => playCollection(visible, { shuffle: true })}
-                  aria-label="Shuffle kirtans for this occasion"
-                  title="Shuffle"
+                  aria-label={dictionary.actions.shuffle}
+                  title={dictionary.actions.shuffle}
                   className="flex h-8 w-8 items-center justify-center rounded-full border border-[#d7e7d8] bg-white text-[#739675] shadow-sm hover:bg-[#f5fbf5]"
                 >
                   <SFIcon icon={sfShuffleCircle} className="h-4 w-4" />
@@ -145,7 +147,7 @@ export default function OccasionDetailClient({
           {pinnedKirtan ? (
             <div className="mt-4">
               <p className="px-1 text-xs font-semibold uppercase tracking-[0.18em] text-[#9b6a5f]">
-                Selected
+                {dictionary.common.selected}
               </p>
               {renderKirtanList([pinnedKirtan])}
             </div>
@@ -153,14 +155,14 @@ export default function OccasionDetailClient({
 
           {visible.length === 0 ? (
             <p className="mt-4 rounded-xl border border-dashed border-[#e7d7ce] bg-white/88 px-4 py-6 text-center text-sm text-[#96786b]">
-              No kirtans found for this occasion.
+              {dictionary.explore.noKirtansFound}
             </p>
           ) : isPersonFocusedOccasion && hasGroupedPeople ? (
             <div className="mt-4 space-y-6">
               {personGroups.map((group) => (
                 <section key={group.person_name}>
                   <h3 className="px-1 text-sm font-semibold text-[#8c5c4a]">
-                    In honor of {group.person_name}
+                    {dictionary.explore.inHonorOf} {group.person_name}
                   </h3>
                   {renderKirtanList(group.kirtans)}
                 </section>
@@ -169,7 +171,7 @@ export default function OccasionDetailClient({
               {ungroupedKirtans.length > 0 ? (
                 <section>
                   <h3 className="px-1 text-sm font-semibold text-[#8c5c4a]">
-                    Other kirtans
+                    {dictionary.explore.otherKirtans}
                   </h3>
                   {renderKirtanList(ungroupedKirtans)}
                 </section>

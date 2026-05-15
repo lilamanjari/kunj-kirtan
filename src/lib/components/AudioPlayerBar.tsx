@@ -18,6 +18,7 @@ import {
   audioProgressColor,
   audioQueuePillClassName,
 } from "@/lib/theme/componentThemes";
+import { useDictionary } from "@/lib/i18n/LocaleProvider";
 
 function formatTime(seconds: number) {
   if (!Number.isFinite(seconds) || seconds < 0) return "0:00";
@@ -41,6 +42,7 @@ function formatQueueDuration(seconds: number) {
 }
 
 export default function AudioPlayerBar() {
+  const dictionary = useDictionary();
   const {
     progress,
     seekBy,
@@ -125,7 +127,7 @@ export default function AudioPlayerBar() {
             type="button"
             className="absolute inset-0 bg-stone-900/30 backdrop-blur-[1px]"
             onClick={closeQueue}
-            aria-label="Close queue"
+            aria-label={dictionary.actions.closeQueue}
           />
           <div className="absolute inset-x-0 bottom-0 px-3 pb-3">
             <div
@@ -154,17 +156,17 @@ export default function AudioPlayerBar() {
                   type="button"
                   onClick={closeQueue}
                   className="h-1.5 w-12 rounded-full bg-stone-300"
-                  aria-label="Dismiss queue"
+                  aria-label={dictionary.actions.dismissQueue}
                 />
               </div>
               <div className="px-4 pb-4 pt-3">
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <h2 className="text-sm font-semibold text-stone-900">
-                      Play queue
+                      {dictionary.player.playQueue}
                     </h2>
                     <p className="text-xs text-stone-500">
-                      {queue.length} up next
+                      {queue.length} {dictionary.player.upNext.toLowerCase()}
                       {fullQueueDurationLabel
                         ? ` • ${fullQueueDurationLabel}`
                         : ""}
@@ -176,7 +178,7 @@ export default function AudioPlayerBar() {
                       onClick={clearQueue}
                       className="rounded-full border border-stone-200 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-stone-500 hover:bg-stone-50"
                     >
-                      Clear
+                      {dictionary.actions.clear}
                     </button>
                   ) : null}
                 </div>
@@ -184,7 +186,7 @@ export default function AudioPlayerBar() {
                 <div className="mt-4 space-y-3">
                   <div>
                     <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#c98892]">
-                      Now playing
+                      {dictionary.player.nowPlaying}
                     </p>
                     <ul>
                       <KirtanListItem
@@ -207,7 +209,7 @@ export default function AudioPlayerBar() {
 
                   <div>
                     <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-stone-400">
-                      Up next
+                      {dictionary.player.upNext}
                     </p>
                     {queue.length > 0 ? (
                       <ul className="max-h-[45vh] space-y-2 overflow-y-auto pb-[env(safe-area-inset-bottom)]">
@@ -228,7 +230,7 @@ export default function AudioPlayerBar() {
                       </ul>
                     ) : (
                       <div className="rounded-xl border border-dashed border-stone-200 bg-white/80 px-3 py-4 text-sm text-stone-500">
-                        No tracks queued.
+                        {dictionary.player.noTracksQueued}
                       </div>
                     )}
                   </div>
@@ -251,7 +253,7 @@ export default function AudioPlayerBar() {
             <button
               onClick={playPrev}
               className="text-stone-900 active:opacity-80"
-              aria-label="Previous"
+              aria-label={dictionary.actions.previous}
             >
               <SFIcon icon={sfBackwardEndFill} className="w-5 h-5" />
             </button>
@@ -269,7 +271,11 @@ export default function AudioPlayerBar() {
                 isPlaying() && current ? pause() : current && play(current)
               }
               className="text-stone-900 active:opacity-80"
-              aria-label={isBuffering ? "Buffering" : "Play or pause"}
+              aria-label={
+                isBuffering
+                  ? dictionary.player.buffering
+                  : dictionary.actions.playOrPause
+              }
             >
               {isBuffering ? (
                 <svg
@@ -324,7 +330,7 @@ export default function AudioPlayerBar() {
               className={`active:opacity-80 ${
                 queue.length === 0 ? "text-stone-300" : "text-stone-900"
               }`}
-              aria-label="Next"
+              aria-label={dictionary.actions.next}
             >
               <SFIcon icon={sfForwardEndFill} className="w-5 h-5" />
             </button>
@@ -333,9 +339,9 @@ export default function AudioPlayerBar() {
               <p className="truncate text-xs text-stone-500">
                 {current.type === "MM" && current.sequence_num
                   ? `#${current.sequence_num} by ${
-                      current.lead_singer ?? "Unknown singer"
+                      current.lead_singer ?? dictionary.player.unknownSinger
                     }`
-                  : (current.lead_singer ?? "Unknown singer")}
+                  : (current.lead_singer ?? dictionary.player.unknownSinger)}
               </p>
             </div>
             <button
@@ -343,13 +349,13 @@ export default function AudioPlayerBar() {
               onClick={() => {
                 shareKirtan(current).then((result) => {
                   if (result?.copied) {
-                    setShareNotice("Link copied");
+                    setShareNotice(dictionary.player.linkCopied);
                   }
                 });
               }}
               className="text-stone-700 active:opacity-80"
-              aria-label="Share"
-              title="Share"
+              aria-label={dictionary.actions.share}
+              title={dictionary.actions.share}
             >
               <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
                 <path
@@ -382,8 +388,8 @@ export default function AudioPlayerBar() {
                   type="button"
                   onClick={openQueue}
                   className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-stone-200 bg-white text-stone-600 hover:bg-stone-50"
-                  aria-label="Open queue"
-                  title="Open queue"
+                  aria-label={dictionary.actions.openQueue}
+                  title={dictionary.actions.openQueue}
                 >
                   <svg
                     viewBox="0 0 24 24"
@@ -421,7 +427,9 @@ export default function AudioPlayerBar() {
                       </span>
                     ) : null}
                   </div>
-                  <span className="truncate">Up next: {queue[0]?.title}</span>
+                  <span className="truncate">
+                    {dictionary.player.upNext}: {queue[0]?.title}
+                  </span>
                 </button>
               </div>
               <button
@@ -429,7 +437,7 @@ export default function AudioPlayerBar() {
                 onClick={clearQueue}
                 className="ml-3 shrink-0 rounded-full border border-stone-200 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-stone-500 hover:bg-stone-50"
               >
-                Clear
+                {dictionary.actions.clear}
               </button>
             </div>
           ) : null}

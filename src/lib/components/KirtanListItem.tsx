@@ -20,6 +20,7 @@ import {
   harmoniumPillClassName,
   queueActiveClassName,
 } from "@/lib/theme/componentThemes";
+import { useDictionary } from "@/lib/i18n/LocaleProvider";
 
 type KirtanListItemProps = {
   kirtan: KirtanSummary;
@@ -46,6 +47,7 @@ export default function KirtanListItem({
   onToggleFavorite,
   isFavorited = false,
 }: KirtanListItemProps) {
+  const dictionary = useDictionary();
   const durationLabel = formatKirtanDuration(kirtan.duration_seconds);
   const sequenceLabel = getKirtanSequenceLabel(kirtan.sequence_num);
   const displayTitle = formatKirtanTitle(kirtan.type, kirtan.title);
@@ -132,10 +134,14 @@ export default function KirtanListItem({
                     : iconButtonInactiveClassName
                 }`}
                 aria-label={
-                  isFavorited ? "Remove from favorites" : "Add to favorites"
+                  isFavorited
+                    ? dictionary.actions.removeFromFavorites
+                    : dictionary.actions.addToFavorites
                 }
                 title={
-                  isFavorited ? "Remove from favorites" : "Add to favorites"
+                  isFavorited
+                    ? dictionary.actions.removeFromFavorites
+                    : dictionary.actions.addToFavorites
                 }
               >
                 <SFIcon
@@ -161,8 +167,16 @@ export default function KirtanListItem({
                     ? queueActiveClassName
                     : iconButtonInactiveClassName
                 }`}
-                aria-label={isQueued ? "Remove from queue" : "Add to queue"}
-                title={isQueued ? "Remove from queue" : "Add to queue"}
+                aria-label={
+                  isQueued
+                    ? dictionary.actions.removeFromQueue
+                    : dictionary.actions.addToQueue
+                }
+                title={
+                  isQueued
+                    ? dictionary.actions.removeFromQueue
+                    : dictionary.actions.addToQueue
+                }
               >
                 {isQueued ? "✓" : "+"}
               </button>

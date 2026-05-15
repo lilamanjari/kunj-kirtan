@@ -1,5 +1,7 @@
 "use client";
 
+import { useDictionary } from "@/lib/i18n/LocaleProvider";
+
 type AlphabetRailProps = {
   letters: string[];
   availableLetters: Set<string>;
@@ -17,6 +19,7 @@ export default function AlphabetRail({
   onReset = null,
   visible = true,
 }: AlphabetRailProps) {
+  const dictionary = useDictionary();
   return (
     <div
       className={`fixed right-2 top-1/2 z-20 -translate-y-1/2 transition-opacity duration-300 sm:right-4 ${
@@ -30,8 +33,8 @@ export default function AlphabetRail({
               type="button"
               onClick={onReset}
               className="mb-1 flex h-4 w-4 items-center justify-center rounded-full text-[0.62rem] font-semibold leading-none text-[#9b6a5f] transition hover:bg-[#f7e7df] hover:text-[#7f5146]"
-              aria-label="Back to top"
-              title="Back to top"
+              aria-label={dictionary.actions.backToTop}
+              title={dictionary.actions.backToTop}
             >
               <svg viewBox="0 0 16 16" className="h-3 w-3" aria-hidden="true">
                 <path
@@ -61,7 +64,7 @@ export default function AlphabetRail({
                       : "text-[#9b6a5f] hover:bg-[#f7e7df] hover:text-[#7f5146]"
                     : "cursor-default text-stone-300"
                 }`}
-                aria-label={`Jump to ${letter}`}
+                aria-label={`${dictionary.actions.jumpToLetter} ${letter}`}
                 aria-pressed={isCurrent}
               >
                 {letter}

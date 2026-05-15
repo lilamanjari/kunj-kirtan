@@ -1,0 +1,85 @@
+export type AppDictionary = {
+  common: {
+    home: string;
+    favorites: string;
+    savedKirtans: string;
+    featured: string;
+    viewAll: string;
+    backToHome: string;
+    selected: string;
+    discover: string;
+    recentlyAdded: string;
+    aboutKunjKirtan: string;
+    offlineCheckConnection: string;
+    noFavoritesYet: string;
+  };
+  explore: {
+    bhajans: string;
+    mahaMantra: string;
+    hariKatha: string;
+    leadSingers: string;
+    occasions: string;
+    leadsSubtitle: string;
+    occasionsSubtitle: string;
+    noLeadSingersFound: string;
+    noOccasionsFound: string;
+    leadsBackLabel: string;
+    occasionsBackLabel: string;
+    kirtans: string;
+    loadingMore: string;
+    noKirtansFound: string;
+    noMahaMantrasMatch: string;
+    noBhajansMatch: string;
+    moreBelow: string;
+    inHonorOf: string;
+    otherKirtans: string;
+    durationAnyLength: string;
+    durationUnder10: string;
+    duration10To20: string;
+    duration20To30: string;
+    durationOver30: string;
+  };
+  home: {
+    favoritesSubtitle: string;
+    recommended: string;
+    recommendedSubtitle: string;
+    popular: string;
+    popularSubtitle: string;
+  };
+  player: {
+    playQueue: string;
+    nowPlaying: string;
+    upNext: string;
+    noTracksQueued: string;
+    linkCopied: string;
+    buffering: string;
+    unknownSinger: string;
+    addedToQueue: string;
+    removedFromQueue: string;
+    checkOutKirtan: string;
+    onKunjKirtan: string;
+  };
+  actions: {
+    share: string;
+    openQueue: string;
+    closeQueue: string;
+    dismissQueue: string;
+    clear: string;
+    previous: string;
+    next: string;
+    playOrPause: string;
+    playAll: string;
+    shuffle: string;
+    addToFavorites: string;
+    removeFromFavorites: string;
+    addToQueue: string;
+    removeFromQueue: string;
+    goToHomePage: string;
+    backToTop: string;
+    jumpToLetter: string;
+  };
+  search: {
+    leadSingerPlaceholder: string;
+    bhajansPlaceholder: string;
+  };
+};

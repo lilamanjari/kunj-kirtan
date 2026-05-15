@@ -8,6 +8,7 @@ import {
   favoriteActiveClassName,
   queueActiveClassName,
 } from "@/lib/theme/componentThemes";
+import { useDictionary } from "@/lib/i18n/LocaleProvider";
 
 type HomeRailActionButtonsProps = {
   kirtan: KirtanSummary;
@@ -28,6 +29,7 @@ export default function HomeRailActionButtons({
   showFilledHeart = false,
   mutedBackground = true,
 }: HomeRailActionButtonsProps) {
+  const dictionary = useDictionary();
   const baseButtonClass = mutedBackground
     ? iconButtonInactiveClassName.replace(
         "bg-[var(--theme-icon-button-bg-rest)]",
@@ -46,8 +48,16 @@ export default function HomeRailActionButtons({
         className={`inline-flex h-7 w-7 items-center justify-center rounded-full border transition ${
           isFavorited ? favoriteActiveClassName : baseButtonClass
         }`}
-        aria-label={isFavorited ? "Remove from favorites" : "Add to favorites"}
-        title={isFavorited ? "Remove from favorites" : "Add to favorites"}
+        aria-label={
+          isFavorited
+            ? dictionary.actions.removeFromFavorites
+            : dictionary.actions.addToFavorites
+        }
+        title={
+          isFavorited
+            ? dictionary.actions.removeFromFavorites
+            : dictionary.actions.addToFavorites
+        }
       >
         <SFIcon
           icon={isFavorited || showFilledHeart ? sfSuitHeartFill : sfSuitHeart}
@@ -63,8 +73,16 @@ export default function HomeRailActionButtons({
         className={`inline-flex h-7 w-7 items-center justify-center rounded-full border transition ${
           isQueued ? queueActiveClassName : baseButtonClass
         }`}
-        aria-label={isQueued ? "Remove from queue" : "Add to queue"}
-        title={isQueued ? "Remove from queue" : "Add to queue"}
+        aria-label={
+          isQueued
+            ? dictionary.actions.removeFromQueue
+            : dictionary.actions.addToQueue
+        }
+        title={
+          isQueued
+            ? dictionary.actions.removeFromQueue
+            : dictionary.actions.addToQueue
+        }
       >
         <span className="text-[18px] leading-none">
           {isQueued ? "✓" : "+"}

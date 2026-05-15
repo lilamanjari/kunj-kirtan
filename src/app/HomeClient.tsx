@@ -11,8 +11,9 @@ import HomeRecommendedStrip from "@/lib/components/HomeRecommendedStrip";
 import KirtanListItem from "@/lib/components/KirtanListItem";
 import KirtanDeepLinkHandler from "@/lib/components/KirtanDeepLinkHandler";
 import { homePalette } from "@/lib/theme/pagePalettes";
-import Link from "next/link";
 import Image from "next/image";
+import LocalizedLink from "@/lib/components/LocalizedLink";
+import { useDictionary } from "@/lib/i18n/LocaleProvider";
 
 const exploreTileStyles: Record<
   string,
@@ -28,32 +29,33 @@ const exploreTileStyles: Record<
     overlay:
       "linear-gradient(145deg, rgba(255,251,246,0.94) 0%, rgba(252,243,236,0.92) 56%, rgba(222,199,194,0.9) 100%)",
     accent: "rgba(230, 213, 209, 0.32)",
-    title: "Maha Mantra",
+    title: "",
   },
   BHJ: {
     backgroundImage: "none", //"url('/Favorites Background.jpeg')",
     overlay:
       "linear-gradient(145deg, rgba(255, 250, 246,0.94) 0%, rgba(241,231,213,0.92) 56%, rgba(187,137,45,0.4) 100%)",
     accent: "rgba(235, 220, 192, 0.34)",
-    title: "Bhajans",
+    title: "",
   },
   LEADS: {
     backgroundImage: "none", //"url('/Favorites Background.jpeg')",
     overlay:
       "linear-gradient(145deg, rgba(255,255,255,0.95) 0%, rgba(253,243,218,0.72) 56%, rgba(245,196,72,0.5) 100%)",
     accent: "rgba(253, 243, 218, 0.34)",
-    title: "Lead Singers",
+    title: "",
   },
   OCCASIONS: {
     backgroundImage: "none", //"url('/Popular-background-2.jpg')",
     overlay:
       "linear-gradient(145deg, rgba(250,236,236,0.75) 0%, rgba(253,243,218,0.5) 56%, rgba(206,69,69,0.2) 100%)",
     accent: "rgba(245, 218, 218, 0.32)",
-    title: "Occasions",
+    title: "",
   },
 };
 
 export default function HomeClient({ data }: { data: HomeData }) {
+  const dictionary = useDictionary();
   const {
     isPlaying,
     isLoading,
@@ -80,6 +82,12 @@ export default function HomeClient({ data }: { data: HomeData }) {
   const renderedRecentlyAdded = pinnedKirtan
     ? [pinnedKirtan, ...recentlyAdded.filter((k) => k.id !== pinnedKirtan.id)]
     : recentlyAdded;
+  const entryPointTitles: Record<string, string> = {
+    MM: dictionary.explore.mahaMantra,
+    BHJ: dictionary.explore.bhajans,
+    LEADS: dictionary.explore.leadSingers,
+    OCCASIONS: dictionary.explore.occasions,
+  };
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-[linear-gradient(180deg,_#f5d7d0_0%,_#f6e4de_18%,_#f7ece7_42%,_#f8f2ef_100%)] text-stone-900">
@@ -122,7 +130,7 @@ export default function HomeClient({ data }: { data: HomeData }) {
 
           <section>
             <h2 className="px-5 text-sm font-semibold uppercase tracking-[0.16em] text-stone-500">
-              Discover
+              {dictionary.common.discover}
             </h2>
 
             <div className="mt-3 grid grid-cols-2 gap-3">
@@ -132,7 +140,7 @@ export default function HomeClient({ data }: { data: HomeData }) {
 
                 if (href) {
                   return (
-                    <Link
+                    <LocalizedLink
                       key={e.id}
                       href={href}
                       className="group relative flex min-h-[8.75rem] items-center justify-center overflow-hidden rounded-[1.3rem] border px-4 py-4 text-center shadow-[0_12px_28px_rgba(156,113,93,0.12)] transition hover:-translate-y-0.5 hover:shadow-[0_16px_34px_rgba(156,113,93,0.16)]"
@@ -153,9 +161,9 @@ export default function HomeClient({ data }: { data: HomeData }) {
                       />
 
                       <span className="relative max-w-[8ch] text-[1.48rem] font-semibold leading-[1.05] text-[#5a443d]">
-                        {tileStyle?.title ?? e.label}
+                        {entryPointTitles[e.id] ?? tileStyle?.title ?? e.label}
                       </span>
-                    </Link>
+                    </LocalizedLink>
                   );
                 }
 
@@ -183,7 +191,7 @@ export default function HomeClient({ data }: { data: HomeData }) {
 
           <section>
             <h2 className="text-sm font-semibold uppercase tracking-[0.16em] text-stone-500">
-              Recently Added
+              {dictionary.common.recentlyAdded}
             </h2>
 
             <ul className="mt-3 space-y-3">
@@ -208,12 +216,12 @@ export default function HomeClient({ data }: { data: HomeData }) {
           </section>
 
           <section className="pb-5 text-center">
-            <Link
+            <LocalizedLink
               href="/about"
               className="mt-3 inline-flex rounded-md border border-white/70 bg-white/78 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#9b6a5f] shadow-sm backdrop-blur-sm transition hover:bg-white"
             >
-              About Kunj Kirtan
-            </Link>
+              {dictionary.common.aboutKunjKirtan}
+            </LocalizedLink>
           </section>
         </div>
       </main>

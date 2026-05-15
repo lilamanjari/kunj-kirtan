@@ -59,6 +59,7 @@ import SubpageHeader from "@/lib/components/SubpageHeader";
 import { bhajansPalette } from "@/lib/theme/pagePalettes";
 import AlphabetRail from "@/lib/components/AlphabetRail";
 import { ALPHABET } from "@/lib/alphabets";
+import { useDictionary } from "@/lib/i18n/LocaleProvider";
 
 type BhajanItem = KirtanSummary;
 
@@ -127,6 +128,7 @@ export default function BhajansPageClient({
 }: {
   initialData: BhajansResponse;
 }) {
+  const dictionary = useDictionary();
   const initialTopPageSnapshot = useMemo<TopPageSnapshot>(
     () => ({
       nextCursor: initialData.next_cursor ?? null,
@@ -607,7 +609,11 @@ export default function BhajansPageClient({
             onPin={setPinnedKirtan}
           />
         </Suspense>
-        <SubpageHeader title="Bhajans" backLabel="Home" backHref="/" />
+        <SubpageHeader
+          title={dictionary.explore.bhajans}
+          backLabel={dictionary.common.home}
+          backHref="/"
+        />
 
         {featured ? (
           <div className="-mt-6">
@@ -645,8 +651,8 @@ export default function BhajansPageClient({
               <button
                 type="button"
                 onClick={() => playCollection(renderedBhajans)}
-                aria-label="Play all bhajans"
-                title="Play all"
+                aria-label={dictionary.actions.playAll}
+                title={dictionary.actions.playAll}
                 className="flex h-8 w-8 items-center justify-center rounded-full border border-[#ead5db] bg-white text-[#8f6774] shadow-sm hover:bg-[#fff6f8]"
               >
                 <SFIcon icon={sfPlaySquareStackFill} className="h-4 w-4" />
@@ -656,8 +662,8 @@ export default function BhajansPageClient({
                 onClick={() =>
                   playCollection(renderedBhajans, { shuffle: true })
                 }
-                aria-label="Shuffle bhajans"
-                title="Shuffle"
+                aria-label={dictionary.actions.shuffle}
+                title={dictionary.actions.shuffle}
                 className="flex h-8 w-8 items-center justify-center rounded-full border border-[#ead5db] bg-white text-[#8f6774] shadow-sm hover:bg-[#fff6f8]"
               >
                 <SFIcon icon={sfShuffleCircle} className="h-4 w-4" />
@@ -693,7 +699,7 @@ export default function BhajansPageClient({
                 </li>
               ) : renderedBhajans.length === 0 && hasFetchedOnce ? (
                 <li className="rounded-xl border border-dashed border-[#ead5db] bg-white/88 px-4 py-6 text-center text-sm text-[#98727e]">
-                  No Bhajans match your search.
+                  {dictionary.explore.noBhajansMatch}
                 </li>
               ) : (
                 groupedBhajans.map((row) =>
@@ -712,8 +718,8 @@ export default function BhajansPageClient({
                           aria-hidden={!isLoadingPrevious}
                         >
                           {isLoadingPrevious && loadingBeforeLetter
-                            ? `Loading titles before ${loadingBeforeLetter}…`
-                            : "Loading more…"}
+                            ? dictionary.explore.loadingMore
+                            : dictionary.explore.loadingMore}
                         </li>
                       ) : null}
                       <li
@@ -745,9 +751,9 @@ export default function BhajansPageClient({
                           className="mt-3 rounded-xl border border-dashed border-[#ead5db] bg-white/80 px-3 py-2 text-center text-[0.68rem] uppercase tracking-[0.18em] text-[#aa8591]"
                         >
                           {isLoadingMore
-                            ? "Loading more…"
+                            ? dictionary.explore.loadingMore
                             : loadedWindow.hasAfter
-                              ? "More below"
+                              ? dictionary.explore.moreBelow
                               : ""}
                         </li>
                       ) : null}
