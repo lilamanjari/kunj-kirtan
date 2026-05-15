@@ -15,12 +15,7 @@ import { fetchWithStatus } from "@/lib/net/fetchWithStatus";
 import FeaturedKirtanCard from "@/lib/components/FeaturedKirtanCard";
 import SubpageHeader from "@/lib/components/SubpageHeader";
 import { leadsPalette } from "@/lib/theme/pagePalettes";
-
-const FILTERS: { key: KirtanType; label: string }[] = [
-  { key: "MM", label: "Maha Mantra" },
-  { key: "BHJ", label: "Bhajans" },
-  { key: "HK", label: "Hari Katha" },
-] as const;
+import { useDictionary } from "@/lib/i18n/LocaleProvider";
 
 export default function LeadPageClient({
   slug,
@@ -29,6 +24,7 @@ export default function LeadPageClient({
   slug: string;
   initialData: LeadResponse;
 }) {
+  const dictionary = useDictionary();
   const {
     isActive,
     isPlaying,
@@ -42,6 +38,11 @@ export default function LeadPageClient({
     isFavorited,
     select,
   } = useAudioPlayer();
+  const filters: { key: KirtanType; label: string }[] = [
+    { key: "MM", label: dictionary.explore.mahaMantra },
+    { key: "BHJ", label: dictionary.explore.bhajans },
+    { key: "HK", label: dictionary.explore.hariKatha },
+  ];
 
   const [listsByType, setListsByType] = useState<Partial<Record<KirtanType, LeadListState>>>(
     initialData.active_type
@@ -127,7 +128,7 @@ export default function LeadPageClient({
     return () => observer.disconnect();
   }, [activeType, initialData.lead.id, isLoadingMore, listsByType, slug]);
 
-  const visibleFilters = FILTERS.filter((filter) => (initialData.counts?.[filter.key] ?? 0) > 0);
+  const visibleFilters = filters.filter((filter) => (initialData.counts?.[filter.key] ?? 0) > 0);
   const showTabs = visibleFilters.length > 1;
   const visible = activeType ? (listsByType[activeType]?.kirtans ?? []) : [];
   const isListLoading = Boolean(activeType && !listsByType[activeType]);
@@ -149,7 +150,7 @@ export default function LeadPageClient({
         </Suspense>
         <SubpageHeader
           title={initialData.lead.display_name}
-          backLabel="Leads"
+          backLabel={dictionary.explore.leadsBackLabel}
           backHref="/explore/leads"
         />
 
@@ -201,15 +202,15 @@ export default function LeadPageClient({
         <section>
           <div className="flex items-center justify-between gap-3">
             <h2 className="text-xs uppercase tracking-wide text-stone-500">
-              Kirtans
+              {dictionary.explore.kirtans}
             </h2>
             {visible.length > 1 ? (
               <div className="flex items-center gap-2">
                 <button
                   type="button"
                   onClick={() => playCollection(visible)}
-                  aria-label="Play all kirtans"
-                  title="Play all"
+                  aria-label={dictionary.actions.playAll}
+                  title={dictionary.actions.playAll}
                   className="flex h-8 w-8 items-center justify-center rounded-full border border-[#e5d7cf] bg-white text-[#9b7466] shadow-sm hover:bg-[#fff8f4]"
                 >
                   <SFIcon icon={sfPlaySquareStackFill} className="h-4 w-4" />
@@ -217,8 +218,8 @@ export default function LeadPageClient({
                 <button
                   type="button"
                   onClick={() => playCollection(visible, { shuffle: true })}
-                  aria-label="Shuffle kirtans"
-                  title="Shuffle"
+                  aria-label={dictionary.actions.shuffle}
+                  title={dictionary.actions.shuffle}
                   className="flex h-8 w-8 items-center justify-center rounded-full border border-[#d7e7d8] bg-white text-[#6f9873] shadow-sm hover:bg-[#f5fbf5]"
                 >
                   <SFIcon icon={sfShuffleCircle} className="h-4 w-4" />
@@ -240,7 +241,7 @@ export default function LeadPageClient({
             </div>
           ) : renderedKirtans.length === 0 ? (
             <p className="mt-4 text-sm text-[#95786a]">
-              No kirtans found.
+              {dictionary.explore.noKirtansFound}
             </p>
           ) : (
             <ul className="mt-3 space-y-3">
@@ -263,7 +264,7 @@ export default function LeadPageClient({
           )}
           {isLoadingMore ? (
             <div className="mt-3 rounded-xl border border-dashed border-[#e5d7cf] bg-white/88 px-4 py-4 text-center text-sm text-[#95786a]">
-              Loading more…
+              {dictionary.explore.loadingMore}
             </div>
           ) : null}
           <div ref={loadMoreRef} />

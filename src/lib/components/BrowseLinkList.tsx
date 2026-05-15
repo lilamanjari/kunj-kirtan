@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import LocalizedLink from "@/lib/components/LocalizedLink";
 
 type BrowseLinkItem = {
   id: string;
@@ -46,7 +46,7 @@ export default function BrowseLinkList({
 
         return (
           <li key={item.id}>
-            <Link
+            <LocalizedLink
               href={item.href}
               className="group flex items-center justify-between gap-4 rounded-xl border px-4 py-4 shadow-[0_18px_34px_rgba(84,38,27,0.12)] transition hover:-translate-y-0.5 hover:shadow-[0_22px_40px_rgba(84,38,27,0.16)]"
               style={{
@@ -67,7 +67,7 @@ export default function BrowseLinkList({
               <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[rgba(180,100,80,0.18)] bg-white/82 text-lg text-[rgb(138,88,72)] shadow-[0_8px_18px_rgba(84,38,27,0.12)] backdrop-blur-sm transition group-hover:translate-x-0.5">
                 →
               </span>
-            </Link>
+            </LocalizedLink>
           </li>
         );
       })}

@@ -22,6 +22,7 @@ import {
   queueActiveClassName,
 } from "@/lib/theme/componentThemes";
 import type { FeaturedCardPalette } from "@/lib/theme/pagePalettes";
+import { useDictionary } from "@/lib/i18n/LocaleProvider";
 
 type FeaturedKirtanCardProps = {
   kirtan: KirtanSummary;
@@ -52,6 +53,7 @@ export default function FeaturedKirtanCard({
   palette,
   contextLine,
 }: FeaturedKirtanCardProps) {
+  const dictionary = useDictionary();
   const sequenceLabel = getKirtanSequenceLabel(kirtan.sequence_num);
   const durationLabel = formatKirtanDuration(kirtan.duration_seconds);
   const displayTitle = formatKirtanTitle(kirtan.type, kirtan.title);
@@ -75,7 +77,7 @@ export default function FeaturedKirtanCard({
           palette?.featuredLabelColor ?? "text-white/58"
         }`}
       >
-        Featured
+        {dictionary.common.featured}
       </p>
       {contextLine ? (
         <p
@@ -152,10 +154,14 @@ export default function FeaturedKirtanCard({
                     : iconButtonInactiveClassName
                 }`}
                 aria-label={
-                  isFavorited ? "Remove from favorites" : "Add to favorites"
+                  isFavorited
+                    ? dictionary.actions.removeFromFavorites
+                    : dictionary.actions.addToFavorites
                 }
                 title={
-                  isFavorited ? "Remove from favorites" : "Add to favorites"
+                  isFavorited
+                    ? dictionary.actions.removeFromFavorites
+                    : dictionary.actions.addToFavorites
                 }
               >
                 <SFIcon
@@ -179,8 +185,16 @@ export default function FeaturedKirtanCard({
                     ? queueActiveClassName
                     : iconButtonInactiveClassName
                 }`}
-                aria-label={isQueued ? "Remove from queue" : "Add to queue"}
-                title={isQueued ? "Remove from queue" : "Add to queue"}
+                aria-label={
+                  isQueued
+                    ? dictionary.actions.removeFromQueue
+                    : dictionary.actions.addToQueue
+                }
+                title={
+                  isQueued
+                    ? dictionary.actions.removeFromQueue
+                    : dictionary.actions.addToQueue
+                }
               >
                 {isQueued ? "✓" : "+"}
               </button>

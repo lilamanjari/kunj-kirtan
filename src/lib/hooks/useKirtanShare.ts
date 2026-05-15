@@ -4,8 +4,10 @@ import { useCallback } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import type { KirtanSummary } from "@/types/kirtan";
 import { formatKirtanTitle } from "@/lib/kirtanTitle";
+import { useDictionary } from "@/lib/i18n/LocaleProvider";
 
 export function useKirtanShare() {
+  const dictionary = useDictionary();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
@@ -19,7 +21,7 @@ export function useKirtanShare() {
 
       const title = formatKirtanTitle(kirtan.type, kirtan.title);
       const singer = kirtan.lead_singer ? ` by ${kirtan.lead_singer}` : "";
-      const shareText = `Check out ${title || "this kirtan"}${singer} on Kunj Kirtan:\n${url}`;
+      const shareText = `${dictionary.player.checkOutKirtan} ${title || "this kirtan"}${singer} ${dictionary.player.onKunjKirtan}:\n${url}`;
 
       const shareData = {
         title: title || "Kunj Kirtan",
@@ -45,6 +47,6 @@ export function useKirtanShare() {
 
       return { url, copied };
     },
-    [pathname, searchParams],
+    [dictionary.player.checkOutKirtan, dictionary.player.onKunjKirtan, pathname, searchParams],
   );
 }

@@ -15,12 +15,14 @@ import FeaturedKirtanCard from "@/lib/components/FeaturedKirtanCard";
 import SubpageHeader from "@/lib/components/SubpageHeader";
 import type { MahaMantrasResponse } from "@/types/maha-mantras";
 import { mahaMantrasPalette } from "@/lib/theme/pagePalettes";
+import { useDictionary } from "@/lib/i18n/LocaleProvider";
 
 export default function MahaMantrasPageClient({
   initialData,
 }: {
   initialData: MahaMantrasResponse;
 }) {
+  const dictionary = useDictionary();
   const [mantras, setMantras] = useState<KirtanSummary[]>(initialData.mantras ?? []);
   const [search, setSearch] = useState("");
   const [searchInput, setSearchInput] = useState("");
@@ -140,11 +142,11 @@ export default function MahaMantrasPageClient({
     string,
     { label: string; min: number | null; max: number | null }
   > = {
-    ALL: { label: "Duration: Any length", min: null, max: null },
-    UNDER_10: { label: "Duration: Under 10 min", min: null, max: 10 * 60 },
-    BETWEEN_10_20: { label: "Duration: 10-20 min", min: 10 * 60, max: 20 * 60 },
-    BETWEEN_20_30: { label: "Duration: 20-30 min", min: 20 * 60, max: 30 * 60 },
-    OVER_30: { label: "Duration: Over 30 min", min: 30 * 60, max: null },
+    ALL: { label: dictionary.explore.durationAnyLength, min: null, max: null },
+    UNDER_10: { label: dictionary.explore.durationUnder10, min: null, max: 10 * 60 },
+    BETWEEN_10_20: { label: dictionary.explore.duration10To20, min: 10 * 60, max: 20 * 60 },
+    BETWEEN_20_30: { label: dictionary.explore.duration20To30, min: 20 * 60, max: 30 * 60 },
+    OVER_30: { label: dictionary.explore.durationOver30, min: 30 * 60, max: null },
   };
 
   const visibleMantras = mantras;
@@ -200,7 +202,11 @@ export default function MahaMantrasPageClient({
             onPin={setPinnedKirtan}
           />
         </Suspense>
-        <SubpageHeader title="Maha Mantra" backLabel="Home" backHref="/" />
+        <SubpageHeader
+          title={dictionary.explore.mahaMantra}
+          backLabel={dictionary.common.home}
+          backHref="/"
+        />
 
         {featured ? (
           <div className="-mt-6">
@@ -280,8 +286,8 @@ export default function MahaMantrasPageClient({
               <button
                 type="button"
                 onClick={() => playCollection(visibleMantras)}
-                aria-label="Play all maha mantras"
-                title="Play all"
+                aria-label={dictionary.actions.playAll}
+                title={dictionary.actions.playAll}
                 className="flex h-10 w-10 items-center justify-center rounded-full border border-[#ead8cf] bg-white text-[#8b6657] shadow-sm hover:bg-[#fff8f4]"
               >
                 <SFIcon icon={sfPlaySquareStackFill} className="h-4 w-4" />
@@ -289,8 +295,8 @@ export default function MahaMantrasPageClient({
               <button
                 type="button"
                 onClick={() => playCollection(visibleMantras, { shuffle: true })}
-                aria-label="Shuffle maha mantras"
-                title="Shuffle"
+                aria-label={dictionary.actions.shuffle}
+                title={dictionary.actions.shuffle}
                 className="flex h-10 w-10 items-center justify-center rounded-full border border-[#ead8cf] bg-white text-[#8b6657] shadow-sm hover:bg-[#fff8f4]"
               >
                 <SFIcon icon={sfShuffleCircle} className="h-4 w-4" />
@@ -313,7 +319,7 @@ export default function MahaMantrasPageClient({
             </li>
           ) : renderedMantras.length === 0 && hasFetchedOnce ? (
             <li className="rounded-xl border border-dashed border-[#ead8cf] bg-white/88 px-4 py-6 text-center text-sm text-[#9b7a6c]">
-              No Maha Mantras match your filters.
+              {dictionary.explore.noMahaMantrasMatch}
             </li>
           ) : (
             renderedMantras.map((m) => (

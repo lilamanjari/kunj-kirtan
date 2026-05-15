@@ -2,6 +2,7 @@
 
 import type { KirtanSummary } from "@/types/kirtan";
 import HomeCuratedKirtanStrip from "@/lib/components/HomeCuratedKirtanStrip";
+import { useDictionary } from "@/lib/i18n/LocaleProvider";
 
 type HomeRecommendedStripProps = {
   kirtans: KirtanSummary[];
@@ -10,10 +11,12 @@ type HomeRecommendedStripProps = {
 export default function HomeRecommendedStrip({
   kirtans,
 }: HomeRecommendedStripProps) {
+  const dictionary = useDictionary();
+
   return (
     <HomeCuratedKirtanStrip
-      title="Recommended"
-      subtitle="Rare gems refreshed weekly."
+      title={dictionary.home.recommended}
+      subtitle={dictionary.home.recommendedSubtitle}
       kirtans={kirtans}
       backgroundGradient="linear-gradient(180deg, #d49897 0%, #d6afa4 18%, #f0d2c4 52%, #f7ebe2 100%)"
       headerOverlayRgb="91,58,28"

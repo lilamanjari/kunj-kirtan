@@ -1,4 +1,9 @@
 import type { RecordedDatePrecision } from "@/types/kirtan";
+import {
+  defaultLocale,
+  getIntlLocale,
+  type Locale,
+} from "@/lib/i18n/config";
 
 export function parseDateSafe(dateStr: string | null | undefined) {
   if (!dateStr) return null;
@@ -16,21 +21,23 @@ export function parseDateSafe(dateStr: string | null | undefined) {
 export function formatDateShort(
   dateStr: string | null | undefined,
   precision: RecordedDatePrecision | null | undefined = "day",
+  locale: Locale = defaultLocale,
 ) {
   const d = parseDateSafe(dateStr);
   if (!d) return "";
+  const intlLocale = getIntlLocale(locale);
   if (precision === "year") {
-    return d.toLocaleDateString("en-GB", {
+    return d.toLocaleDateString(intlLocale, {
       year: "numeric",
     });
   }
   if (precision === "month") {
-    return d.toLocaleDateString("en-GB", {
+    return d.toLocaleDateString(intlLocale, {
       month: "short",
       year: "numeric",
     });
   }
-  return d.toLocaleDateString("en-GB", {
+  return d.toLocaleDateString(intlLocale, {
     day: "numeric",
     month: "short",
     year: "numeric",
@@ -40,21 +47,23 @@ export function formatDateShort(
 export function formatDateLong(
   dateStr: string | null | undefined,
   precision: RecordedDatePrecision | null | undefined = "day",
+  locale: Locale = defaultLocale,
 ) {
   const d = parseDateSafe(dateStr);
   if (!d) return "";
+  const intlLocale = getIntlLocale(locale);
   if (precision === "year") {
-    return d.toLocaleDateString("en-GB", {
+    return d.toLocaleDateString(intlLocale, {
       year: "numeric",
     });
   }
   if (precision === "month") {
-    return d.toLocaleDateString("en-GB", {
+    return d.toLocaleDateString(intlLocale, {
       month: "long",
       year: "numeric",
     });
   }
-  return d.toLocaleDateString("en-GB", {
+  return d.toLocaleDateString(intlLocale, {
     day: "numeric",
     month: "long",
     year: "numeric",

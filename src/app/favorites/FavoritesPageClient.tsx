@@ -11,8 +11,10 @@ import type { KirtanSummary } from "@/types/kirtan";
 import KirtanDeepLinkHandler from "@/lib/components/KirtanDeepLinkHandler";
 import KirtanListItem from "@/lib/components/KirtanListItem";
 import SubpageHeader from "@/lib/components/SubpageHeader";
+import { useDictionary } from "@/lib/i18n/LocaleProvider";
 
 export default function FavoritesPageClient() {
+  const dictionary = useDictionary();
   const {
     favorites,
     favoritesLoaded,
@@ -50,20 +52,24 @@ export default function FavoritesPageClient() {
             onPin={setPinnedKirtan}
           />
         </Suspense>
-        <SubpageHeader title="Favorites" backLabel="Home" backHref="/" />
+        <SubpageHeader
+          title={dictionary.common.favorites}
+          backLabel={dictionary.common.home}
+          backHref="/"
+        />
 
         <section>
           <div className="flex items-center justify-between gap-3">
             <h2 className="text-xs uppercase tracking-wide text-stone-500">
-              Saved Kirtans
+              {dictionary.common.savedKirtans}
             </h2>
             {favorites.length > 1 ? (
               <div className="flex items-center gap-2">
                 <button
                   type="button"
                   onClick={() => playCollection(favorites)}
-                  aria-label="Play all favorites"
-                  title="Play all"
+                  aria-label={dictionary.actions.playAll}
+                  title={dictionary.actions.playAll}
                   className="flex h-8 w-8 items-center justify-center rounded-full border border-[#ead8d2] bg-white text-stone-700 shadow-sm hover:bg-[#fff7f3]"
                 >
                   <SFIcon icon={sfPlaySquareStackFill} className="h-4 w-4" />
@@ -71,8 +77,8 @@ export default function FavoritesPageClient() {
                 <button
                   type="button"
                   onClick={() => playCollection(favorites, { shuffle: true })}
-                  aria-label="Shuffle favorites"
-                  title="Shuffle"
+                  aria-label={dictionary.actions.shuffle}
+                  title={dictionary.actions.shuffle}
                   className="flex h-8 w-8 items-center justify-center rounded-full border border-[#ead8d2] bg-white text-stone-700 shadow-sm hover:bg-[#fff7f3]"
                 >
                   <SFIcon icon={sfShuffleCircle} className="h-4 w-4" />
@@ -94,7 +100,7 @@ export default function FavoritesPageClient() {
             </div>
           ) : renderedFavorites.length === 0 ? (
             <div className="mt-3 rounded-xl border border-dashed border-stone-200 bg-white px-4 py-6 text-center text-sm text-stone-500">
-              No favorites yet. Tap the heart on any kirtan to save it here.
+              {dictionary.common.noFavoritesYet}
             </div>
           ) : (
             <ul className="mt-3 space-y-3">

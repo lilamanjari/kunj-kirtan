@@ -1,7 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
+import LocalizedLink from "@/lib/components/LocalizedLink";
+import { useDictionary } from "@/lib/i18n/LocaleProvider";
 
 type SubpageHeaderProps = {
   title: string;
@@ -16,6 +17,7 @@ export default function SubpageHeader({
   backHref = "/",
   backLabel = "Home",
 }: SubpageHeaderProps) {
+  const dictionary = useDictionary();
   const isLongTitle = title.length > 18;
   const isVeryLongTitle = title.length > 26;
   const isExtremelyLongTitle = title.length > 34;
@@ -47,20 +49,20 @@ export default function SubpageHeader({
         />
         <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,247,242,0.76)_0%,rgba(255,244,238,0.34)_32%,rgba(255,244,238,0.08)_56%,rgba(255,244,238,0)_78%)]" />
         <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-b from-transparent to-[#f6e4de]" />
-        <Link
+        <LocalizedLink
           href="/"
-          aria-label="Go to home page"
+          aria-label={dictionary.actions.goToHomePage}
           className="absolute right-4 top-0 z-10 block h-28 w-[58%] rounded-bl-[2rem]"
         />
 
         <div className="absolute inset-x-5 top-4">
           <div className={titleWidthClassName}>
-            <Link
+            <LocalizedLink
               href={backHref}
               className="inline-flex rounded-md border border-white/70 bg-white/78 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#9b6a5f] shadow-sm backdrop-blur-sm hover:bg-white"
             >
               {`\u2039 ${backLabel}`}
-            </Link>
+            </LocalizedLink>
           </div>
         </div>
 
