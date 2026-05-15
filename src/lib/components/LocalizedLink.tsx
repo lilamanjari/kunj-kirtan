@@ -7,7 +7,7 @@ import { localizeHref } from "@/lib/i18n/localizeHref";
 
 type LocalizedLinkProps = LinkProps &
   Omit<AnchorHTMLAttributes<HTMLAnchorElement>, "href"> & {
-    children: ReactNode;
+    children?: ReactNode;
   };
 
 export default function LocalizedLink({
