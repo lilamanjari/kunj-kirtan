@@ -99,7 +99,7 @@ export default function HomeRailKirtanCard({
           {isActive && isLoading ? (
             <span className="block h-3.5 w-3.5 animate-spin rounded-full border-2 border-stone-300 border-t-stone-600" />
           ) : isActive && isPlaying ? (
-            <Equalizer />
+            <Equalizer className="h-3.5 gap-px" />
           ) : (
             <SFIcon icon={sfPlayFill} className="h-3.5 w-3.5" />
           )}

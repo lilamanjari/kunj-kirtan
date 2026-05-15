@@ -5,7 +5,7 @@ type EqualizerProps = {
 export default function Equalizer({ className = "" }: EqualizerProps) {
   return (
     <div
-      className={`h-4 opacity-90 ml-3 flex items-end gap-[2px] ${className}`}
+      className={`flex h-4 items-end justify-center gap-[2px] opacity-90 ${className}`}
     >
       {[1, 2, 3].map((i) => (
         <span

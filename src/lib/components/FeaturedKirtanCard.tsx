@@ -92,16 +92,12 @@ export default function FeaturedKirtanCard({
       </h1>
 
       {/* Lead singer row */}
-      <div className="mt-2 flex items-center justify-between gap-2">
+      <div className="mt-2">
         <p className={palette?.leadsingerLabelColor ?? "text-stone-300"}>
           {sequenceLabel ? `${sequenceLabel} by` : ""}
           {sequenceLabel ? " " : ""}
           {kirtan.lead_singer}
         </p>
-
-        <div className="h-4 w-6 flex items-center justify-end">
-          {isActive && isPlaying && <Equalizer />}
-        </div>
       </div>
 
       <div
@@ -135,8 +131,17 @@ export default function FeaturedKirtanCard({
             {durationLabel}
           </span>
         ) : null}
+        {isActive && isPlaying ? (
+          <span className="ml-auto inline-flex h-7 items-center justify-center">
+            <Equalizer className="h-3.5 gap-px" />
+          </span>
+        ) : null}
         {onToggleFavorite || onEnqueue ? (
-          <div className="ml-auto flex items-center gap-2">
+          <div
+            className={`flex items-center gap-2 ${
+              isActive && isPlaying ? "" : "ml-auto"
+            }`}
+          >
             {onToggleFavorite ? (
               <button
                 type="button"
