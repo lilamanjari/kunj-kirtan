@@ -108,8 +108,8 @@ export default function HomeClient({ data }: { data: HomeData }) {
             <FeaturedKirtanCard
               kirtan={primaryAction.kirtan}
               isActive={isActive(primaryAction.kirtan)}
-              isPlaying={isPlaying()}
-              isLoading={isLoading()}
+              isPlaying={isPlaying(primaryAction.kirtan)}
+              isLoading={isLoading(primaryAction.kirtan)}
               onToggle={() => toggle(primaryAction.kirtan)}
               onEnqueue={enqueue}
               onDequeue={dequeueById}
@@ -193,8 +193,8 @@ export default function HomeClient({ data }: { data: HomeData }) {
                     key={k.id}
                     kirtan={k}
                     isActive={isActive(k)}
-                    isPlaying={isPlaying()}
-                    isLoading={isLoading()}
+                    isPlaying={isPlaying(k)}
+                    isLoading={isLoading(k)}
                     onToggle={() => toggle(k)}
                     onEnqueue={enqueue}
                     onDequeue={dequeueById}

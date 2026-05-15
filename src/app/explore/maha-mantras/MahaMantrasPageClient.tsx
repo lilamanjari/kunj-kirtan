@@ -207,8 +207,8 @@ export default function MahaMantrasPageClient({
             <FeaturedKirtanCard
               kirtan={featured}
               isActive={isActive(featured)}
-              isPlaying={isPlaying()}
-              isLoading={isLoading()}
+              isPlaying={isPlaying(featured)}
+              isLoading={isLoading(featured)}
               onToggle={() => toggle(featured)}
               onEnqueue={enqueue}
               onDequeue={dequeueById}
@@ -321,8 +321,8 @@ export default function MahaMantrasPageClient({
                 key={m.id}
                 kirtan={m}
                 isActive={isActive(m)}
-                isPlaying={isPlaying()}
-                isLoading={isLoading()}
+                isPlaying={isPlaying(m)}
+                isLoading={isLoading(m)}
                 onToggle={() => toggle(m)}
                 onEnqueue={enqueue}
                 onDequeue={dequeueById}

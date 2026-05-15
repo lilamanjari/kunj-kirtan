@@ -106,7 +106,7 @@ export default function HomeCuratedKirtanStrip({
       </div>
 
       <div className="relative mt-4 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        <div className="flex gap-3 overflow-y-visible py-1 pr-8">
+        <div className="flex gap-3 overflow-y-visible py-1 pl-2 pr-8">
           {kirtans.map((kirtan) => {
             const durationLabel = formatKirtanDuration(kirtan.duration_seconds);
             const active = isActive(kirtan);
@@ -118,8 +118,8 @@ export default function HomeCuratedKirtanStrip({
                 key={kirtan.id}
                 kirtan={kirtan}
                 isActive={active}
-                isPlaying={isPlaying()}
-                isLoading={isLoading()}
+                isPlaying={isPlaying(kirtan)}
+                isLoading={isLoading(kirtan)}
                 onActivate={() => play(kirtan)}
                 opacity={0.85}
                 leadingSlot={

@@ -103,8 +103,8 @@ export default function FavoritesPageClient() {
                   key={kirtan.id}
                   kirtan={kirtan}
                   isActive={isActive(kirtan)}
-                  isPlaying={isPlaying()}
-                  isLoading={isLoading()}
+                  isPlaying={isPlaying(kirtan)}
+                  isLoading={isLoading(kirtan)}
                   onToggle={() => toggle(kirtan)}
                   onEnqueue={enqueue}
                   onDequeue={dequeueById}

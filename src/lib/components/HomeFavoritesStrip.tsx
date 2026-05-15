@@ -7,10 +7,7 @@ import { formatKirtanDuration } from "@/lib/kirtanPresentation";
 import type { KirtanSummary } from "@/types/kirtan";
 import HomeRailKirtanCard from "@/lib/components/HomeRailKirtanCard";
 import HomeRailActionButtons from "@/lib/components/HomeRailActionButtons";
-import {
-  durationPillClassName,
-  harmoniumPillClassName,
-} from "@/lib/theme/componentThemes";
+import { durationPillClassName } from "@/lib/theme/componentThemes";
 
 type HomeFavoritesStripProps = {
   favorites: KirtanSummary[];
@@ -97,7 +94,7 @@ export default function HomeFavoritesStrip({
       </div>
 
       <div className="relative mt-4 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        <div className="flex gap-3 overflow-y-visible py-1 pr-8">
+        <div className="flex gap-3 overflow-y-visible py-1 pl-2 pr-8">
           {previewFavorites.map((kirtan) => {
             const durationLabel = formatKirtanDuration(kirtan.duration_seconds);
             const active = isActive(kirtan);
@@ -108,8 +105,8 @@ export default function HomeFavoritesStrip({
                 key={kirtan.id}
                 kirtan={kirtan}
                 isActive={active}
-                isPlaying={isPlaying()}
-                isLoading={isLoading()}
+                isPlaying={isPlaying(kirtan)}
+                isLoading={isLoading(kirtan)}
                 onActivate={() => play(kirtan)}
                 opacity={0.85}
                 leadingSlot={
@@ -130,13 +127,6 @@ export default function HomeFavoritesStrip({
                 }
                 trailingTopSlot={
                   <>
-                    {kirtan.has_harmonium ? (
-                      <span
-                        className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${harmoniumPillClassName}`}
-                      >
-                        H
-                      </span>
-                    ) : null}
                     {durationLabel ? (
                       <span
                         className={`rounded-full px-2.5 py-1 text-[11px] font-semibold tracking-wide ${durationPillClassName}`}

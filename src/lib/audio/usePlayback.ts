@@ -13,11 +13,19 @@ export function usePlayback() {
     return current?.id === kirtan.id;
   }
 
-  function isPlaying() {
+  function isPlaying(kirtan?: KirtanSummary) {
+    if (kirtan) {
+      return current?.id === kirtan.id && state === "playing";
+    }
+
     return state === "playing";
   }
 
-  function isLoading() {
+  function isLoading(kirtan?: KirtanSummary) {
+    if (kirtan) {
+      return current?.id === kirtan.id && state === "loading";
+    }
+
     return state === "loading";
   }
 

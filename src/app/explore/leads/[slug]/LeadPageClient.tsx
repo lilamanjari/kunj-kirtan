@@ -158,8 +158,8 @@ export default function LeadPageClient({
             <FeaturedKirtanCard
               kirtan={featuredKirtan}
               isActive={isActive(featuredKirtan)}
-              isPlaying={isPlaying()}
-              isLoading={isAudioLoading()}
+              isPlaying={isPlaying(featuredKirtan)}
+              isLoading={isAudioLoading(featuredKirtan)}
               onToggle={() => toggle(featuredKirtan)}
               onEnqueue={enqueue}
               onDequeue={dequeueById}
@@ -249,8 +249,8 @@ export default function LeadPageClient({
                   key={k.id}
                   kirtan={k}
                   isActive={isActive(k)}
-                  isPlaying={isPlaying()}
-                  isLoading={isAudioLoading()}
+                  isPlaying={isPlaying(k)}
+                  isLoading={isAudioLoading(k)}
                   onToggle={() => toggle(k)}
                   onEnqueue={enqueue}
                   onDequeue={dequeueById}

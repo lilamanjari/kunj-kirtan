@@ -59,8 +59,8 @@ export default function OccasionDetailClient({
             key={k.id}
             kirtan={k}
             isActive={isActive(k)}
-            isPlaying={isPlaying()}
-            isLoading={isLoading()}
+            isPlaying={isPlaying(k)}
+            isLoading={isLoading(k)}
             onToggle={() => toggle(k)}
             onEnqueue={enqueue}
             onDequeue={dequeueById}
@@ -95,8 +95,8 @@ export default function OccasionDetailClient({
             <FeaturedKirtanCard
               kirtan={featured}
               isActive={isActive(featured)}
-              isPlaying={isPlaying()}
-              isLoading={isLoading()}
+              isPlaying={isPlaying(featured)}
+              isLoading={isLoading(featured)}
               onToggle={() => toggle(featured)}
               onEnqueue={enqueue}
               onDequeue={dequeueById}

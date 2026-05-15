@@ -614,8 +614,8 @@ export default function BhajansPageClient({
             <FeaturedKirtanCard
               kirtan={featured}
               isActive={isActive(featured)}
-              isPlaying={isPlaying()}
-              isLoading={isLoading()}
+              isPlaying={isPlaying(featured)}
+              isLoading={isLoading(featured)}
               onToggle={() => toggle(featured)}
               onEnqueue={enqueue}
               onDequeue={dequeueById}
@@ -730,8 +730,8 @@ export default function BhajansPageClient({
                       <KirtanListItem
                         kirtan={row.bhajan}
                         isActive={isActive(row.bhajan)}
-                        isPlaying={isPlaying()}
-                        isLoading={isLoading()}
+                        isPlaying={isPlaying(row.bhajan)}
+                        isLoading={isLoading(row.bhajan)}
                         onToggle={() => toggle(row.bhajan)}
                         onEnqueue={enqueue}
                         onDequeue={dequeueById}
