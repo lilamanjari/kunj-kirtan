@@ -13,13 +13,14 @@ export const ruDictionary: AppDictionary = {
     recentlyAdded: "Недавно добавленные",
     aboutKunjKirtan: "О Kunj Kirtan",
     offlineCheckConnection: "Нет сети — проверьте соединение",
-    noFavoritesYet: "Пока нет избранного. Нажмите на сердечко у любого киртана, чтобы сохранить его здесь.",
+    noFavoritesYet:
+      "Пока нет избранного. Нажмите на сердечко у любого киртана, чтобы сохранить его здесь.",
   },
   explore: {
     bhajans: "Бхаджаны",
     mahaMantra: "Маха-мантра",
     hariKatha: "Хари-катха",
-    leadSingers: "Ведущие киртана",
+    leadSingers: "Киртании",
     occasions: "События",
     leadsSubtitle: "Киртаны по исполнителям",
     occasionsSubtitle: "Киртаны по праздникам",
