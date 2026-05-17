@@ -1,1 +1,5 @@
-export { default } from "@/app/rare-gem-lab/page";
+import RareGemLabPage from "./RareGemLabPage";
+
+export default function LocalizedRareGemLabPage() {
+  return <RareGemLabPage />;
+}

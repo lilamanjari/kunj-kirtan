@@ -1,1 +1,5 @@
-export { default } from "@/app/about/page";
+import AboutPageContent from "./AboutPageContent";
+
+export default function LocalizedAboutPage() {
+  return <AboutPageContent />;
+}

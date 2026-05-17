@@ -30,14 +30,14 @@ const DONATION_LINKS = [
   },
 ] as const;
 
-export default function AboutPage() {
+export default function AboutPageContent() {
   const locale = useLocale();
   const dictionary = useDictionary();
   const content = getAboutContent(locale);
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-[linear-gradient(180deg,_#f5d7d0_0%,_#f6e4de_18%,_#f7ece7_42%,_#f8f2ef_100%)] text-stone-900">
-      <main className="relative z-10 mx-auto max-w-md px-5 py-6 space-y-8">
+      <main className="relative z-10 mx-auto max-w-md space-y-8 px-5 py-6">
         <SubpageHeader
           title={content.headerTitle}
           subtitle={content.headerSubtitle}
@@ -123,9 +123,7 @@ export default function AboutPage() {
                 {content.kirtanContributionBody}
               </p>
               <div className="mt-3 rounded-2xl border border-white/18 bg-white/10 px-4 py-4 backdrop-blur-sm">
-                <p className="text-sm font-medium text-white">
-                  {content.uploadIntro}
-                </p>
+                <p className="text-sm font-medium text-white">{content.uploadIntro}</p>
                 <ul className="mt-3 space-y-2 text-sm leading-6 text-white/82">
                   {content.uploadChecklist.map((item) => (
                     <li key={item}>{item}</li>

@@ -1,1 +1,5 @@
-export { default } from "@/app/favorites/page";
+import FavoritesPageClient from "./FavoritesPageClient";
+
+export default function LocalizedFavoritesPage() {
+  return <FavoritesPageClient />;
+}
