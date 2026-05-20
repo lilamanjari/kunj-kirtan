@@ -2,20 +2,31 @@ import { supabase } from "@/lib/supabase";
 import { ALPHABET } from "@/lib/alphabets";
 import type { BhajanAlphabetIndex, BhajanCursor } from "@/types/bhajans";
 
+function normalizeSearchText(input: string) {
+  return input
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim()
+    .replace(/\s+/g, " ");
+}
+
 export async function buildBhajanAlphabetIndex(search: string | null) {
+  const normalizedSearch = search ? normalizeSearchText(search) : null;
+
   const entries = await Promise.all(
     ALPHABET.map(async (letter) => {
       let query = supabase
-        .from("playable_kirtans")
-        .select("id,title")
-        .eq("type", "BHJ")
+        .from("playable_bhajan_titles")
+        .select("browse_id,title")
         .ilike("title", `${letter}%`)
         .order("title", { ascending: true })
-        .order("id", { ascending: true })
+        .order("browse_id", { ascending: true })
         .limit(1);
 
-      if (search) {
-        query = query.ilike("title", `%${search}%`);
+      if (normalizedSearch) {
+        query = query.ilike("searchable_text", `%${normalizedSearch}%`);
       }
 
       const { data, error } = await query;
@@ -25,7 +36,7 @@ export async function buildBhajanAlphabetIndex(search: string | null) {
 
       const first = data?.[0];
       return first
-        ? ([letter, { title: first.title, id: first.id }] as const)
+        ? ([letter, { title: first.title, id: first.browse_id }] as const)
         : null;
     }),
   );

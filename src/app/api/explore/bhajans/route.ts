@@ -1,5 +1,5 @@
 import { supabase } from "@/lib/supabase";
-import type { KirtanSummary } from "@/types/kirtan";
+import type { KirtanSummary, PlayableBhajanTitleRow } from "@/types/kirtan";
 import type { BhajanAlphabetIndex, BhajanCursor } from "@/types/bhajans";
 import { fetchKirtanTagFlags } from "@/lib/server/kirtanTags";
 import { getDailyRareGem } from "@/lib/server/featured";
@@ -12,8 +12,18 @@ function escapeTitle(title: string) {
   return title.replace(/"/g, '\\"');
 }
 
-function mapCursor(row: { title: string; id: string } | undefined) {
-  return row ? { title: row.title, id: row.id } satisfies BhajanCursor : null;
+function normalizeSearchText(input: string) {
+  return input
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim()
+    .replace(/\s+/g, " ");
+}
+
+function mapCursor(row: Pick<PlayableBhajanTitleRow, "title" | "browse_id"> | undefined) {
+  return row ? { title: row.title, id: row.browse_id } satisfies BhajanCursor : null;
 }
 
 export async function GET(req: Request) {
@@ -27,6 +37,7 @@ export async function GET(req: Request) {
   const startId = searchParams.get("start_id");
   const beforeTitle = searchParams.get("before_title");
   const beforeId = searchParams.get("before_id");
+  const normalizedSearch = search ? normalizeSearchText(search) : null;
   const shouldIncludeAlphabetIndex =
     !cursorTitle && !cursorId && !startTitle && !startId && !beforeTitle && !beforeId;
 
@@ -54,29 +65,29 @@ export async function GET(req: Request) {
 
   const isBeforeQuery = Boolean(beforeTitle && beforeId);
   const isStartQuery = Boolean(startTitle && startId);
-  let query = supabase.from("playable_kirtans").select("*").eq("type", "BHJ");
+  let query = supabase.from("playable_bhajan_titles").select("*");
 
-  if (search) {
-    query = query.ilike("title", `%${search}%`);
+  if (normalizedSearch) {
+    query = query.ilike("searchable_text", `%${normalizedSearch}%`);
   }
 
   if (isBeforeQuery) {
     const safeTitle = escapeTitle(beforeTitle!);
     query = query
-      .or(`title.lt."${safeTitle}",and(title.eq."${safeTitle}",id.lt.${beforeId})`)
+      .or(`title.lt."${safeTitle}",and(title.eq."${safeTitle}",browse_id.lt.${beforeId})`)
       .order("title", { ascending: false })
-      .order("id", { ascending: false });
+      .order("browse_id", { ascending: false });
   } else {
-    query = query.order("title", { ascending: true }).order("id", { ascending: true });
+    query = query.order("title", { ascending: true }).order("browse_id", { ascending: true });
     if (startTitle && startId) {
       const safeTitle = escapeTitle(startTitle);
       query = query.or(
-        `title.gt."${safeTitle}",and(title.eq."${safeTitle}",id.gte.${startId})`,
+        `title.gt."${safeTitle}",and(title.eq."${safeTitle}",browse_id.gte.${startId})`,
       );
     } else if (cursorTitle && cursorId) {
       const safeTitle = escapeTitle(cursorTitle);
       query = query.or(
-        `title.gt."${safeTitle}",and(title.eq."${safeTitle}",id.gt.${cursorId})`,
+        `title.gt."${safeTitle}",and(title.eq."${safeTitle}",browse_id.gt.${cursorId})`,
       );
     }
   }
@@ -91,7 +102,7 @@ export async function GET(req: Request) {
     });
   }
 
-  let rows = data ?? [];
+  let rows = (data ?? []) as PlayableBhajanTitleRow[];
   let hasMore = false;
   let hasBefore = false;
   let nextCursor: BhajanCursor | null = null;
@@ -114,14 +125,15 @@ export async function GET(req: Request) {
     if (firstRow) {
       const safeTitle = escapeTitle(firstRow.title);
       let beforeQuery = supabase
-        .from("playable_kirtans")
-        .select("id")
-        .eq("type", "BHJ")
-        .or(`title.lt."${safeTitle}",and(title.eq."${safeTitle}",id.lt.${firstRow.id})`)
+        .from("playable_bhajan_titles")
+        .select("browse_id")
+        .or(
+          `title.lt."${safeTitle}",and(title.eq."${safeTitle}",browse_id.lt.${firstRow.browse_id})`,
+        )
         .limit(1);
 
-      if (search) {
-        beforeQuery = beforeQuery.ilike("title", `%${search}%`);
+      if (normalizedSearch) {
+        beforeQuery = beforeQuery.ilike("searchable_text", `%${normalizedSearch}%`);
       }
 
       const { data: beforeData, error: beforeError } = await timing.measure("before", async () =>
@@ -141,7 +153,7 @@ export async function GET(req: Request) {
     }
   }
 
-  const ids = rows.map((k) => k.id);
+  const ids = [...new Set(rows.map((k) => k.kirtan_id))];
   if (featured.kirtan?.id) {
     ids.unshift(featured.kirtan.id);
   }
@@ -155,7 +167,7 @@ export async function GET(req: Request) {
   }
 
   const bhajans: KirtanSummary[] = rows.map((k) => ({
-    id: k.id,
+    id: k.kirtan_id,
     audio_url: k.audio_url ?? "",
     type: k.type,
     title: k.title,
@@ -165,8 +177,8 @@ export async function GET(req: Request) {
     sanga: k.sanga,
     duration_seconds: k.duration_seconds,
     sequence_num: k.sequence_num ?? null,
-    has_harmonium: harmoniumIds.has(k.id),
-    is_rare_gem: rareGemIds.has(k.id),
+    has_harmonium: harmoniumIds.has(k.kirtan_id),
+    is_rare_gem: rareGemIds.has(k.kirtan_id),
   }));
 
   const featuredKirtan: KirtanSummary | null = featured.kirtan

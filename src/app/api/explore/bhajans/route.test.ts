@@ -35,7 +35,7 @@ const fromMock = vi.fn(() => builder);
 
 vi.mock("@/lib/supabase", () => ({
   supabase: {
-    from: (...args: unknown[]) => fromMock(...args),
+    from: () => fromMock(),
   },
 }));
 
@@ -64,7 +64,8 @@ describe("GET /api/explore/bhajans", () => {
     builder = createMockBuilder({
       data: [
         {
-          id: "1",
+          browse_id: "browse-1",
+          kirtan_id: "1",
           audio_url: "a1",
           type: "BHJ",
           title: "Bhajan One",
@@ -99,7 +100,7 @@ describe("GET /api/explore/bhajans", () => {
       new Request("http://localhost/api/explore/bhajans?search=ram"),
     );
 
-    expect(builder.ilike).toHaveBeenCalledWith("title", "%ram%");
+    expect(builder.ilike).toHaveBeenCalledWith("searchable_text", "%ram%");
   });
 
   it("applies cursor pagination", async () => {

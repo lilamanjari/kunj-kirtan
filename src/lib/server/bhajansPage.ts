@@ -1,5 +1,5 @@
 import { supabase } from "@/lib/supabase";
-import type { KirtanSummary } from "@/types/kirtan";
+import type { KirtanSummary, PlayableBhajanTitleRow } from "@/types/kirtan";
 import type { BhajanAlphabetIndex, BhajansResponse } from "@/types/bhajans";
 import { fetchKirtanTagFlags } from "@/lib/server/kirtanTags";
 import { getDailyRareGem } from "@/lib/server/featured";
@@ -34,25 +34,24 @@ const getCachedBhajansPageData = unstable_cache(
     }
 
     const { data, error } = await supabase
-      .from("playable_kirtans")
+      .from("playable_bhajan_titles")
       .select("*")
-      .eq("type", "BHJ")
       .order("title", { ascending: true })
-      .order("id", { ascending: true })
+      .order("browse_id", { ascending: true })
       .limit(21);
 
     if (error) {
       return { data: null, error: error.message, status: 500 };
     }
 
-    const rows = (data ?? []).slice(0, 20);
+    const rows = ((data ?? []) as PlayableBhajanTitleRow[]).slice(0, 20);
     const hasMore = (data ?? []).length > 20;
     const last = rows[rows.length - 1];
     const nextCursor = hasMore && last
-      ? { title: last.title, id: last.id }
+      ? { title: last.title, id: last.browse_id }
       : null;
 
-    const ids = rows.map((k) => k.id);
+    const ids = [...new Set(rows.map((k) => k.kirtan_id))];
     if (featured.kirtan?.id) {
       ids.unshift(featured.kirtan.id);
     }
@@ -64,7 +63,7 @@ const getCachedBhajansPageData = unstable_cache(
     }
 
     const bhajans: KirtanSummary[] = rows.map((k) => ({
-      id: k.id,
+      id: k.kirtan_id,
       audio_url: k.audio_url ?? "",
       type: k.type,
       title: k.title,
@@ -74,8 +73,8 @@ const getCachedBhajansPageData = unstable_cache(
       sanga: k.sanga,
       duration_seconds: k.duration_seconds,
       sequence_num: k.sequence_num ?? null,
-      has_harmonium: harmoniumIds.has(k.id),
-      is_rare_gem: rareGemIds.has(k.id),
+      has_harmonium: harmoniumIds.has(k.kirtan_id),
+      is_rare_gem: rareGemIds.has(k.kirtan_id),
     }));
 
     const featuredKirtan: KirtanSummary | null = featured.kirtan
