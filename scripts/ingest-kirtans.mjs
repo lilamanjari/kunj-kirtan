@@ -192,6 +192,11 @@ function parseRecordedDate(value) {
   return { recorded_date: null, recorded_date_precision: null };
 }
 
+function cleanText(value) {
+  const text = String(value ?? "").trim();
+  return text || null;
+}
+
 function getFileExtension(filename) {
   const match = String(filename || "").match(/\.([^.]+)$/);
   return match ? match[1].toLowerCase() : "mp3";
@@ -490,6 +495,55 @@ async function upsertAudioFile({
   return data.id;
 }
 
+async function syncBhajanTitles({
+  kirtanId,
+  firstLineTitle,
+  officialTitle,
+}) {
+  if (!kirtanId || !firstLineTitle) return;
+
+  if (DRY_RUN) {
+    const titles = [
+      { kind: "first_line", title: firstLineTitle },
+      ...(officialTitle && officialTitle !== firstLineTitle
+        ? [{ kind: "official", title: officialTitle }]
+        : []),
+    ];
+    console.log(
+      `[DRY_RUN] Would replace kirtan_titles for kirtan_id=${kirtanId} with ${JSON.stringify(titles)}`,
+    );
+    return;
+  }
+
+  const { error: deleteError } = await supabase
+    .from("kirtan_titles")
+    .delete()
+    .eq("kirtan_id", kirtanId)
+    .in("kind", ["first_line", "official"]);
+  if (deleteError) throw new Error(deleteError.message);
+
+  const payload = [
+    {
+      kirtan_id: kirtanId,
+      kind: "first_line",
+      title: firstLineTitle,
+    },
+  ];
+
+  if (officialTitle && officialTitle !== firstLineTitle) {
+    payload.push({
+      kirtan_id: kirtanId,
+      kind: "official",
+      title: officialTitle,
+    });
+  }
+
+  const { error: insertError } = await supabase
+    .from("kirtan_titles")
+    .insert(payload);
+  if (insertError) throw new Error(insertError.message);
+}
+
 async function main() {
   const sheets = await getSheetsClient();
   const sheetRange = `${SHEET_NAME}`;
@@ -529,9 +583,18 @@ async function main() {
       ? Number(row[col.duration_seconds])
       : null;
     const sanga = row[col.sanga] || null;
-    const title = row[col.title] || null;
+    const title = cleanText(row[col.title]);
+    const officialTitle = cleanText(
+      col.official_title !== undefined ? row[col.official_title] : null,
+    );
     const singer = row[col.singer] || null;
     const raga = row[col.raga] || null;
+    const bhajanFirstLineTitle = type === "BHJ" ? title : null;
+    const bhajanOfficialTitle = type === "BHJ" ? officialTitle : null;
+    const canonicalTitle =
+      type === "BHJ"
+        ? bhajanOfficialTitle ?? bhajanFirstLineTitle
+        : title;
 
     const { recorded_date, recorded_date_precision } = parseRecordedDate(
       row[col.date],
@@ -592,7 +655,7 @@ async function main() {
         }
         const payload = {
           id: kirtanId,
-          title,
+          title: canonicalTitle,
           lead_singer_id: leadSingerId,
           type,
           raga,
@@ -613,6 +676,14 @@ async function main() {
         kirtanId = data.id;
         existingKirtan = { id: data.id, sequence_num: data.sequence_num };
         cleanupUploadedOnFailure = false;
+        if (type === "BHJ" && bhajanFirstLineTitle) {
+          await syncBhajanTitles({
+            kirtanId,
+            firstLineTitle: bhajanFirstLineTitle,
+            officialTitle: bhajanOfficialTitle,
+          });
+          logStep(`Synced bhajan titles for kirtan id: ${kirtanId}`);
+        }
         logStep(`Inserted kirtan id: ${kirtanId}`);
         inserted += 1;
       } else {
