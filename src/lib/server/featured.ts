@@ -41,7 +41,7 @@ const getRareGemCandidates = unstable_cache(
     }
 
     const { data, error } = await supabase
-      .from("playable_kirtans")
+      .from("playable_kirtans_with_titles")
       .select("*")
       .in("id", rareGemIds)
       .order("id", { ascending: true });

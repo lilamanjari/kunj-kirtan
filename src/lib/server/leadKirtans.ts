@@ -1,6 +1,6 @@
 import { supabase } from "@/lib/supabase";
 import { fetchKirtanTagFlags } from "@/lib/server/kirtanTags";
-import { formatKirtanTitle } from "@/lib/kirtanTitle";
+import { getDisplayKirtanTitle } from "@/lib/server/bhajanDisplayTitle";
 import {
   fetchLeadDirectory,
   OTHER_LEAD_ID,
@@ -156,7 +156,7 @@ export async function fetchLeadKirtansPage({
   cursorId,
 }: FetchLeadKirtansArgs) {
   let query = supabase
-    .from("playable_kirtans")
+    .from("playable_kirtans_with_titles")
     .select("*");
 
   if (leadSingerIds && leadSingerIds.length > 0) {
@@ -281,7 +281,7 @@ export async function fetchTaggedLeadKirtansPage({
     id: k.id,
     audio_url: k.audio_url ?? "",
     type: k.type as KirtanType,
-    title: formatKirtanTitle(k.type as KirtanType, k.title),
+    title: getDisplayKirtanTitle(k),
     lead_singer: k.lead_singer,
     recorded_date: k.recorded_date,
     recorded_date_precision: k.recorded_date_precision ?? null,

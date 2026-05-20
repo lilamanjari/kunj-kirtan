@@ -2,7 +2,7 @@ import { unstable_cache } from "next/cache";
 import { supabase } from "@/lib/supabase";
 import { fetchKirtanTagFlags } from "@/lib/server/kirtanTags";
 import { getDailyRareGem } from "@/lib/server/featured";
-import { formatKirtanTitle } from "@/lib/kirtanTitle";
+import { getDisplayKirtanTitle } from "@/lib/server/bhajanDisplayTitle";
 import type { HomeData } from "@/types/home";
 import type { KirtanSummary, PlayableKirtanRow } from "@/types/kirtan";
 
@@ -21,7 +21,7 @@ function toKirtanSummary(
     id: kirtan.id,
     audio_url: kirtan.audio_url ?? "",
     type: kirtan.type,
-    title: formatKirtanTitle(kirtan.type, kirtan.title),
+    title: getDisplayKirtanTitle(kirtan),
     lead_singer: kirtan.lead_singer,
     recorded_date: kirtan.recorded_date,
     recorded_date_precision: kirtan.recorded_date_precision ?? null,
@@ -159,7 +159,7 @@ async function buildHomePageData() {
         id: featured.kirtan.id,
         audio_url: featured.kirtan.audio_url ?? "",
         type: featured.kirtan.type,
-        title: formatKirtanTitle(featured.kirtan.type, featured.kirtan.title),
+        title: featured.kirtan.title,
         lead_singer: featured.kirtan.lead_singer,
         recorded_date: featured.kirtan.recorded_date,
         recorded_date_precision:
@@ -173,7 +173,7 @@ async function buildHomePageData() {
     : null;
 
   const { data: recentlyAdded, error: recentlyAddedError } = await supabase
-    .from("playable_kirtans")
+    .from("playable_kirtans_with_titles")
     .select("*")
     .in("type", ["MM", "BHJ"])
     .order("created_at", { ascending: false })
@@ -185,7 +185,7 @@ async function buildHomePageData() {
   }
 
   const { data: popularKirtans, error: popularError } = await supabase
-    .from("playable_popular_kirtans_moving_window")
+    .from("playable_popular_kirtans_moving_window_with_titles")
     .select("*")
     .in("type", ["MM", "BHJ"])
     .order("play_count", { ascending: false })
@@ -211,7 +211,7 @@ async function buildHomePageData() {
 
   if (rareGemCandidateIds.length > 0) {
     const { data: recommendedCandidates, error: recommendedError } = await supabase
-      .from("playable_kirtans")
+      .from("playable_kirtans_with_titles")
       .select("*")
       .in("id", rareGemCandidateIds)
       .in("type", ["MM", "BHJ"])
@@ -252,7 +252,8 @@ async function buildHomePageData() {
     return { data: null, error: tagError, status: 500 };
   }
 
-  if (featuredId && featuredKirtan) {
+  if (featuredId && featuredKirtan && featured.kirtan) {
+    featuredKirtan.title = getDisplayKirtanTitle(featured.kirtan);
     featuredKirtan.has_harmonium = harmoniumIds.has(featuredId);
     featuredKirtan.is_rare_gem = rareGemIds.has(featuredId);
   }

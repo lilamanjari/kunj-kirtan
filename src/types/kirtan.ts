@@ -6,6 +6,9 @@ export type PlayableKirtanRow = {
   audio_url: string | null;
   type: KirtanType;
   title: string;
+  display_title?: string | null;
+  official_title?: string | null;
+  first_line_title?: string | null;
   lead_singer: string | null;
   lead_singer_id?: string | null;
   recorded_date: string | null;

@@ -2,7 +2,7 @@ import { supabase } from "@/lib/supabase";
 import type { KirtanSummary, KirtanType } from "@/types/kirtan";
 import { fetchKirtanTagFlags } from "@/lib/server/kirtanTags";
 import { ServerTiming, jsonWithServerTiming } from "@/lib/server/serverTiming";
-import { formatKirtanTitle } from "@/lib/kirtanTitle";
+import { getDisplayKirtanTitle } from "@/lib/server/bhajanDisplayTitle";
 
 export const revalidate = 86400;
 
@@ -52,7 +52,7 @@ export async function GET(
 
   const { data: kirtans, error: kirtanError } = await timing.measure("db", async () =>
     await supabase
-      .from("playable_kirtans")
+      .from("playable_kirtans_with_titles")
       .select("*")
       .in("id", ids)
       .in("type", ["MM", "BHJ"])
@@ -86,7 +86,7 @@ export async function GET(
       id: k.id,
       audio_url: k.audio_url ?? "",
       type: k.type as KirtanType,
-      title: formatKirtanTitle(k.type as KirtanType, k.title),
+      title: getDisplayKirtanTitle(k),
       lead_singer: k.lead_singer,
       recorded_date: k.recorded_date,
       recorded_date_precision: k.recorded_date_precision ?? null,

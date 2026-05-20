@@ -7,7 +7,7 @@ import type {
   PlayableKirtanRow,
   RecordedDatePrecision,
 } from "@/types/kirtan";
-import { formatKirtanTitle } from "@/lib/kirtanTitle";
+import { getDisplayKirtanTitle } from "@/lib/server/bhajanDisplayTitle";
 import type { LeadResponse } from "@/types/leads";
 import {
   fetchLeadCounts,
@@ -57,10 +57,7 @@ function mapFeaturedKirtan(
     id: featuredData.id,
     audio_url: featuredData.audio_url ?? "",
     type: featuredData.type,
-    title: formatKirtanTitle(
-      featuredData.type,
-      featuredData.title,
-    ),
+    title: getDisplayKirtanTitle(featuredData),
     lead_singer: featuredData.lead_singer,
     recorded_date: featuredData.recorded_date,
     recorded_date_precision: normalizeRecordedDatePrecision(
@@ -83,7 +80,7 @@ function mapLeadKirtans(
     id: k.id,
     audio_url: k.audio_url ?? "",
     type: k.type,
-    title: formatKirtanTitle(k.type, k.title),
+    title: getDisplayKirtanTitle(k),
     lead_singer: k.lead_singer,
     recorded_date: k.recorded_date,
     recorded_date_precision: normalizeRecordedDatePrecision(

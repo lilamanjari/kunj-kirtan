@@ -17,13 +17,28 @@ vi.mock("next/cache", () => ({
 
 vi.mock("@/lib/supabase", () => ({
   supabase: {
-    from: vi.fn(() => ({
-      select: vi.fn(() => ({
-        eq: vi.fn(() => ({
-          maybeSingle: maybeSingleMock,
+    from: vi.fn((table: string) => {
+      if (table === "kirtan_titles") {
+        return {
+          select: vi.fn(() => ({
+            in: vi.fn(() => ({
+              in: vi.fn().mockResolvedValue({
+                data: [],
+                error: null,
+              }),
+            })),
+          })),
+        };
+      }
+
+      return {
+        select: vi.fn(() => ({
+          eq: vi.fn(() => ({
+            maybeSingle: maybeSingleMock,
+          })),
         })),
-      })),
-    })),
+      };
+    }),
   },
 }));
 

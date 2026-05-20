@@ -2,8 +2,8 @@ import { unstable_cache } from "next/cache";
 import { supabase } from "@/lib/supabase";
 import type { KirtanSummary, KirtanType } from "@/types/kirtan";
 import { fetchKirtanPersonNames, fetchKirtanTagFlags } from "@/lib/server/kirtanTags";
-import { formatKirtanTitle } from "@/lib/kirtanTitle";
 import { getDailyRareGem } from "@/lib/server/featured";
+import { getDisplayKirtanTitle } from "@/lib/server/bhajanDisplayTitle";
 import type { OccasionPersonGroup, OccasionResponse } from "@/types/occasions";
 
 const getCachedOccasionPageData = unstable_cache(
@@ -50,7 +50,7 @@ const getCachedOccasionPageData = unstable_cache(
     }
 
     const { data: kirtans, error: kirtanError } = await supabase
-      .from("playable_kirtans")
+      .from("playable_kirtans_with_titles")
       .select("*")
       .in("id", ids)
       .in("type", ["MM", "BHJ"])
@@ -85,7 +85,7 @@ const getCachedOccasionPageData = unstable_cache(
         id: k.id,
         audio_url: k.audio_url ?? "",
         type: k.type as KirtanType,
-        title: formatKirtanTitle(k.type as KirtanType, k.title),
+        title: getDisplayKirtanTitle(k),
         lead_singer: k.lead_singer,
         recorded_date: k.recorded_date,
         recorded_date_precision: k.recorded_date_precision ?? null,
@@ -102,10 +102,7 @@ const getCachedOccasionPageData = unstable_cache(
           id: featured.kirtan.id,
           audio_url: featured.kirtan.audio_url ?? "",
           type: featured.kirtan.type as KirtanType,
-          title: formatKirtanTitle(
-            featured.kirtan.type as KirtanType,
-            featured.kirtan.title,
-          ),
+          title: getDisplayKirtanTitle(featured.kirtan),
           lead_singer: featured.kirtan.lead_singer,
           recorded_date: featured.kirtan.recorded_date,
           recorded_date_precision:
