@@ -1,12 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { GET } from "./route";
 
+const fetchKirtanTagFlagsMock = vi.fn();
+
 vi.mock("@/lib/server/kirtanTags", () => ({
-  fetchKirtanTagFlags: vi.fn().mockResolvedValue({
-    harmoniumIds: new Set<string>(),
-    rareGemIds: new Set<string>(),
-    error: null,
-  }),
+  fetchKirtanTagFlags: (...args: unknown[]) => fetchKirtanTagFlagsMock(...args),
 }));
 
 vi.mock("@/lib/server/featured", () => ({
@@ -57,6 +55,12 @@ function createMockBuilder(result: MockResult): MockBuilder {
 
 beforeEach(() => {
   fromMock.mockClear();
+  fetchKirtanTagFlagsMock.mockReset();
+  fetchKirtanTagFlagsMock.mockResolvedValue({
+    harmoniumIds: new Set<string>(),
+    rareGemIds: new Set<string>(),
+    error: null,
+  });
 });
 
 describe("GET /api/explore/bhajans", () => {
@@ -93,6 +97,46 @@ describe("GET /api/explore/bhajans", () => {
     expect(json.alphabet_index).toBeDefined();
   });
 
+  it("returns multiple browse entries for the same underlying kirtan", async () => {
+    builder = createMockBuilder({
+      data: [
+        {
+          browse_id: "browse-official",
+          kirtan_id: "shared-kirtan",
+          audio_url: "a1",
+          type: "BHJ",
+          title: "Sri Goswamyastakam",
+          lead_singer: "S1",
+          recorded_date: "2020-01-01",
+          sanga: "X",
+          duration_seconds: 123,
+        },
+        {
+          browse_id: "browse-first-line",
+          kirtan_id: "shared-kirtan",
+          audio_url: "a1",
+          type: "BHJ",
+          title: "Indranila Mani Manjula Varnah",
+          lead_singer: "S1",
+          recorded_date: "2020-01-01",
+          sanga: "X",
+          duration_seconds: 123,
+        },
+      ],
+      error: null,
+    });
+
+    const res = await GET(new Request("http://localhost/api/explore/bhajans"));
+    const json = await res.json();
+
+    expect(json.bhajans).toHaveLength(2);
+    expect(json.bhajans[0].id).toBe("shared-kirtan");
+    expect(json.bhajans[1].id).toBe("shared-kirtan");
+    expect(json.bhajans[0].title).toBe("Sri Goswamyastakam");
+    expect(json.bhajans[1].title).toBe("Indranila Mani Manjula Varnah");
+    expect(fetchKirtanTagFlagsMock).toHaveBeenCalledWith(["shared-kirtan"]);
+  });
+
   it("applies search filter", async () => {
     builder = createMockBuilder({ data: [], error: null });
 
@@ -101,6 +145,41 @@ describe("GET /api/explore/bhajans", () => {
     );
 
     expect(builder.ilike).toHaveBeenCalledWith("searchable_text", "%ram%");
+  });
+
+  it("searches through alias text, not only the visible browse title", async () => {
+    builder = createMockBuilder({
+      data: [
+        {
+          browse_id: "browse-first-line",
+          kirtan_id: "shared-kirtan",
+          audio_url: "a1",
+          type: "BHJ",
+          title: "Indranila Mani Manjula Varnah",
+          searchable_text: "indranila mani manjula varnah sri goswamyastakam",
+          lead_singer: "S1",
+          recorded_date: "2020-01-01",
+          sanga: "X",
+          duration_seconds: 123,
+        },
+      ],
+      error: null,
+    });
+
+    const res = await GET(
+      new Request("http://localhost/api/explore/bhajans?search=%C5%9Ar%C4%AB%20Go%C5%9Bw%C4%81my%C4%81%E1%B9%A3%E1%B9%ADakam"),
+    );
+    const json = await res.json();
+
+    expect(builder.ilike).toHaveBeenCalledWith(
+      "searchable_text",
+      "%sri goswamyastakam%",
+    );
+    expect(json.bhajans).toHaveLength(1);
+    expect(json.bhajans[0]).toMatchObject({
+      id: "shared-kirtan",
+      title: "Indranila Mani Manjula Varnah",
+    });
   });
 
   it("applies cursor pagination", async () => {
@@ -112,7 +191,9 @@ describe("GET /api/explore/bhajans", () => {
       ),
     );
 
-    expect(builder.or).toHaveBeenCalled();
+    expect(builder.or).toHaveBeenCalledWith(
+      'title.gt."Bhajan A",and(title.eq."Bhajan A",browse_id.gt.abc)',
+    );
   });
 
   it("returns error payload when supabase fails", async () => {
