@@ -82,7 +82,7 @@ function buildResult(state: QueryState): MockResult {
     return { data: lead, error: null };
   }
 
-  if (state.table === "playable_kirtans") {
+  if (state.table === "playable_kirtans_with_titles") {
     return {
       data: bhjRows.slice(0, state.limit ?? bhjRows.length),
       error: null,

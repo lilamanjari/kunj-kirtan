@@ -32,7 +32,6 @@ vi.mock("@/lib/server/leadDirectory", () => ({
 type QueryState = {
   table: string;
   filters: Record<string, string>;
-  head: boolean;
   limit: number | null;
 };
 
@@ -134,16 +133,18 @@ function buildResult(state: QueryState): MockResult {
     };
   }
 
-  if (state.table === "playable_kirtans" && state.head) {
-    const type = state.filters.type;
-    const countByType = { MM: 2, BHJ: 2, HK: 1 } as const;
+  if (state.table === "lead_kirtan_counts") {
     return {
-      count: countByType[type as keyof typeof countByType] ?? 0,
+      data: [
+        { type: "MM", count: 2 },
+        { type: "BHJ", count: 2 },
+        { type: "HK", count: 1 },
+      ],
       error: null,
     };
   }
 
-  if (state.table === "playable_kirtans") {
+  if (state.table === "playable_kirtans_with_titles") {
     const type = state.filters.type;
     if (type === "BHJ") {
       return { data: bhjRows.slice(0, state.limit ?? bhjRows.length), error: null };
@@ -161,15 +162,11 @@ function createMockBuilder(table: string): MockBuilder {
   const state: QueryState = {
     table,
     filters: {},
-    head: false,
     limit: null,
   };
   const self = {} as MockBuilder;
 
-  self.select = vi.fn((_: string, options?: { head?: boolean }) => {
-    state.head = Boolean(options?.head);
-    return self;
-  });
+  self.select = vi.fn(() => self);
   self.eq = vi.fn((column: string, value: string) => {
     state.filters[column] = value;
     return self;

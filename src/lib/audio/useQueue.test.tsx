@@ -77,7 +77,10 @@ describe("useQueue", () => {
     });
 
     expect(result.current.queue.map((item) => item.id)).toEqual(["1", "3"]);
-    expect(result.current.notice).toBe('Removed "Track 2" from queue');
+    expect(result.current.notice).toEqual({
+      kind: "removed",
+      title: "Track 2",
+    });
     expect(result.current.isQueued("2")).toBe(false);
   });
 
@@ -114,7 +117,10 @@ describe("useQueue", () => {
       result.current.enqueue(sampleKirtan("1"));
     });
 
-    expect(result.current.notice).toMatch(/Added/);
+    expect(result.current.notice).toEqual({
+      kind: "added",
+      title: "Track 1",
+    });
   });
 
   it("isQueued reflects queue state", () => {

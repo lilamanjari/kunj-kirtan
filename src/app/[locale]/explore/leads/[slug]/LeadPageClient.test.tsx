@@ -39,6 +39,22 @@ vi.mock("@/lib/net/fetchWithStatus", () => ({
   fetchWithStatus: vi.fn(),
 }));
 
+vi.mock("@/lib/i18n/LocaleProvider", () => ({
+  useDictionary: () => ({
+    explore: {
+      mahaMantra: "Maha Mantras",
+      bhajans: "Bhajans",
+      hariKatha: "Hari Katha",
+      kirtans: "Kirtans",
+      noKirtansFound: "No kirtans found",
+    },
+    actions: {
+      playAll: "Play all",
+      shuffle: "Shuffle",
+    },
+  }),
+}));
+
 vi.mock("@/lib/components/KirtanDeepLinkHandler", () => ({
   default: ({
     kirtans,
@@ -99,7 +115,7 @@ describe("LeadPageClient play controls", () => {
     render(<LeadPageClient slug="lead-singer" initialData={initialData} />);
 
     fireEvent.click(screen.getByText("Pin second"));
-    fireEvent.click(screen.getByRole("button", { name: "Play all kirtans" }));
+    fireEvent.click(screen.getByRole("button", { name: "Play all" }));
 
     expect(playCollectionMock).toHaveBeenCalledWith([firstKirtan, secondKirtan]);
   });
