@@ -6,11 +6,29 @@
  * The Bhajans page behaves like a hybrid between infinite scroll and an
  * alphabet jump browser:
  *
- * 1. We keep the currently loaded bhajans in a Map keyed by id. That lets us
- *    merge newly fetched slices from above, below, or a jumped-to letter
- *    without duplicating rows.
+ * Title/browse identity model
+ * ---------------------------
+ * Bhajan browse rows are not the same thing as underlying kirtans anymore.
+ * A single audio track can appear more than once on this page when it has
+ * multiple browseable titles, for example an official title plus a first line.
+ *
+ * - `id` is the underlying kirtan/audio identity and is still what playback,
+ *   queue, favorites, and deep linking care about.
+ * - `browse_id` is the per-row browse identity coming from
+ *   `playable_bhajan_titles`. Each visible title row gets its own `browse_id`,
+ *   even when two rows point at the same audio track.
+ * - Because of that split, all list merging, sorting tiebreakers, React keys,
+ *   and pagination/window cursors on this page must use `browse_id`, not
+ *   `id`, otherwise companion title rows collapse into one another and
+ *   alphabet jumps/pagination drift out of sync with the backend.
+ *
+ * Browse/orchestration model
+ * --------------------------
+ * 1. We keep the currently loaded bhajans in a Map keyed by browse entry id.
+ *    That lets us merge newly fetched slices from above, below, or a jumped-to
+ *    letter without accidentally collapsing companion title rows.
  * 2. The rendered list is always derived from that Map and sorted by
- *    title/id, so merged slices settle back into one alphabetical list.
+ *    title/browse_id, so merged slices settle back into one alphabetical list.
  * 3. `loadedWindow` tracks the currently loaded alphabetical range
  *    (start/end cursor plus whether there is more above/below). That range is
  *    updated as we scroll-load upward or downward.
@@ -82,6 +100,13 @@ type TopPageSnapshot = {
   window: LoadedBhajanWindow | null;
 };
 
+function getBrowseEntryId(bhajan: BhajanItem) {
+  // `browse_id` preserves multiple visible title rows for a single audio
+  // track. We fall back to `id` only for older data shapes that may not yet
+  // include browse identity.
+  return bhajan.browse_id ?? bhajan.id;
+}
+
 function getBrowseLetter(title: string) {
   const first = title.trim().charAt(0).toUpperCase();
   return /^[A-Z]$/.test(first) ? first : "#";
@@ -90,18 +115,18 @@ function getBrowseLetter(title: string) {
 function compareBhajans(a: BhajanItem, b: BhajanItem) {
   return (
     a.title.localeCompare(b.title, undefined, { sensitivity: "base" }) ||
-    a.id.localeCompare(b.id)
+    getBrowseEntryId(a).localeCompare(getBrowseEntryId(b))
   );
 }
 
 function toBhajanMap(items: BhajanItem[]) {
-  return new Map(items.map((item) => [item.id, item]));
+  return new Map(items.map((item) => [getBrowseEntryId(item), item]));
 }
 
 function mergeBhajans(prev: Map<string, BhajanItem>, items: BhajanItem[]) {
   const next = new Map(prev);
   for (const item of items) {
-    next.set(item.id, item);
+    next.set(getBrowseEntryId(item), item);
   }
   return next;
 }
@@ -116,8 +141,10 @@ function createLoadedWindow(
   const firstBhajan = items[0];
   const lastBhajan = items[items.length - 1];
   return {
-    start: { title: firstBhajan.title, id: firstBhajan.id },
-    end: { title: lastBhajan.title, id: lastBhajan.id },
+    // Window cursors must use browse identity so pagination can distinguish
+    // two title rows that share the same underlying kirtan id.
+    start: { title: firstBhajan.title, id: getBrowseEntryId(firstBhajan) },
+    end: { title: lastBhajan.title, id: getBrowseEntryId(lastBhajan) },
     hasBefore,
     hasAfter,
   };
@@ -169,6 +196,9 @@ export default function BhajansPageClient({
     initialData.alphabet_index ?? {},
   );
   const [pendingLetterScroll, setPendingLetterScroll] = useState<string | null>(
+    null,
+  );
+  const [pendingJumpLetter, setPendingJumpLetter] = useState<string | null>(
     null,
   );
   const [activeBrowseLetter, setActiveBrowseLetter] = useState<string | null>(
@@ -231,6 +261,7 @@ export default function BhajansPageClient({
     setPrevCursor(null);
     setHasMore(true);
     setHasBefore(false);
+    setPendingJumpLetter(null);
     setPendingLetterScroll(null);
     setActiveBrowseLetter(null);
     setLoadedWindow(null);
@@ -314,6 +345,8 @@ export default function BhajansPageClient({
         setTopPageSnapshot(nextTopPageSnapshot);
         // Search results define a fresh browse universe, so we reset the
         // top-page snapshot to that new first page as well.
+        resumeAutoLoad();
+        setActiveBrowseLetter(null);
       })
       .finally(() => setIsLoadingList(false));
   }, [search]);
@@ -452,7 +485,10 @@ export default function BhajansPageClient({
                 prev
                   ? {
                       ...prev,
-                      end: { title: lastBhajan.title, id: lastBhajan.id },
+                      end: {
+                        title: lastBhajan.title,
+                        id: getBrowseEntryId(lastBhajan),
+                      },
                       hasAfter: Boolean(data.has_more),
                     }
                   : prev,
@@ -474,9 +510,19 @@ export default function BhajansPageClient({
 
   const renderedBhajans = useMemo(() => {
     return pinnedKirtan
-      ? [pinnedKirtan, ...sortedBhajans.filter((k) => k.id !== pinnedKirtan.id)]
+      ? [
+          pinnedKirtan,
+          ...sortedBhajans.filter(
+            // Pinning should suppress only the exact browse row already shown
+            // at the top, not every alias row for the same audio track.
+            (k) => getBrowseEntryId(k) !== getBrowseEntryId(pinnedKirtan),
+          ),
+        ]
       : sortedBhajans;
   }, [pinnedKirtan, sortedBhajans]);
+
+  const shouldShowCollectionActions =
+    renderedBhajans.length > 1 || isLoadingList;
 
   const availableLetters = useMemo(() => {
     return new Set(Object.keys(alphabetIndex));
@@ -516,6 +562,9 @@ export default function BhajansPageClient({
     if (!node) return;
 
     requestAnimationFrame(() => {
+      // Once the target header exists in the DOM, the "pending jump" state can
+      // hand off to the actual smooth scroll.
+      setPendingJumpLetter(null);
       // We block upward auto-load while the smooth scroll is traveling to the
       // target letter, otherwise the temporary upward motion can trigger
       // cascading loads from letters above.
@@ -563,6 +612,8 @@ export default function BhajansPageClient({
     }
 
     setIsJumpLoading(true);
+    setPendingJumpLetter(letter);
+    let didScheduleScroll = false;
     const params = new URLSearchParams();
     if (search) params.set("search", search);
     params.set("limit", "20");
@@ -585,6 +636,7 @@ export default function BhajansPageClient({
       setNextCursor(data.next_cursor ?? null);
       setHasFetchedOnce(true);
       setPendingLetterScroll(letter);
+      didScheduleScroll = true;
       setActiveBrowseLetter(letter);
       setLoadedWindow(
         createLoadedWindow(
@@ -594,6 +646,12 @@ export default function BhajansPageClient({
         ),
       );
     } finally {
+      // Successful jumps clear this in the scroll handoff effect above, so the
+      // user sees feedback until the target letter is ready. Failures and empty
+      // results must clear it here instead.
+      if (!didScheduleScroll) {
+        setPendingJumpLetter(null);
+      }
       setIsJumpLoading(false);
     }
   }
@@ -634,26 +692,44 @@ export default function BhajansPageClient({
         ) : null}
 
         <div className="flex items-center gap-2">
-          <input
-            type="text"
-            placeholder="Search bhajans…"
-            value={search}
-            onChange={(e) => {
-              setIsLoadingList(true);
-              resetPagination();
-              setSearch(e.target.value);
-            }}
-            className="min-w-0 flex-1 rounded-xl border border-[#ead5db] bg-white/92 px-4 py-2 text-sm text-[#67474f] shadow-sm focus:border-[#d8a8b6] focus:outline-none focus:ring-1 focus:ring-[#d8a8b6]"
-          />
+          <div className="relative min-w-0 flex-1">
+            <input
+              type="text"
+              placeholder="Search bhajans…"
+              value={search}
+              onChange={(e) => {
+                setIsLoadingList(true);
+                resetPagination();
+                setSearch(e.target.value);
+              }}
+              className="min-w-0 w-full rounded-xl border border-[#ead5db] bg-white/92 px-4 py-2 pr-10 text-sm text-[#67474f] shadow-sm focus:border-[#d8a8b6] focus:outline-none focus:ring-1 focus:ring-[#d8a8b6]"
+            />
+            {search ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setIsLoadingList(true);
+                  resetPagination();
+                  setSearch("");
+                }}
+                aria-label="Clear search"
+                title="Clear search"
+                className="absolute right-3 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full bg-[#f3dfe5] text-[0.8rem] font-semibold leading-none text-[#8f6774] transition hover:bg-[#ecd1d9]"
+              >
+                ×
+              </button>
+            ) : null}
+          </div>
 
-          {sortedBhajans.length > 1 ? (
+          {shouldShowCollectionActions ? (
             <div className="flex shrink-0 gap-2">
               <button
                 type="button"
                 onClick={() => playCollection(renderedBhajans)}
                 aria-label={dictionary.actions.playAll}
                 title={dictionary.actions.playAll}
-                className="flex h-8 w-8 items-center justify-center rounded-full border border-[#ead5db] bg-white text-[#8f6774] shadow-sm hover:bg-[#fff6f8]"
+                disabled={renderedBhajans.length <= 1}
+                className="flex h-8 w-8 items-center justify-center rounded-full border border-[#ead5db] bg-white text-[#8f6774] shadow-sm transition hover:bg-[#fff6f8] disabled:pointer-events-none disabled:opacity-40"
               >
                 <SFIcon icon={sfPlaySquareStackFill} className="h-4 w-4" />
               </button>
@@ -664,7 +740,8 @@ export default function BhajansPageClient({
                 }
                 aria-label={dictionary.actions.shuffle}
                 title={dictionary.actions.shuffle}
-                className="flex h-8 w-8 items-center justify-center rounded-full border border-[#ead5db] bg-white text-[#8f6774] shadow-sm hover:bg-[#fff6f8]"
+                disabled={renderedBhajans.length <= 1}
+                className="flex h-8 w-8 items-center justify-center rounded-full border border-[#ead5db] bg-white text-[#8f6774] shadow-sm transition hover:bg-[#fff6f8] disabled:pointer-events-none disabled:opacity-40"
               >
                 <SFIcon icon={sfShuffleCircle} className="h-4 w-4" />
               </button>
@@ -679,6 +756,7 @@ export default function BhajansPageClient({
               availableLetters={availableLetters}
               onSelectLetter={jumpToLetter}
               currentLetter={activeBrowseLetter}
+              pendingLetter={pendingJumpLetter}
               onReset={activeBrowseLetter ? resetToStart : null}
               visible={isRailVisible}
             />
@@ -732,7 +810,7 @@ export default function BhajansPageClient({
                       </li>
                     </Fragment>
                   ) : (
-                    <Fragment key={row.bhajan.id}>
+                    <Fragment key={getBrowseEntryId(row.bhajan)}>
                       <KirtanListItem
                         kirtan={row.bhajan}
                         isActive={isActive(row.bhajan)}
@@ -745,7 +823,8 @@ export default function BhajansPageClient({
                         onToggleFavorite={toggleFavorite}
                         isFavorited={isFavorited(row.bhajan.id)}
                       />
-                      {loadedWindow && row.bhajan.id === loadedWindow.end.id ? (
+                      {loadedWindow &&
+                      getBrowseEntryId(row.bhajan) === loadedWindow.end.id ? (
                         <li
                           ref={loadMoreRef}
                           className="mt-3 rounded-xl border border-dashed border-[#ead5db] bg-white/80 px-3 py-2 text-center text-[0.68rem] uppercase tracking-[0.18em] text-[#aa8591]"

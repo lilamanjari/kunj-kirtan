@@ -64,6 +64,7 @@ const getCachedBhajansPageData = unstable_cache(
 
     const bhajans: KirtanSummary[] = rows.map((k) => ({
       id: k.kirtan_id,
+      browse_id: k.browse_id,
       audio_url: k.audio_url ?? "",
       type: k.type,
       title: k.title,

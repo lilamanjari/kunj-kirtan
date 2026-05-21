@@ -20,6 +20,7 @@ export type PlayableKirtanRow = {
 
 export type KirtanSummary = {
   id: string;
+  browse_id?: string;
   audio_url: string;
   type: KirtanType;
   title: string;

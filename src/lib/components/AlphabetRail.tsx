@@ -7,6 +7,7 @@ type AlphabetRailProps = {
   availableLetters: Set<string>;
   onSelectLetter: (letter: string) => void;
   currentLetter?: string | null;
+  pendingLetter?: string | null;
   onReset?: (() => void) | null;
   visible?: boolean;
 };
@@ -16,13 +17,23 @@ export default function AlphabetRail({
   availableLetters,
   onSelectLetter,
   currentLetter = null,
+  pendingLetter = null,
   onReset = null,
   visible = true,
 }: AlphabetRailProps) {
   const dictionary = useDictionary();
+
+  function stopRailTap(event: {
+    preventDefault: () => void;
+    stopPropagation: () => void;
+  }) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+
   return (
     <div
-      className={`fixed right-2 top-1/2 z-20 -translate-y-1/2 transition-opacity duration-300 sm:right-4 ${
+      className={`fixed right-2 top-1/2 z-30 -translate-y-1/2 touch-none transition-opacity duration-300 sm:right-4 ${
         visible ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0"
       }`}
     >
@@ -31,8 +42,12 @@ export default function AlphabetRail({
           {onReset ? (
             <button
               type="button"
-              onClick={onReset}
-              className="mb-1 flex h-4 w-4 items-center justify-center rounded-full text-[0.62rem] font-semibold leading-none text-[#9b6a5f] transition hover:bg-[#f7e7df] hover:text-[#7f5146]"
+              onPointerDown={stopRailTap}
+              onClick={(event) => {
+                stopRailTap(event);
+                onReset();
+              }}
+              className="mb-1 flex h-6 w-6 items-center justify-center rounded-full text-[0.62rem] font-semibold leading-none text-[#9b6a5f] transition hover:bg-[#f7e7df] hover:text-[#7f5146]"
               aria-label={dictionary.actions.backToTop}
               title={dictionary.actions.backToTop}
             >
@@ -51,23 +66,36 @@ export default function AlphabetRail({
           {letters.map((letter) => {
             const isAvailable = availableLetters.has(letter);
             const isCurrent = currentLetter === letter;
+            const isPending = pendingLetter === letter;
             return (
               <button
                 key={letter}
                 type="button"
-                onClick={() => onSelectLetter(letter)}
+                onPointerDown={stopRailTap}
+                onClick={(event) => {
+                  stopRailTap(event);
+                  onSelectLetter(letter);
+                }}
                 disabled={!isAvailable}
-                className={`flex h-3.5 w-3.5 items-center justify-center rounded-full text-[0.58rem] font-semibold leading-none transition ${
+                className={`relative flex h-5 w-5 items-center justify-center rounded-full text-[0.58rem] font-semibold leading-none transition ${
                   isAvailable
-                    ? isCurrent
+                    ? isPending
+                      ? "bg-[#ead5db] text-[#7f5146] shadow-sm"
+                      : isCurrent
                       ? "bg-[#9b6a5f] text-white shadow-sm"
                       : "text-[#9b6a5f] hover:bg-[#f7e7df] hover:text-[#7f5146]"
                     : "cursor-default text-stone-300"
                 }`}
                 aria-label={`${dictionary.actions.jumpToLetter} ${letter}`}
-                aria-pressed={isCurrent}
+                aria-pressed={isCurrent || isPending}
               >
                 {letter}
+                {isPending ? (
+                  <span
+                    className="absolute -right-0.5 -top-0.5 h-1.5 w-1.5 rounded-full bg-[#9b6a5f] animate-pulse"
+                    aria-hidden="true"
+                  />
+                ) : null}
               </button>
             );
           })}
