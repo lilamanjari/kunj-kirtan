@@ -71,7 +71,7 @@ export default function HomeClient({ data }: { data: HomeData }) {
     select,
   } = useAudioPlayer();
   const primaryAction = data.primary_action;
-  const [recentlyAdded] = useState(() => data.recently_added ?? []);
+  const recentlyAdded = data.recently_added ?? [];
   const [pinnedKirtan, setPinnedKirtan] = useState<KirtanSummary | null>(null);
   const entryPointLinks: Record<string, string> = {
     MM: "/explore/maha-mantras",
