@@ -30,6 +30,8 @@ type MockBuilder = {
   select: ReturnType<typeof vi.fn>;
   in: ReturnType<typeof vi.fn>;
   eq: ReturnType<typeof vi.fn>;
+  or: ReturnType<typeof vi.fn>;
+  maybeSingle: ReturnType<typeof vi.fn>;
   limit: ReturnType<typeof vi.fn>;
   order: ReturnType<typeof vi.fn>;
   then: (
@@ -54,6 +56,8 @@ function createMockBuilder(result: MockResult): MockBuilder {
   self.select = vi.fn(chain);
   self.in = vi.fn(chain);
   self.eq = vi.fn(chain);
+  self.or = vi.fn(chain);
+  self.maybeSingle = vi.fn(chain);
   self.limit = vi.fn(chain);
   self.order = vi.fn(chain);
   self.then = (onFulfilled, onRejected) =>
@@ -107,6 +111,28 @@ describe("GET /api/home", () => {
       {
         data: [
           {
+            id: "f1",
+            entity_table: "tags",
+            entity_id: "tag-1",
+            title_override: "Current Vrata",
+            subtitle: "July 1 - July 29",
+            starts_at: null,
+            ends_at: null,
+          },
+        ],
+        error: null,
+      },
+      {
+        data: {
+          id: "tag-1",
+          name: "Purushottama Vrata",
+          slug: "purushottama-vrata",
+        },
+        error: null,
+      },
+      {
+        data: [
+          {
             id: "k4",
             audio_url: "a4",
             type: "BHJ",
@@ -150,6 +176,12 @@ describe("GET /api/home", () => {
       id: "k2",
       title: "Bhajan One",
       duration_seconds: 240,
+    });
+    expect(json.current_occasion).toMatchObject({
+      name: "Purushottama Vrata",
+      slug: "purushottama-vrata",
+      header: "Current Vrata",
+      subtitle: "July 1 - July 29",
     });
   });
 
@@ -213,6 +245,7 @@ describe("GET /api/home", () => {
       { data: [], error: null },
       { data: [], error: null },
       { data: [{ kirtan_id: "k4" }], error: null },
+      { data: null, error: null },
       { data: null, error: { message: "Recommended error" } },
     ];
 
@@ -263,6 +296,7 @@ describe("GET /api/home", () => {
         data: [{ kirtan_id: "k1" }, { kirtan_id: "k4" }],
         error: null,
       },
+      { data: null, error: null },
       {
         data: [
           {

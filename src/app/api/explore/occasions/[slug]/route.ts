@@ -3,6 +3,7 @@ import type { KirtanSummary, KirtanType } from "@/types/kirtan";
 import { fetchKirtanTagFlags } from "@/lib/server/kirtanTags";
 import { ServerTiming, jsonWithServerTiming } from "@/lib/server/serverTiming";
 import { getDisplayKirtanTitle } from "@/lib/server/bhajanDisplayTitle";
+import { compareOccasionKirtans } from "@/lib/server/occasionCurations";
 
 export const revalidate = 86400;
 
@@ -95,7 +96,7 @@ export async function GET(
       sequence_num: k.sequence_num ?? null,
       has_harmonium: harmoniumIds.has(k.id),
       is_rare_gem: rareGemIds.has(k.id),
-    })) ?? [];
+    })).sort(compareOccasionKirtans) ?? [];
 
   return jsonWithServerTiming({ tag, kirtans: payload }, timing);
 }

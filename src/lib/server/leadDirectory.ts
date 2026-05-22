@@ -2,6 +2,7 @@ import { supabase } from "@/lib/supabase";
 import type { LeadItem } from "@/types/explore";
 import type { KirtanType } from "@/types/kirtan";
 import type { LeadCounts } from "@/types/leads";
+import { compareLeadDirectoryItems } from "@/lib/server/occasionCurations";
 
 export const OTHER_LEAD_THRESHOLD = 2;
 export const OTHER_LEAD_ID = "others";
@@ -22,6 +23,7 @@ type LeadAggregate = {
   id: string;
   display_name: string;
   slug: string;
+  priority: number | null;
   counts: LeadCounts;
   total: number;
 };
@@ -29,8 +31,9 @@ type LeadAggregate = {
 export async function fetchLeadDirectory() {
   const { data: leads, error: leadsError } = await supabase
     .from("lead_singers")
-    .select("id, display_name, slug")
+    .select("id, display_name, slug, priority")
     .eq("is_identified", true)
+    .order("priority", { ascending: true })
     .order("display_name", { ascending: true });
 
   if (leadsError) {
@@ -71,6 +74,7 @@ export async function fetchLeadDirectory() {
         id: lead.id,
         display_name: lead.display_name,
         slug: lead.slug,
+        priority: lead.priority ?? 100,
         counts,
         total,
       };
@@ -79,6 +83,7 @@ export async function fetchLeadDirectory() {
 
   const regularLeads = aggregates
     .filter((lead) => lead.total > OTHER_LEAD_THRESHOLD)
+    .sort(compareLeadDirectoryItems)
     .map<LeadItem>((lead) => ({
       id: lead.id,
       display_name: lead.display_name,

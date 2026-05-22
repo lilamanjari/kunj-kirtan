@@ -40,6 +40,8 @@ export type AppDictionary = {
     durationOver30: string;
   };
   home: {
+    currentVrata: string;
+    currentVrataSubtitle: string;
     favoritesSubtitle: string;
     recommended: string;
     recommendedSubtitle: string;

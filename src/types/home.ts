@@ -7,7 +7,13 @@ export type HomeData = {
     kirtan: KirtanSummary;
   } | null;
 
-  continue_listening: KirtanSummary | null;
+  current_occasion: {
+    id: string;
+    name: string;
+    slug: string;
+    header: string | null;
+    subtitle: string | null;
+  } | null;
 
   entry_points: { id: string; label: string }[];
 

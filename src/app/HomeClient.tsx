@@ -180,6 +180,44 @@ export default function HomeClient({ data }: { data: HomeData }) {
             </div>
           </section>
 
+          {data.current_occasion ? (
+            <section className="relative">
+              <LocalizedLink
+                href={`/explore/occasions/${data.current_occasion.slug}`}
+                className="group block rounded-[1.45rem] border border-[#cfe0c6] p-6 text-[#4f5f45] shadow-[0_20px_42px_rgba(116,148,98,0.18)] backdrop-blur-sm transition hover:-translate-y-0.5"
+                style={{
+                  backgroundColor: "rgba(247, 252, 244, 0.92)",
+                  backgroundImage:
+                    "linear-gradient(145deg, rgba(252,255,250,0.96) 0%, rgba(240,248,232,0.94) 52%, rgba(220,235,205,0.9) 100%)",
+                }}
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7d9271]">
+                      {data.current_occasion.header ??
+                        dictionary.home.currentVrata}
+                    </p>
+                    <p className="mt-2 text-sm font-medium text-[#7f926f]">
+                      {data.current_occasion.subtitle ??
+                        dictionary.home.currentVrataSubtitle}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-5 flex items-center justify-between gap-4">
+                  <div>
+                    <h2 className="text-[1.9rem] font-semibold leading-[1.05] text-[#4e6143]">
+                      {data.current_occasion.name}
+                    </h2>
+                  </div>
+                  <span className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-[#d4e5ca] bg-white/88 text-xl text-[#6f8b60] shadow-[0_8px_18px_rgba(116,148,98,0.16)] backdrop-blur-sm transition group-hover:translate-x-0.5">
+                    →
+                  </span>
+                </div>
+              </LocalizedLink>
+            </section>
+          ) : null}
+
           <div className="space-y-0">
             <HomeFavoritesStrip
               favorites={favorites}

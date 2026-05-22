@@ -9,7 +9,7 @@ import {
 import { useAudioPlayer } from "@/lib/audio/AudioPlayerContext";
 import KirtanListItem from "@/lib/components/KirtanListItem";
 import type { KirtanSummary } from "@/types/kirtan";
-import type { OccasionPersonGroup, OccasionResponse } from "@/types/occasions";
+import type { OccasionResponse } from "@/types/occasions";
 import KirtanDeepLinkHandler from "@/lib/components/KirtanDeepLinkHandler";
 import SubpageHeader from "@/lib/components/SubpageHeader";
 import FeaturedKirtanCard from "@/lib/components/FeaturedKirtanCard";
@@ -40,18 +40,9 @@ export default function OccasionDetailClient({
   const visible = initialData.kirtans ?? [];
   const featured = initialData.featured ?? null;
   const pinnedId = pinnedKirtan?.id ?? null;
-  const isPersonFocusedOccasion =
-    initialData.tag.slug === "avirbhava" || initialData.tag.slug === "tirobhava";
-  const personGroups = (initialData.person_groups ?? []).map(
-    (group): OccasionPersonGroup => ({
-      person_name: group.person_name,
-      kirtans: group.kirtans.filter((k) => k.id !== pinnedId),
-    }),
-  ).filter((group) => group.kirtans.length > 0);
-  const ungroupedKirtans = (initialData.ungrouped_kirtans ?? visible)
-    .filter((k) => k.id !== pinnedId);
   const flatKirtans = visible.filter((k) => k.id !== pinnedId);
-  const hasGroupedPeople = personGroups.length > 0;
+  const bhajans = flatKirtans.filter((k) => k.type === "BHJ");
+  const mahaMantras = flatKirtans.filter((k) => k.type === "MM");
 
   function renderKirtanList(kirtans: KirtanSummary[]) {
     return (
@@ -106,7 +97,7 @@ export default function OccasionDetailClient({
               onToggleFavorite={toggleFavorite}
               isFavorited={isFavorited(featured.id)}
               contextLine={
-                isPersonFocusedOccasion && featured.person_tag
+                featured.person_tag
                   ? `${dictionary.explore.inHonorOf} ${featured.person_tag}`
                   : undefined
               }
@@ -157,28 +148,26 @@ export default function OccasionDetailClient({
             <p className="mt-4 rounded-xl border border-dashed border-[#e7d7ce] bg-white/88 px-4 py-6 text-center text-sm text-[#96786b]">
               {dictionary.explore.noKirtansFound}
             </p>
-          ) : isPersonFocusedOccasion && hasGroupedPeople ? (
+          ) : (
             <div className="mt-4 space-y-6">
-              {personGroups.map((group) => (
-                <section key={group.person_name}>
-                  <h3 className="px-1 text-sm font-semibold text-[#8c5c4a]">
-                    {dictionary.explore.inHonorOf} {group.person_name}
-                  </h3>
-                  {renderKirtanList(group.kirtans)}
-                </section>
-              ))}
-
-              {ungroupedKirtans.length > 0 ? (
+              {bhajans.length > 0 ? (
                 <section>
                   <h3 className="px-1 text-sm font-semibold text-[#8c5c4a]">
-                    {dictionary.explore.otherKirtans}
+                    {dictionary.explore.bhajans}
                   </h3>
-                  {renderKirtanList(ungroupedKirtans)}
+                  {renderKirtanList(bhajans)}
+                </section>
+              ) : null}
+
+              {mahaMantras.length > 0 ? (
+                <section>
+                  <h3 className="px-1 text-sm font-semibold text-[#8c5c4a]">
+                    {dictionary.explore.mahaMantra}
+                  </h3>
+                  {renderKirtanList(mahaMantras)}
                 </section>
               ) : null}
             </div>
-          ) : (
-            renderKirtanList(flatKirtans)
           )}
         </section>
 

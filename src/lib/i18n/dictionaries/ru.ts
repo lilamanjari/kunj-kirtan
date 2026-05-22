@@ -43,6 +43,8 @@ export const ruDictionary: AppDictionary = {
     durationOver30: "Длительность: более 30 мин",
   },
   home: {
+    currentVrata: "Текущая вратa",
+    currentVrataSubtitle: "Священный период со своими киртанами и настроением.",
     favoritesSubtitle: "Ваши сохраненные киртаны готовы к воспроизведению.",
     recommended: "Рекомендуем",
     recommendedSubtitle: "Редкие жемчужины, обновляемые еженедельно.",

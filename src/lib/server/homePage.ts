@@ -3,6 +3,7 @@ import { supabase } from "@/lib/supabase";
 import { fetchKirtanTagFlags } from "@/lib/server/kirtanTags";
 import { getDailyRareGem } from "@/lib/server/featured";
 import { getDisplayKirtanTitle } from "@/lib/server/bhajanDisplayTitle";
+import { fetchHomeCurrentOccasion } from "@/lib/server/homeFeaturedItem";
 import type { HomeData } from "@/types/home";
 import type { KirtanSummary, PlayableKirtanRow } from "@/types/kirtan";
 
@@ -101,7 +102,8 @@ export function selectWeeklyRecommendedRareGems(
   for (const groupKey of orderedGroupKeys) {
     groupedByLeadSinger.get(groupKey)?.sort((left, right) => {
       const scoreDiff =
-        getSeededSortValue(left.id, week.key) - getSeededSortValue(right.id, week.key);
+        getSeededSortValue(left.id, week.key) -
+        getSeededSortValue(right.id, week.key);
 
       if (scoreDiff !== 0) {
         return scoreDiff;
@@ -205,17 +207,23 @@ async function buildHomePageData() {
     return { data: null, error: rareGemTagsError.message, status: 500 };
   }
 
+  const featuredOccasion = await fetchHomeCurrentOccasion();
+  if (featuredOccasion.error) {
+    return { data: null, error: featuredOccasion.error, status: 500 };
+  }
+
   const rareGemCandidateIds =
     rareGemTags?.map((row) => row.kirtan_id).filter(Boolean) ?? [];
   let recommendedRows: PlayableKirtanRow[] = [];
 
   if (rareGemCandidateIds.length > 0) {
-    const { data: recommendedCandidates, error: recommendedError } = await supabase
-      .from("playable_kirtans_with_titles")
-      .select("*")
-      .in("id", rareGemCandidateIds)
-      .in("type", ["MM", "BHJ"])
-      .order("id", { ascending: true });
+    const { data: recommendedCandidates, error: recommendedError } =
+      await supabase
+        .from("playable_kirtans_with_titles")
+        .select("*")
+        .in("id", rareGemCandidateIds)
+        .in("type", ["MM", "BHJ"])
+        .order("id", { ascending: true });
 
     if (recommendedError) {
       return { data: null, error: recommendedError.message, status: 500 };
@@ -275,7 +283,7 @@ async function buildHomePageData() {
           kirtan: featuredKirtan,
         }
       : null,
-    continue_listening: null,
+    current_occasion: featuredOccasion.data,
     entry_points: [
       { id: "MM", label: "Maha Mantras" },
       { id: "BHJ", label: "Bhajans" },

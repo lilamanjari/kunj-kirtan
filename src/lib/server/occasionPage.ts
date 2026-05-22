@@ -4,7 +4,8 @@ import type { KirtanSummary, KirtanType } from "@/types/kirtan";
 import { fetchKirtanPersonNames, fetchKirtanTagFlags } from "@/lib/server/kirtanTags";
 import { getDailyRareGem } from "@/lib/server/featured";
 import { getDisplayKirtanTitle } from "@/lib/server/bhajanDisplayTitle";
-import type { OccasionPersonGroup, OccasionResponse } from "@/types/occasions";
+import { compareOccasionKirtans } from "@/lib/server/occasionCurations";
+import type { OccasionResponse } from "@/types/occasions";
 
 const getCachedOccasionPageData = unstable_cache(
   async (slug: string) => {
@@ -95,7 +96,7 @@ const getCachedOccasionPageData = unstable_cache(
         has_harmonium: harmoniumIds.has(k.id),
         is_rare_gem: rareGemIds.has(k.id),
         person_tag: personNamesById.get(k.id) ?? null,
-      })) ?? [];
+      })).sort(compareOccasionKirtans) ?? [];
 
     const featuredKirtan: KirtanSummary | null = featured.kirtan
       ? {
@@ -116,37 +117,11 @@ const getCachedOccasionPageData = unstable_cache(
         }
       : null;
 
-    const personGroupsMap = new Map<string, KirtanSummary[]>();
-    const ungroupedKirtans: KirtanSummary[] = [];
-
-    for (const kirtan of payload) {
-      if (!kirtan.person_tag) {
-        ungroupedKirtans.push(kirtan);
-        continue;
-      }
-      const existing = personGroupsMap.get(kirtan.person_tag);
-      if (existing) {
-        existing.push(kirtan);
-      } else {
-        personGroupsMap.set(kirtan.person_tag, [kirtan]);
-      }
-    }
-
-    const personGroups: OccasionPersonGroup[] = Array.from(
-      personGroupsMap.entries(),
-      ([person_name, kirtans]) => ({
-        person_name,
-        kirtans,
-      }),
-    );
-
     return {
       data: {
         tag,
         featured: featuredKirtan,
         kirtans: payload,
-        person_groups: personGroups,
-        ungrouped_kirtans: ungroupedKirtans,
       } satisfies OccasionResponse,
       error: null,
       status: 200,

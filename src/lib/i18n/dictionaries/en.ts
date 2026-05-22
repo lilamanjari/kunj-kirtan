@@ -42,6 +42,8 @@ export const enDictionary: AppDictionary = {
     durationOver30: "Duration: Over 30 min",
   },
   home: {
+    currentVrata: "Current Vrata",
+    currentVrataSubtitle: "A sacred period with its own kirtans and moods.",
     favoritesSubtitle: "Your saved kirtans, ready to play.",
     recommended: "Recommended",
     recommendedSubtitle: "Rare gems refreshed weekly.",
