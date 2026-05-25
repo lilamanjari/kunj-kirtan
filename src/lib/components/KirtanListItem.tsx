@@ -20,6 +20,7 @@ import {
   harmoniumPillClassName,
   queueActiveClassName,
 } from "@/lib/theme/componentThemes";
+import { radiusClassNames } from "@/lib/theme/radii";
 import { useDictionary } from "@/lib/i18n/LocaleProvider";
 
 type KirtanListItemProps = {
@@ -62,7 +63,7 @@ export default function KirtanListItem({
     <li
       onClick={onToggle}
       className={`
-        group relative flex cursor-pointer items-start justify-between rounded-xl border px-4 py-2.5 shadow-[0_14px_30px_rgba(120,53,15,0.10)] transition
+        group relative flex cursor-pointer items-start justify-between border px-4 py-2.5 shadow-[0_14px_30px_rgba(120,53,15,0.10)] transition ${radiusClassNames.card}
         ${cardBackground}
         ${
           kirtan.is_rare_gem

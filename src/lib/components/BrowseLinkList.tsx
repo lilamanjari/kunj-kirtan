@@ -1,6 +1,7 @@
 "use client";
 
 import LocalizedLink from "@/lib/components/LocalizedLink";
+import { radiusClassNames } from "@/lib/theme/radii";
 
 type BrowseLinkItem = {
   id: string;
@@ -33,7 +34,7 @@ export default function BrowseLinkList({
 }: BrowseLinkListProps) {
   if (items.length === 0) {
     return (
-      <div className="rounded-xl border border-dashed border-stone-200 bg-white/80 px-4 py-8 text-center text-sm text-stone-500 shadow-[0_12px_28px_rgba(120,53,15,0.08)]">
+      <div className={`${radiusClassNames.card} border border-dashed border-stone-200 bg-white/80 px-4 py-8 text-center text-sm text-stone-500 shadow-[0_12px_28px_rgba(120,53,15,0.08)]`}>
         {emptyMessage}
       </div>
     );
@@ -48,7 +49,7 @@ export default function BrowseLinkList({
           <li key={item.id}>
             <LocalizedLink
               href={item.href}
-              className="group flex items-center justify-between gap-4 rounded-xl border px-4 py-4 shadow-[0_18px_34px_rgba(84,38,27,0.12)] transition hover:-translate-y-0.5 hover:shadow-[0_22px_40px_rgba(84,38,27,0.16)]"
+              className={`group flex items-center justify-between gap-4 border px-4 py-4 shadow-[0_18px_34px_rgba(84,38,27,0.12)] transition hover:-translate-y-0.5 hover:shadow-[0_22px_40px_rgba(84,38,27,0.16)] ${radiusClassNames.card}`}
               style={{
                 borderColor: tint.border,
                 background: tint.background,

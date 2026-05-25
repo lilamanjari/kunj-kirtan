@@ -364,8 +364,9 @@ async function getOrCreateTag(name, category) {
   const slug = slugify(cleanName);
   const { data, error } = await supabase
     .from("tags")
-    .select("id, slug")
-    .eq("slug", slug)
+    .select("id")
+    .eq("name", cleanName)
+    .eq("category", category)
     .maybeSingle();
   if (error) throw new Error(error.message);
   if (data?.id) return data.id;
@@ -375,7 +376,22 @@ async function getOrCreateTag(name, category) {
     .insert({ name: cleanName, category, slug })
     .select("id")
     .single();
-  if (insertError) throw new Error(insertError.message);
+  if (insertError) {
+    // If another row created the same tag first, fall back to lookup and reuse it.
+    if (insertError.code === "23505") {
+      const { data: existing, error: existingError } = await supabase
+        .from("tags")
+        .select("id")
+        .eq("name", cleanName)
+        .eq("category", category)
+        .maybeSingle();
+
+      if (existingError) throw new Error(existingError.message);
+      if (existing?.id) return existing.id;
+    }
+
+    throw new Error(insertError.message);
+  }
   return inserted.id;
 }
 

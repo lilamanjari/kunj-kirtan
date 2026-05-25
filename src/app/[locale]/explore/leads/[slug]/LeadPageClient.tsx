@@ -44,7 +44,9 @@ export default function LeadPageClient({
     { key: "HK", label: dictionary.explore.hariKatha },
   ];
 
-  const [listsByType, setListsByType] = useState<Partial<Record<KirtanType, LeadListState>>>(
+  const [listsByType, setListsByType] = useState<
+    Partial<Record<KirtanType, LeadListState>>
+  >(
     initialData.active_type
       ? {
           [initialData.active_type]: {
@@ -55,7 +57,9 @@ export default function LeadPageClient({
         }
       : {},
   );
-  const [activeType, setActiveType] = useState<KirtanType | null>(initialData.active_type ?? null);
+  const [activeType, setActiveType] = useState<KirtanType | null>(
+    initialData.active_type ?? null,
+  );
   const [pinnedKirtan, setPinnedKirtan] = useState<KirtanSummary | null>(null);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
@@ -102,18 +106,26 @@ export default function LeadPageClient({
           params.set("cursor_id", activeList.next_cursor.id);
         } else {
           if (activeList.next_cursor.recorded_date) {
-            params.set("cursor_recorded_date", activeList.next_cursor.recorded_date);
+            params.set(
+              "cursor_recorded_date",
+              activeList.next_cursor.recorded_date,
+            );
           }
           params.set("cursor_id", activeList.next_cursor.id);
         }
 
-        fetchWithStatus(`/api/explore/leads/${slug}/kirtans?${params.toString()}`)
+        fetchWithStatus(
+          `/api/explore/leads/${slug}/kirtans?${params.toString()}`,
+        )
           .then((res) => res.json())
           .then((json) => {
             setListsByType((prev) => ({
               ...prev,
               [activeType]: {
-                kirtans: [...(prev[activeType]?.kirtans ?? []), ...(json.kirtans ?? [])],
+                kirtans: [
+                  ...(prev[activeType]?.kirtans ?? []),
+                  ...(json.kirtans ?? []),
+                ],
                 has_more: Boolean(json.has_more),
                 next_cursor: json.next_cursor ?? null,
               },
@@ -128,7 +140,9 @@ export default function LeadPageClient({
     return () => observer.disconnect();
   }, [activeType, initialData.lead.id, isLoadingMore, listsByType, slug]);
 
-  const visibleFilters = filters.filter((filter) => (initialData.counts?.[filter.key] ?? 0) > 0);
+  const visibleFilters = filters.filter(
+    (filter) => (initialData.counts?.[filter.key] ?? 0) > 0,
+  );
   const showTabs = visibleFilters.length > 1;
   const visible = activeType ? (listsByType[activeType]?.kirtans ?? []) : [];
   const isListLoading = Boolean(activeType && !listsByType[activeType]);
@@ -187,8 +201,8 @@ export default function LeadPageClient({
                     rounded-full px-4 py-1.5 text-xs font-medium transition
                     ${
                       active
-                        ? "bg-gradient-to-r from-[#d4937d] to-[#86b489] text-white shadow-sm"
-                        : "border border-[#e5d7cf] bg-white text-[#7e665c] hover:bg-[#fff8f4]"
+                        ? "bg-gradient-to-r from-[#d49897] to-[#79a14f] text-white shadow-sm"
+                        : "border border-[#efd4cb] bg-white text-[#7e665c] hover:bg-[#fff8f4]"
                     }
                   `}
                 >

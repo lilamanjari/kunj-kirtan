@@ -11,6 +11,7 @@ import HomeRecommendedStrip from "@/lib/components/HomeRecommendedStrip";
 import KirtanListItem from "@/lib/components/KirtanListItem";
 import KirtanDeepLinkHandler from "@/lib/components/KirtanDeepLinkHandler";
 import { homePalette } from "@/lib/theme/pagePalettes";
+import { radiusClassNames } from "@/lib/theme/radii";
 import Image from "next/image";
 import LocalizedLink from "@/lib/components/LocalizedLink";
 import { useDictionary } from "@/lib/i18n/LocaleProvider";
@@ -143,7 +144,7 @@ export default function HomeClient({ data }: { data: HomeData }) {
                     <LocalizedLink
                       key={e.id}
                       href={href}
-                      className="group relative flex min-h-[8.75rem] items-center justify-center overflow-hidden rounded-[1.3rem] border px-4 py-4 text-center shadow-[0_12px_28px_rgba(156,113,93,0.12)] transition hover:-translate-y-0.5 hover:shadow-[0_16px_34px_rgba(156,113,93,0.16)]"
+                      className={`group relative flex min-h-[8.75rem] items-center justify-center overflow-hidden border px-4 py-4 text-center shadow-[0_12px_28px_rgba(156,113,93,0.12)] transition hover:-translate-y-0.5 hover:shadow-[0_16px_34px_rgba(156,113,93,0.16)] ${radiusClassNames.tile}`}
                       style={{
                         backgroundImage: `${tileStyle?.overlay ?? "linear-gradient(180deg, rgba(255,250,246,0.9) 0%, rgba(247,239,235,0.86) 100%)"}, ${tileStyle?.backgroundImage ?? "none"}`,
                         backgroundSize: "cover",
@@ -171,7 +172,7 @@ export default function HomeClient({ data }: { data: HomeData }) {
                   <button
                     key={e.id}
                     disabled
-                    className="flex min-h-[8.75rem] items-center justify-center rounded-[1.3rem] border border-[#e6d4cc] bg-white/75 px-4 py-4 text-center text-[1.48rem] font-semibold text-[#9d8a84]"
+                    className={`flex min-h-[8.75rem] items-center justify-center border border-[#e6d4cc] bg-white/75 px-4 py-4 text-center text-[1.48rem] font-semibold text-[#9d8a84] ${radiusClassNames.tile}`}
                   >
                     {e.label}
                   </button>
@@ -184,7 +185,7 @@ export default function HomeClient({ data }: { data: HomeData }) {
             <section className="relative">
               <LocalizedLink
                 href={`/explore/occasions/${data.current_occasion.slug}`}
-                className="group block rounded-[1.45rem] border border-[#cfe0c6] p-6 text-[#4f5f45] shadow-[0_20px_42px_rgba(116,148,98,0.18)] backdrop-blur-sm transition hover:-translate-y-0.5"
+                className={`group block border border-[#cfe0c6] p-6 text-[#4f5f45] shadow-[0_20px_42px_rgba(116,148,98,0.18)] backdrop-blur-sm transition hover:-translate-y-0.5 ${radiusClassNames.surface}`}
                 style={{
                   backgroundColor: "rgba(247, 252, 244, 0.92)",
                   backgroundImage:
@@ -256,7 +257,7 @@ export default function HomeClient({ data }: { data: HomeData }) {
           <section className="pb-5 text-center">
             <LocalizedLink
               href="/about"
-              className="mt-3 inline-flex rounded-md border border-white/70 bg-white/78 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#9b6a5f] shadow-sm backdrop-blur-sm transition hover:bg-white"
+              className={`mt-3 inline-flex border border-white/70 bg-white/78 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#9b6a5f] shadow-sm backdrop-blur-sm transition hover:bg-white ${radiusClassNames.button}`}
             >
               {dictionary.common.aboutKunjKirtan}
             </LocalizedLink>

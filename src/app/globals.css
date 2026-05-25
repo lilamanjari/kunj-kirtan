@@ -32,6 +32,12 @@
   --theme-audio-progress: var(--theme-player-green);
   --theme-audio-queue-pill-bg: var(--theme-player-green-soft);
   --theme-audio-queue-pill-text: var(--theme-player-green);
+  --theme-radius-surface: 1.3rem; /* FeaturedKirtanCard and featured occasion card */
+  --theme-radius-card: 0.8rem; /* KirtanListItem, BrowseLinkList, RailCards */
+  --theme-radius-tile: 1rem; /* Explore tiles on home page */
+  --theme-radius-button: 0.375rem; /* About button and home button */
+  --theme-radius-badge: 0.75rem; /* Used for duration and other pills */
+  --theme-radius-header-corner: 2rem; /* Sub page header home link cutout */
 }
 
 @theme inline {

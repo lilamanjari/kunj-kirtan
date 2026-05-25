@@ -7,6 +7,7 @@ import type { KirtanSummary } from "@/types/kirtan";
 import HomeRailActionButtons from "@/lib/components/HomeRailActionButtons";
 import HomeRailKirtanCard from "@/lib/components/HomeRailKirtanCard";
 import { durationPillClassName } from "@/lib/theme/componentThemes";
+import { radiusClassNames } from "@/lib/theme/radii";
 
 type OverlayStops = {
   start: number;
@@ -140,7 +141,7 @@ export default function HomeCuratedKirtanStrip({
                 trailingTopSlot={
                   durationLabel ? (
                     <span
-                      className={`rounded-full px-2.5 py-1 text-[11px] font-semibold tracking-wide ${durationPillClassName}`}
+                      className={`${radiusClassNames.badge} px-2.5 py-1 text-[11px] font-semibold tracking-wide ${durationPillClassName}`}
                     >
                       {durationLabel}
                     </span>

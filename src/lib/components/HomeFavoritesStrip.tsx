@@ -7,6 +7,7 @@ import type { KirtanSummary } from "@/types/kirtan";
 import HomeRailKirtanCard from "@/lib/components/HomeRailKirtanCard";
 import HomeRailActionButtons from "@/lib/components/HomeRailActionButtons";
 import { durationPillClassName } from "@/lib/theme/componentThemes";
+import { radiusClassNames } from "@/lib/theme/radii";
 import LocalizedLink from "@/lib/components/LocalizedLink";
 import { useDictionary } from "@/lib/i18n/LocaleProvider";
 
@@ -88,7 +89,7 @@ export default function HomeFavoritesStrip({
         <div className="shrink-0">
           <LocalizedLink
             href="/favorites"
-            className="rounded-full border border-rose-200/90 bg-white/88 px-3 py-1.5 text-xs font-medium text-[#9b5e52] shadow-sm transition hover:bg-rose-50"
+            className={`border border-rose-200/90 bg-white/88 px-3 py-1.5 text-xs font-medium text-[#9b5e52] shadow-sm transition hover:bg-rose-50 ${radiusClassNames.button}`}
           >
             {dictionary.common.viewAll}
           </LocalizedLink>
@@ -131,7 +132,7 @@ export default function HomeFavoritesStrip({
                   <>
                     {durationLabel ? (
                       <span
-                        className={`rounded-full px-2.5 py-1 text-[11px] font-semibold tracking-wide ${durationPillClassName}`}
+                        className={`${radiusClassNames.badge} px-2.5 py-1 text-[11px] font-semibold tracking-wide ${durationPillClassName}`}
                       >
                         {durationLabel}
                       </span>

@@ -3,6 +3,7 @@
 import Image from "next/image";
 import LocalizedLink from "@/lib/components/LocalizedLink";
 import { useDictionary } from "@/lib/i18n/LocaleProvider";
+import { radiusClassNames } from "@/lib/theme/radii";
 
 type SubpageHeaderProps = {
   title: string;
@@ -52,14 +53,14 @@ export default function SubpageHeader({
         <LocalizedLink
           href="/"
           aria-label={dictionary.actions.goToHomePage}
-          className="absolute right-4 top-0 z-10 block h-28 w-[58%] rounded-bl-[2rem]"
+          className={`absolute right-4 top-0 z-10 block h-28 w-[58%] ${radiusClassNames.headerCorner}`}
         />
 
         <div className="absolute inset-x-5 top-4">
           <div className={titleWidthClassName}>
             <LocalizedLink
               href={backHref}
-              className="inline-flex rounded-md border border-white/70 bg-white/78 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#9b6a5f] shadow-sm backdrop-blur-sm hover:bg-white"
+              className={`inline-flex border border-white/70 bg-white/78 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#9b6a5f] shadow-sm backdrop-blur-sm hover:bg-white ${radiusClassNames.button}`}
             >
               {`\u2039 ${backLabel}`}
             </LocalizedLink>

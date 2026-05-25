@@ -22,6 +22,7 @@ import {
   queueActiveClassName,
 } from "@/lib/theme/componentThemes";
 import type { FeaturedCardPalette } from "@/lib/theme/pagePalettes";
+import { radiusClassNames } from "@/lib/theme/radii";
 import { useDictionary } from "@/lib/i18n/LocaleProvider";
 
 type FeaturedKirtanCardProps = {
@@ -65,7 +66,7 @@ export default function FeaturedKirtanCard({
   return (
     <section
       className={`
-        relative rounded-[1.45rem] p-6 transition
+        relative p-6 transition ${radiusClassNames.surface}
         ${cardToneClass}
         ${isActive ? `ring-2 ${palette?.playbackRingColor ?? "ring-[#d58a96]/50"}` : ""}
         ${isPlaying ? "animate-breathe" : ""}
@@ -208,7 +209,7 @@ export default function FeaturedKirtanCard({
         disabled={isLoading && !isActive}
         onClick={onToggle}
         className={`
-          mt-6 w-full rounded-xl py-3 font-medium transition
+          mt-6 w-full py-3 font-medium transition ${radiusClassNames.card}
           ${featuredPlayButtonClassName}
           disabled:opacity-40 disabled:pointer-events-none
         `}
