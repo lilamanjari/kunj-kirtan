@@ -5,17 +5,83 @@ import {
   localeHeaderName,
 } from "@/lib/i18n/config";
 
+function isAdminPath(pathname: string) {
+  return pathname === "/admin" || pathname.startsWith("/admin/");
+}
+
+function isAdminApiPath(pathname: string) {
+  return pathname === "/api/admin" || pathname.startsWith("/api/admin/");
+}
+
 function isBypassedPath(pathname: string) {
   return (
     pathname.startsWith("/api") ||
+    isAdminPath(pathname) ||
     pathname.startsWith("/_next") ||
     pathname === "/favicon.ico" ||
     pathname.includes(".")
   );
 }
 
+function unauthorizedResponse() {
+  return new NextResponse("Authentication required", {
+    status: 401,
+    headers: {
+      "WWW-Authenticate": 'Basic realm="Kunj Kirtan CMS"',
+    },
+  });
+}
+
+function invalidAdminConfigResponse() {
+  return new NextResponse("ADMIN_USERNAME or ADMIN_PASSWORD is not configured", {
+    status: 500,
+  });
+}
+
+function isAuthorizedAdminRequest(request: NextRequest) {
+  const username = process.env.ADMIN_USERNAME;
+  const password = process.env.ADMIN_PASSWORD;
+
+  if (!username || !password) {
+    return { ok: false as const, response: invalidAdminConfigResponse() };
+  }
+
+  const authHeader = request.headers.get("authorization");
+  if (!authHeader?.startsWith("Basic ")) {
+    return { ok: false as const, response: unauthorizedResponse() };
+  }
+
+  try {
+    const decoded = atob(authHeader.slice("Basic ".length));
+    const separatorIndex = decoded.indexOf(":");
+    const providedUsername =
+      separatorIndex >= 0 ? decoded.slice(0, separatorIndex) : decoded;
+    const providedPassword =
+      separatorIndex >= 0 ? decoded.slice(separatorIndex + 1) : "";
+
+    if (providedUsername === username && providedPassword === password) {
+      return { ok: true as const };
+    }
+  } catch {
+    return { ok: false as const, response: unauthorizedResponse() };
+  }
+
+  return { ok: false as const, response: unauthorizedResponse() };
+}
+
 export function middleware(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
+
+  if (isAdminPath(pathname) || isAdminApiPath(pathname)) {
+    const auth = isAuthorizedAdminRequest(request);
+    if (!auth.ok) {
+      return auth.response;
+    }
+  }
+
+  if (isAdminPath(pathname)) {
+    return NextResponse.next();
+  }
 
   if (isBypassedPath(pathname)) {
     return NextResponse.next();
