@@ -14,6 +14,7 @@ const getCachedOccasionPageData = unstable_cache(
       .select("id, name, slug")
       .eq("slug", slug)
       .eq("category", "occasion")
+      .eq("published", true)
       .maybeSingle();
 
     if (tagError || !tag) {

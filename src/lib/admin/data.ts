@@ -347,13 +347,15 @@ export async function getAdminKirtanDetail(id: string) {
 export async function listAdminTags({
   search,
   category,
+  publishedOnly,
 }: {
   search?: string | null;
   category?: string | "all" | null;
+  publishedOnly?: boolean;
 }) {
   let query = supabaseAdmin
     .from("tags")
-    .select("id, name, slug, category")
+    .select("id, name, slug, category, published, browse_visible")
     .order("name", { ascending: true })
     .limit(250);
 
@@ -363,6 +365,10 @@ export async function listAdminTags({
 
   if (category && category !== "all") {
     query = query.eq("category", category);
+  }
+
+  if (publishedOnly) {
+    query = query.eq("published", true);
   }
 
   const { data: tags, error } = await query;
@@ -396,13 +402,15 @@ export async function listAdminTags({
     slug: tag.slug,
     category: tag.category,
     usage_count: countsById.get(tag.id) ?? 0,
+    published: Boolean(tag.published),
+    browse_visible: Boolean(tag.browse_visible),
   })) satisfies AdminTagSummary[];
 }
 
 export async function getAdminTagDetail(id: string) {
   const { data: tag, error } = await supabaseAdmin
     .from("tags")
-    .select("id, name, slug, category")
+    .select("id, name, slug, category, published, browse_visible")
     .eq("id", id)
     .maybeSingle();
 
@@ -429,6 +437,8 @@ export async function getAdminTagDetail(id: string) {
     slug: tag.slug,
     category: tag.category,
     usage_count: (links ?? []).length,
+    published: Boolean(tag.published),
+    browse_visible: Boolean(tag.browse_visible),
     linked_kirtan_ids: (links ?? [])
       .map((row) => row.kirtan_id)
       .filter((value): value is string => Boolean(value)),

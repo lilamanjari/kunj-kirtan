@@ -12,9 +12,10 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const search = searchParams.get("search");
     const category = searchParams.get("category");
+    const publishedOnly = searchParams.get("publishedOnly") === "true";
 
     const [tags, categories] = await Promise.all([
-      listAdminTags({ search, category }),
+      listAdminTags({ search, category, publishedOnly }),
       getAdminTagCategories(),
     ]);
 
@@ -34,10 +35,14 @@ export async function POST(req: Request) {
     const body = (await req.json()) as {
       name?: string;
       category?: string;
+      published?: boolean;
+      browse_visible?: boolean;
     };
 
     const name = body.name?.trim() ?? "";
     const category = body.category?.trim() ?? "";
+    const published = body.published ?? true;
+    const browseVisible = published ? (body.browse_visible ?? false) : false;
 
     if (!name || !category) {
       return NextResponse.json(
@@ -68,7 +73,13 @@ export async function POST(req: Request) {
 
     const { data, error } = await supabaseAdmin
       .from("tags")
-      .insert({ name, category, slug })
+      .insert({
+        name,
+        category,
+        slug,
+        published,
+        browse_visible: browseVisible,
+      })
       .select("id")
       .single();
 

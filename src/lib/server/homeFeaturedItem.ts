@@ -79,6 +79,7 @@ export async function fetchHomeCurrentOccasion() {
     .from("tags")
     .select("id, name, slug")
     .eq("id", item.entity_id)
+    .eq("published", true)
     .maybeSingle();
 
   if (tagError) {

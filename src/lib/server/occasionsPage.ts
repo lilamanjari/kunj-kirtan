@@ -13,6 +13,8 @@ const getCachedOccasionsPageData = unstable_cache(
       .from("tags")
       .select("id, name, slug")
       .eq("category", "occasion")
+      .eq("published", true)
+      .eq("browse_visible", true)
       .order("name", { ascending: true });
 
     if (error) {

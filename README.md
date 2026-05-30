@@ -1,5 +1,18 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## CMS Auth
+
+Local CMS routes under `/admin` use HTTP Basic Auth.
+
+Add these values to `.env.local`:
+
+```env
+ADMIN_USERNAME=yourname
+ADMIN_PASSWORD=some-strong-password
+```
+
+Then restart the dev server and open `/admin`.
+
 ## Getting Started
 
 First, run the development server:

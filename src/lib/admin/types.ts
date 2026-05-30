@@ -18,6 +18,8 @@ export type AdminTagSummary = {
   slug: string;
   category: string;
   usage_count: number;
+  published: boolean;
+  browse_visible: boolean;
 };
 
 export type AdminKirtanTag = {

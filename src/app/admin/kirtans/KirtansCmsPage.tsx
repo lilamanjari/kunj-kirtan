@@ -161,6 +161,7 @@ export function KirtansCmsPage() {
     async function loadTags() {
       const params = new URLSearchParams();
       if (deferredTagSearch.trim()) params.set("search", deferredTagSearch.trim());
+      params.set("publishedOnly", "true");
 
       const response = await fetch(`/api/admin/tags?${params.toString()}`, {
         cache: "no-store",

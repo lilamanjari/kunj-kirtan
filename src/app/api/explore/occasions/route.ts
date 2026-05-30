@@ -1,4 +1,3 @@
-import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 import { ServerTiming, jsonWithServerTiming } from "@/lib/server/serverTiming";
 
@@ -11,6 +10,8 @@ export async function GET() {
       .from("tags")
       .select("id, name, slug")
       .eq("category", "occasion")
+      .eq("published", true)
+      .eq("browse_visible", true)
       .order("name", { ascending: true }),
   );
 

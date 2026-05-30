@@ -21,8 +21,12 @@ export function TagsCmsPage() {
   const [selected, setSelected] = useState<AdminTagDetail | null>(null);
   const [name, setName] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("occasion");
+  const [published, setPublished] = useState(true);
+  const [browseVisible, setBrowseVisible] = useState(false);
   const [newTagName, setNewTagName] = useState("");
   const [newTagCategory, setNewTagCategory] = useState("occasion");
+  const [newTagPublished, setNewTagPublished] = useState(true);
+  const [newTagBrowseVisible, setNewTagBrowseVisible] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -66,6 +70,8 @@ export function TagsCmsPage() {
     setSelected(tag);
     setName(tag.name);
     setSelectedCategory(tag.category);
+    setPublished(tag.published);
+    setBrowseVisible(tag.browse_visible);
   }, []);
 
   useEffect(() => {
@@ -127,7 +133,12 @@ export function TagsCmsPage() {
     const response = await fetch(`/api/admin/tags/${selected.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, category: selectedCategory }),
+      body: JSON.stringify({
+        name,
+        category: selectedCategory,
+        published,
+        browse_visible: published ? browseVisible : false,
+      }),
     });
     const json = await response.json();
     if (!response.ok) {
@@ -147,7 +158,12 @@ export function TagsCmsPage() {
     const response = await fetch("/api/admin/tags", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: newTagName, category: newTagCategory }),
+      body: JSON.stringify({
+        name: newTagName,
+        category: newTagCategory,
+        published: newTagPublished,
+        browse_visible: newTagPublished ? newTagBrowseVisible : false,
+      }),
     });
     const json = await response.json();
     if (!response.ok) {
@@ -157,6 +173,8 @@ export function TagsCmsPage() {
 
     setMessage("Tag created.");
     setNewTagName("");
+    setNewTagPublished(true);
+    setNewTagBrowseVisible(false);
     await loadTags(json.id);
     return true;
   }
@@ -247,6 +265,10 @@ export function TagsCmsPage() {
                 <p className="mt-1 text-xs text-[#8f6c65]">
                   {tag.category} • {tag.usage_count} linked
                 </p>
+                <p className="mt-1 text-[11px] text-[#a07a6e]">
+                  {tag.published ? "published" : "unpublished"} •{" "}
+                  {tag.browse_visible ? "browse visible" : "hidden from browse"}
+                </p>
               </button>
             ))}
           </div>
@@ -309,6 +331,41 @@ export function TagsCmsPage() {
                       ))}
                     </select>
                   </div>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <label className="rounded-[var(--theme-radius-card)] border border-[#eedbd0] bg-[#fffdfa] px-3 py-3 text-sm text-[#6b514a]">
+                      <span className="mb-2 block text-xs uppercase tracking-[0.14em] text-[#a47d6d]">
+                        Published
+                      </span>
+                      <input
+                        type="checkbox"
+                        checked={published}
+                        onChange={(event) => {
+                          const nextPublished = event.target.checked;
+                          setPublished(nextPublished);
+                          if (!nextPublished) {
+                            setBrowseVisible(false);
+                          }
+                        }}
+                      />
+                    </label>
+                    <label className="rounded-[var(--theme-radius-card)] border border-[#eedbd0] bg-[#fffdfa] px-3 py-3 text-sm text-[#6b514a]">
+                      <span className="mb-2 block text-xs uppercase tracking-[0.14em] text-[#a47d6d]">
+                        Browse visible
+                      </span>
+                      <input
+                        type="checkbox"
+                        checked={published && browseVisible}
+                        disabled={!published}
+                        onChange={(event) =>
+                          setBrowseVisible(event.target.checked)
+                        }
+                      />
+                    </label>
+                  </div>
+                  <p className="text-xs text-[#9a786f]">
+                    Only published tags can be visible in browse lists like
+                    Occasions.
+                  </p>
                   <p className="text-sm text-[#8d6b64]">
                     {selected.usage_count} linked kirtans
                   </p>
@@ -345,7 +402,7 @@ export function TagsCmsPage() {
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="text-xs uppercase tracking-[0.22em] text-[#b18472]">
-                  New tag
+                  New Tag
                 </p>
                 <h3 className="mt-1 text-xl font-semibold text-[#5f4338]">
                   Create a tag
@@ -380,6 +437,40 @@ export function TagsCmsPage() {
                   <option value="occasion">occasion</option>
                 ) : null}
               </select>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <label className="rounded-[var(--theme-radius-card)] border border-[#eedbd0] bg-[#fffdfa] px-3 py-3 text-sm text-[#6b514a]">
+                  <span className="mb-2 block text-xs uppercase tracking-[0.14em] text-[#a47d6d]">
+                    Published
+                  </span>
+                  <input
+                    type="checkbox"
+                    checked={newTagPublished}
+                    onChange={(event) => {
+                      const nextPublished = event.target.checked;
+                      setNewTagPublished(nextPublished);
+                      if (!nextPublished) {
+                        setNewTagBrowseVisible(false);
+                      }
+                    }}
+                  />
+                </label>
+                <label className="rounded-[var(--theme-radius-card)] border border-[#eedbd0] bg-[#fffdfa] px-3 py-3 text-sm text-[#6b514a]">
+                  <span className="mb-2 block text-xs uppercase tracking-[0.14em] text-[#a47d6d]">
+                    Browse visible
+                  </span>
+                  <input
+                    type="checkbox"
+                    checked={newTagPublished && newTagBrowseVisible}
+                    disabled={!newTagPublished}
+                    onChange={(event) =>
+                      setNewTagBrowseVisible(event.target.checked)
+                    }
+                  />
+                </label>
+              </div>
+              <p className="text-xs text-[#9a786f]">
+                Only published tags can be visible in browse lists.
+              </p>
               <div className="flex gap-3 pt-2">
                 <button
                   type="button"

@@ -35,10 +35,14 @@ export async function PATCH(
     const body = (await req.json()) as {
       name?: string;
       category?: string;
+      published?: boolean;
+      browse_visible?: boolean;
     };
 
     const name = body.name?.trim() ?? "";
     const category = body.category?.trim() ?? "";
+    const published = body.published ?? true;
+    const browseVisible = published ? (body.browse_visible ?? false) : false;
 
     if (!name || !category) {
       return NextResponse.json(
@@ -49,7 +53,12 @@ export async function PATCH(
 
     const { error } = await supabaseAdmin
       .from("tags")
-      .update({ name, category })
+      .update({
+        name,
+        category,
+        published,
+        browse_visible: browseVisible,
+      })
       .eq("id", id);
 
     if (error) {
