@@ -30,6 +30,7 @@ export function TagsCmsPage() {
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
 
   const loadTags = useCallback(
     async (nextSelectedId?: string | null) => {
@@ -128,7 +129,7 @@ export function TagsCmsPage() {
   async function saveTag() {
     if (!selected) return;
     setError(null);
-    setMessage(null);
+    setSaveState("saving");
 
     const response = await fetch(`/api/admin/tags/${selected.id}`, {
       method: "PATCH",
@@ -143,10 +144,12 @@ export function TagsCmsPage() {
     const json = await response.json();
     if (!response.ok) {
       setError(json.error ?? "Failed to save tag");
+      setSaveState("error");
       return;
     }
 
     setMessage("Tag saved.");
+    setSaveState("saved");
     await loadTags(selected.id);
     await loadSelected(selected.id);
   }
@@ -251,7 +254,12 @@ export function TagsCmsPage() {
               <button
                 key={tag.id}
                 type="button"
-                onClick={() => setSelectedId(tag.id)}
+                onClick={() => {
+                  setMessage(null);
+                  setError(null);
+                  setSaveState("idle");
+                  setSelectedId(tag.id);
+                }}
                 className={[
                   "mb-2 w-full rounded-[var(--theme-radius-card)] border p-3 text-left transition",
                   selectedId === tag.id
@@ -275,16 +283,20 @@ export function TagsCmsPage() {
         </section>
 
         <section
-          className={sectionCardClassName("min-h-0 overflow-hidden px-5 py-5")}
+          className={sectionCardClassName(
+            "relative min-h-0 overflow-hidden px-5 py-5",
+          )}
         >
           {error ? (
             <div className="mb-4 rounded-[var(--theme-radius-card)] border border-[#efc7c0] bg-[#fff4f3] px-3 py-2 text-sm text-[#a45e5a]">
               {error}
             </div>
           ) : null}
-          {message ? (
-            <div className="mb-4 rounded-[var(--theme-radius-card)] border border-[#dce7cd] bg-[#f7fbf1] px-3 py-2 text-sm text-[color:var(--theme-player-green)]">
-              {message}
+          {message || saveState === "saving" ? (
+            <div className="pointer-events-none absolute right-5 top-5 z-10">
+              <div className="rounded-[var(--theme-radius-card)] border border-[#dce7cd] bg-[#f7fbf1]/95 px-3 py-2 text-sm text-[color:var(--theme-player-green)] shadow-[0_12px_26px_rgba(121,161,79,0.14)] backdrop-blur-sm">
+                {saveState === "saving" ? "Saving tag..." : message}
+              </div>
             </div>
           ) : null}
 
