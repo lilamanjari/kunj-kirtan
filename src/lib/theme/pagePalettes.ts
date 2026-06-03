@@ -14,6 +14,23 @@ export type PagePalette = {
   featuredCard: FeaturedCardPalette;
 };
 
+export const greenSurfaceTheme = {
+  borderColor: "#d9e7d0",
+  textColor: "#445643",
+  shadowColor: "rgba(94, 129, 86, 0.2)",
+  backgroundColor: "rgba(247, 252, 244, 0.94)",
+  gradient:
+    "linear-gradient(145deg, rgba(252,255,250,0.98) 0%, rgba(240,248,232,0.94) 52%, rgba(220,235,205,0.9) 100%)",
+  ringClassName: "ring-[#bdd8b0]/70",
+  labelClassName: "text-[#6f8d66]",
+  contextClassName: "text-[#76906d]",
+  metadataClassName: "text-[#71836b]",
+  leadsingerClassName: "text-[#5b6d55]",
+  buttonBorderColor: "#d4e5ca",
+  buttonTextColor: "#6f8b60",
+  buttonShadowColor: "rgba(116, 148, 98, 0.16)",
+} as const;
+
 export const homePalette: PagePalette = {
   featuredCard: {
     cardClassName:
@@ -29,6 +46,22 @@ export const homePalette: PagePalette = {
     metadataLabelColor: "text-[#9c7b72]",
     leadsingerLabelColor: "text-[#87675f]",
   },
+};
+
+export const homeSharedPalette: FeaturedCardPalette = {
+  cardClassName: "border backdrop-blur-sm",
+  cardStyle: {
+    backgroundColor: greenSurfaceTheme.backgroundColor,
+    borderColor: greenSurfaceTheme.borderColor,
+    color: greenSurfaceTheme.textColor,
+    boxShadow: `0 20px 42px ${greenSurfaceTheme.shadowColor}`,
+    backgroundImage: greenSurfaceTheme.gradient,
+  },
+  playbackRingColor: greenSurfaceTheme.ringClassName,
+  featuredLabelColor: greenSurfaceTheme.labelClassName,
+  contextLineColor: greenSurfaceTheme.contextClassName,
+  metadataLabelColor: greenSurfaceTheme.metadataClassName,
+  leadsingerLabelColor: greenSurfaceTheme.leadsingerClassName,
 };
 
 export const mahaMantrasPalette: PagePalette = {

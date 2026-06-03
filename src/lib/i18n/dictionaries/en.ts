@@ -14,6 +14,7 @@ export const enDictionary: AppDictionary = {
     aboutKunjKirtan: "About Kunj Kirtan",
     offlineCheckConnection: "Offline — check your connection",
     noFavoritesYet: "No favorites yet. Tap the heart on any kirtan to save it here.",
+    sharedWithYou: "Shared with you",
   },
   explore: {
     bhajans: "Bhajan",
@@ -49,6 +50,7 @@ export const enDictionary: AppDictionary = {
     recommendedSubtitle: "Rare gems refreshed weekly.",
     popular: "Popular",
     popularSubtitle: "Our most played tracks.",
+    sharedKirtanContext: "Someone shared this kirtan with you.",
   },
   player: {
     playQueue: "Play queue",
@@ -62,6 +64,7 @@ export const enDictionary: AppDictionary = {
     removedFromQueue: 'Removed "{title}" from queue',
     checkOutKirtan: "Check out",
     onKunjKirtan: "on Kunj Kirtan",
+    copyLinkPrompt: "Copy this link",
   },
   actions: {
     share: "Share",
@@ -81,6 +84,7 @@ export const enDictionary: AppDictionary = {
     goToHomePage: "Go to home page",
     backToTop: "Back to top",
     jumpToLetter: "Jump to",
+    dismiss: "Dismiss",
   },
   search: {
     leadSingerPlaceholder: "Search by lead singer…",

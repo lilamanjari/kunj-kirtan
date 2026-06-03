@@ -15,6 +15,7 @@ export const ruDictionary: AppDictionary = {
     offlineCheckConnection: "Нет сети — проверьте соединение",
     noFavoritesYet:
       "Пока нет избранного. Нажмите на сердечко у любого киртана, чтобы сохранить его здесь.",
+    sharedWithYou: "Поделились с вами",
   },
   explore: {
     bhajans: "Бхаджаны",
@@ -50,6 +51,7 @@ export const ruDictionary: AppDictionary = {
     recommendedSubtitle: "Редкие жемчужины, обновляемые еженедельно.",
     popular: "Популярное",
     popularSubtitle: "Наши самые часто прослушиваемые треки.",
+    sharedKirtanContext: "Этим киртаном с вами поделились.",
   },
   player: {
     playQueue: "Очередь воспроизведения",
@@ -63,6 +65,7 @@ export const ruDictionary: AppDictionary = {
     removedFromQueue: 'Удалено из очереди: "{title}"',
     checkOutKirtan: "Послушайте",
     onKunjKirtan: "в Kunj Kirtan",
+    copyLinkPrompt: "Скопируйте эту ссылку",
   },
   actions: {
     share: "Поделиться",
@@ -82,6 +85,7 @@ export const ruDictionary: AppDictionary = {
     goToHomePage: "Перейти на главную",
     backToTop: "Наверх",
     jumpToLetter: "Перейти к",
+    dismiss: "Скрыть",
   },
   search: {
     leadSingerPlaceholder: "Искать по ведущему киртана…",

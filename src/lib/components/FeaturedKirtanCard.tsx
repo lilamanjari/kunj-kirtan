@@ -12,6 +12,7 @@ import {
   sfPlayFill,
   sfSuitHeart,
   sfSuitHeartFill,
+  sfXmark,
 } from "@bradleyhodges/sfsymbols";
 import {
   iconButtonInactiveClassName,
@@ -38,6 +39,9 @@ type FeaturedKirtanCardProps = {
   isFavorited?: boolean;
   palette?: FeaturedCardPalette;
   contextLine?: string;
+  label?: string;
+  onDismiss?: () => void;
+  dismissLabel?: string;
 };
 
 export default function FeaturedKirtanCard({
@@ -53,6 +57,9 @@ export default function FeaturedKirtanCard({
   isFavorited = false,
   palette,
   contextLine,
+  label,
+  onDismiss,
+  dismissLabel,
 }: FeaturedKirtanCardProps) {
   const dictionary = useDictionary();
   const sequenceLabel = getKirtanSequenceLabel(kirtan.sequence_num);
@@ -66,23 +73,36 @@ export default function FeaturedKirtanCard({
   return (
     <section
       className={`
-        relative p-6 transition ${radiusClassNames.surface}
+        relative overflow-hidden p-6 transition ${radiusClassNames.surface}
         ${cardToneClass}
         ${isActive ? `ring-2 ${palette?.playbackRingColor ?? "ring-[#d58a96]/50"}` : ""}
         ${isPlaying ? "animate-breathe" : ""}
       `}
       style={cardToneStyle}
     >
-      <p
-        className={`text-xs font-medium uppercase tracking-[0.16em] ${
-          palette?.featuredLabelColor ?? "text-white/58"
-        }`}
-      >
-        {dictionary.common.featured}
-      </p>
+      {onDismiss ? (
+        <button
+          type="button"
+          onClick={onDismiss}
+          className="absolute right-5 top-5 flex h-8 w-8 items-center justify-center rounded-full border border-current/15 bg-white/45 text-current/65 transition hover:bg-white/65 hover:text-current"
+          aria-label={dismissLabel}
+          title={dismissLabel}
+        >
+          <SFIcon icon={sfXmark} className="h-3.5 w-3.5" />
+        </button>
+      ) : null}
+      <div className={onDismiss ? "pr-12" : undefined}>
+        <p
+          className={`text-xs font-medium uppercase tracking-[0.16em] ${
+            palette?.featuredLabelColor ?? "text-white/58"
+          }`}
+        >
+          {label ?? dictionary.common.featured}
+        </p>
+      </div>
       {contextLine ? (
         <p
-          className={`mt-2 text-sm font-medium ${
+          className={`mt-1 text-sm font-medium ${
             palette?.contextLineColor ?? "text-[#e4b6a7]"
           }`}
         >
@@ -90,12 +110,14 @@ export default function FeaturedKirtanCard({
         </p>
       ) : null}
 
-      <h1 className={`${contextLine ? "mt-3" : "mt-2"} text-3xl font-semibold`}>
+      <h1
+        className={`${contextLine ? "mt-2" : "mt-2"} pr-10 text-3xl font-semibold leading-[1.08]`}
+      >
         {displayTitle}
       </h1>
 
       {/* Lead singer row */}
-      <div className="mt-2">
+      <div className="mt-1.5">
         <p className={palette?.leadsingerLabelColor ?? "text-stone-300"}>
           {sequenceLabel ? `${sequenceLabel} by` : ""}
           {sequenceLabel ? " " : ""}

@@ -12,6 +12,7 @@ export type AppDictionary = {
     aboutKunjKirtan: string;
     offlineCheckConnection: string;
     noFavoritesYet: string;
+    sharedWithYou: string;
   };
   explore: {
     bhajans: string;
@@ -47,6 +48,7 @@ export type AppDictionary = {
     recommendedSubtitle: string;
     popular: string;
     popularSubtitle: string;
+    sharedKirtanContext: string;
   };
   player: {
     playQueue: string;
@@ -60,6 +62,7 @@ export type AppDictionary = {
     removedFromQueue: string;
     checkOutKirtan: string;
     onKunjKirtan: string;
+    copyLinkPrompt: string;
   };
   actions: {
     share: string;
@@ -79,6 +82,7 @@ export type AppDictionary = {
     goToHomePage: string;
     backToTop: string;
     jumpToLetter: string;
+    dismiss: string;
   };
   search: {
     leadSingerPlaceholder: string;

@@ -28,25 +28,82 @@ export function useKirtanShare() {
         text: shareText,
         url: url,
       };
-      if (navigator.share) {
-        try {
-          await navigator.share(shareData);
-        } catch {
-          // Ignore cancelled shares and fall back only when needed.
-        }
-      } else {
+      const fallbackShareData = {
+        title: title || "Kunj Kirtan",
+        url: url,
+      };
+      const tryClipboardFallback = async () => {
         try {
           if (navigator.clipboard?.writeText) {
             await navigator.clipboard.writeText(shareText);
             copied = true;
+            return true;
           }
         } catch {
           copied = false;
+        }
+        return false;
+      };
+
+      if (navigator.share) {
+        try {
+          if (!navigator.canShare || navigator.canShare(shareData)) {
+            await navigator.share(shareData);
+          } else if (!navigator.canShare || navigator.canShare(fallbackShareData)) {
+            await navigator.share(fallbackShareData);
+          } else {
+            throw new Error("Native share data not supported");
+          }
+        } catch (error) {
+          const name =
+            error instanceof DOMException
+              ? error.name
+              : error instanceof Error
+                ? error.name
+                : "";
+          if (name === "AbortError") {
+            return { url, copied: false };
+          }
+
+          if (navigator.share) {
+            try {
+              if (!navigator.canShare || navigator.canShare(fallbackShareData)) {
+                await navigator.share(fallbackShareData);
+                return { url, copied: false };
+              }
+            } catch (retryError) {
+              const retryName =
+                retryError instanceof DOMException
+                  ? retryError.name
+                  : retryError instanceof Error
+                    ? retryError.name
+                    : "";
+              if (retryName === "AbortError") {
+                return { url, copied: false };
+              }
+            }
+          }
+
+          const copiedFallback = await tryClipboardFallback();
+          if (!copiedFallback) {
+            window.prompt(dictionary.player.copyLinkPrompt, url);
+          }
+        }
+      } else {
+        const copiedFallback = await tryClipboardFallback();
+        if (!copiedFallback) {
+          window.prompt(dictionary.player.copyLinkPrompt, url);
         }
       }
 
       return { url, copied };
     },
-    [dictionary.player.checkOutKirtan, dictionary.player.onKunjKirtan, pathname, searchParams],
+    [
+      dictionary.player.checkOutKirtan,
+      dictionary.player.onKunjKirtan,
+      dictionary.player.copyLinkPrompt,
+      pathname,
+      searchParams,
+    ],
   );
 }

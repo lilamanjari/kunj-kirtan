@@ -10,7 +10,11 @@ import HomePopularStrip from "@/lib/components/HomePopularStrip";
 import HomeRecommendedStrip from "@/lib/components/HomeRecommendedStrip";
 import KirtanListItem from "@/lib/components/KirtanListItem";
 import KirtanDeepLinkHandler from "@/lib/components/KirtanDeepLinkHandler";
-import { homePalette } from "@/lib/theme/pagePalettes";
+import SharedKirtanFeature from "@/lib/components/SharedKirtanFeature";
+import {
+  greenSurfaceTheme,
+  homePalette,
+} from "@/lib/theme/pagePalettes";
 import { radiusClassNames } from "@/lib/theme/radii";
 import Image from "next/image";
 import LocalizedLink from "@/lib/components/LocalizedLink";
@@ -74,6 +78,8 @@ export default function HomeClient({ data }: { data: HomeData }) {
   const primaryAction = data.primary_action;
   const recentlyAdded = data.recently_added ?? [];
   const [pinnedKirtan, setPinnedKirtan] = useState<KirtanSummary | null>(null);
+  const [sharedKirtan, setSharedKirtan] = useState<KirtanSummary | null>(null);
+  const [sharedCardDismissed, setSharedCardDismissed] = useState(false);
   const entryPointLinks: Record<string, string> = {
     MM: "/explore/maha-mantras",
     BHJ: "/explore/bhajans",
@@ -83,12 +89,21 @@ export default function HomeClient({ data }: { data: HomeData }) {
   const renderedRecentlyAdded = pinnedKirtan
     ? [pinnedKirtan, ...recentlyAdded.filter((k) => k.id !== pinnedKirtan.id)]
     : recentlyAdded;
+  const shouldHidePrimaryFeatured =
+    !!sharedKirtan &&
+    !sharedCardDismissed &&
+    sharedKirtan.id === primaryAction?.kirtan.id;
   const entryPointTitles: Record<string, string> = {
     MM: dictionary.explore.mahaMantra,
     BHJ: dictionary.explore.bhajans,
     LEADS: dictionary.explore.leadSingers,
     OCCASIONS: dictionary.explore.occasions,
   };
+  function handleSharedKirtan(kirtan: KirtanSummary) {
+    setPinnedKirtan(kirtan);
+    setSharedKirtan(kirtan);
+    setSharedCardDismissed(false);
+  }
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-[linear-gradient(180deg,_#f5d7d0_0%,_#f6e4de_18%,_#f7ece7_42%,_#f8f2ef_100%)] text-stone-900">
@@ -110,10 +125,25 @@ export default function HomeClient({ data }: { data: HomeData }) {
               kirtans={recentlyAdded}
               onSelect={select}
               isActive={isActive}
-              onPin={setPinnedKirtan}
+              onPin={handleSharedKirtan}
             />
           </Suspense>
-          {primaryAction && (
+          <SharedKirtanFeature
+            kirtan={sharedKirtan}
+            isActive={sharedKirtan ? isActive(sharedKirtan) : false}
+            isPlaying={sharedKirtan ? isPlaying(sharedKirtan) : false}
+            isLoading={sharedKirtan ? isLoading(sharedKirtan) : false}
+            onToggle={() => {
+              if (sharedKirtan) toggle(sharedKirtan);
+            }}
+            onEnqueue={enqueue}
+            onDequeue={dequeueById}
+            isQueued={sharedKirtan ? isQueued(sharedKirtan.id) : false}
+            onToggleFavorite={toggleFavorite}
+            isFavorited={sharedKirtan ? isFavorited(sharedKirtan.id) : false}
+            onDismissedChange={setSharedCardDismissed}
+          />
+          {primaryAction && !shouldHidePrimaryFeatured && (
             <FeaturedKirtanCard
               kirtan={primaryAction.kirtan}
               isActive={isActive(primaryAction.kirtan)}
@@ -187,18 +217,24 @@ export default function HomeClient({ data }: { data: HomeData }) {
                 href={`/explore/occasions/${data.current_occasion.slug}`}
                 className={`group block border border-[#cfe0c6] p-6 text-[#4f5f45] shadow-[0_20px_42px_rgba(116,148,98,0.18)] backdrop-blur-sm transition hover:-translate-y-0.5 ${radiusClassNames.surface}`}
                 style={{
-                  backgroundColor: "rgba(247, 252, 244, 0.92)",
-                  backgroundImage:
-                    "linear-gradient(145deg, rgba(252,255,250,0.96) 0%, rgba(240,248,232,0.94) 52%, rgba(220,235,205,0.9) 100%)",
+                  backgroundColor: greenSurfaceTheme.backgroundColor,
+                  backgroundImage: greenSurfaceTheme.gradient,
+                  borderColor: greenSurfaceTheme.borderColor,
+                  boxShadow: `0 20px 42px ${greenSurfaceTheme.shadowColor}`,
+                  color: greenSurfaceTheme.textColor,
                 }}
               >
                 <div className="flex items-start justify-between gap-4">
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7d9271]">
+                    <p
+                      className={`text-xs font-semibold uppercase tracking-[0.16em] ${greenSurfaceTheme.labelClassName}`}
+                    >
                       {data.current_occasion.header ??
                         dictionary.home.currentVrata}
                     </p>
-                    <p className="mt-2 text-sm font-medium text-[#7f926f]">
+                    <p
+                      className={`mt-2 text-sm font-medium ${greenSurfaceTheme.contextClassName}`}
+                    >
                       {data.current_occasion.subtitle ??
                         dictionary.home.currentVrataSubtitle}
                     </p>
@@ -207,11 +243,18 @@ export default function HomeClient({ data }: { data: HomeData }) {
 
                 <div className="mt-5 flex items-center justify-between gap-4">
                   <div>
-                    <h2 className="text-[1.9rem] font-semibold leading-[1.05] text-[#4e6143]">
+                    <h2 className="text-[1.9rem] font-semibold leading-[1.05] text-[#445643]">
                       {data.current_occasion.name}
                     </h2>
                   </div>
-                  <span className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-[#d4e5ca] bg-white/88 text-xl text-[#6f8b60] shadow-[0_8px_18px_rgba(116,148,98,0.16)] backdrop-blur-sm transition group-hover:translate-x-0.5">
+                  <span
+                    className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full border bg-white/88 text-xl backdrop-blur-sm transition group-hover:translate-x-0.5"
+                    style={{
+                      borderColor: greenSurfaceTheme.buttonBorderColor,
+                      color: greenSurfaceTheme.buttonTextColor,
+                      boxShadow: `0 8px 18px ${greenSurfaceTheme.buttonShadowColor}`,
+                    }}
+                  >
                     →
                   </span>
                 </div>

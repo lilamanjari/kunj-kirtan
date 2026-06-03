@@ -10,6 +10,7 @@ import { useAudioPlayer } from "@/lib/audio/AudioPlayerContext";
 import type { KirtanSummary } from "@/types/kirtan";
 import KirtanDeepLinkHandler from "@/lib/components/KirtanDeepLinkHandler";
 import KirtanListItem from "@/lib/components/KirtanListItem";
+import SharedKirtanFeature from "@/lib/components/SharedKirtanFeature";
 import SubpageHeader from "@/lib/components/SubpageHeader";
 import { useDictionary } from "@/lib/i18n/LocaleProvider";
 
@@ -31,6 +32,8 @@ export default function FavoritesPageClient() {
     select,
   } = useAudioPlayer();
   const [pinnedKirtan, setPinnedKirtan] = useState<KirtanSummary | null>(null);
+  const [sharedKirtan, setSharedKirtan] = useState<KirtanSummary | null>(null);
+  const [sharedCardDismissed, setSharedCardDismissed] = useState(false);
 
   const activePinnedKirtan =
     pinnedKirtan && isFavorited(pinnedKirtan.id) ? pinnedKirtan : null;
@@ -41,6 +44,12 @@ export default function FavoritesPageClient() {
       ]
     : favorites;
 
+  function handleSharedKirtan(kirtan: KirtanSummary) {
+    setPinnedKirtan(kirtan);
+    setSharedKirtan(kirtan);
+    setSharedCardDismissed(false);
+  }
+
   return (
     <div className="relative min-h-screen overflow-hidden bg-[linear-gradient(180deg,_#f5d7d0_0%,_#f6e4de_18%,_#f7ece7_42%,_#f8f2ef_100%)] text-stone-900">
       <main className="relative z-10 mx-auto max-w-md px-5 py-6 space-y-6">
@@ -49,13 +58,29 @@ export default function FavoritesPageClient() {
             kirtans={favorites}
             onSelect={select}
             isActive={isActive}
-            onPin={setPinnedKirtan}
+            onPin={handleSharedKirtan}
           />
         </Suspense>
         <SubpageHeader
           title={dictionary.common.favorites}
           backLabel={dictionary.common.home}
           backHref="/"
+        />
+
+        <SharedKirtanFeature
+          kirtan={sharedKirtan && !sharedCardDismissed ? sharedKirtan : null}
+          isActive={sharedKirtan ? isActive(sharedKirtan) : false}
+          isPlaying={sharedKirtan ? isPlaying(sharedKirtan) : false}
+          isLoading={sharedKirtan ? isLoading(sharedKirtan) : false}
+          onToggle={() => {
+            if (sharedKirtan) toggle(sharedKirtan);
+          }}
+          onEnqueue={enqueue}
+          onDequeue={dequeueById}
+          isQueued={sharedKirtan ? isQueued(sharedKirtan.id) : false}
+          onToggleFavorite={toggleFavorite}
+          isFavorited={sharedKirtan ? isFavorited(sharedKirtan.id) : false}
+          onDismissedChange={setSharedCardDismissed}
         />
 
         <section>

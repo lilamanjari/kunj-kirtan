@@ -13,6 +13,8 @@ ADMIN_PASSWORD=some-strong-password
 
 Then restart the dev server and open `/admin`.
 
+Outside localhost, `/admin` and `/api/admin` are redirected to HTTPS automatically.
+
 ## Getting Started
 
 First, run the development server:

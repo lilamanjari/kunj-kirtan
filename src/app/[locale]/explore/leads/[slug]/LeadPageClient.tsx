@@ -11,6 +11,7 @@ import KirtanListItem from "@/lib/components/KirtanListItem";
 import type { KirtanSummary, KirtanType } from "@/types/kirtan";
 import type { LeadListState, LeadResponse } from "@/types/leads";
 import KirtanDeepLinkHandler from "@/lib/components/KirtanDeepLinkHandler";
+import SharedKirtanFeature from "@/lib/components/SharedKirtanFeature";
 import { fetchWithStatus } from "@/lib/net/fetchWithStatus";
 import FeaturedKirtanCard from "@/lib/components/FeaturedKirtanCard";
 import SubpageHeader from "@/lib/components/SubpageHeader";
@@ -150,6 +151,17 @@ export default function LeadPageClient({
   const renderedKirtans = pinnedKirtan
     ? [pinnedKirtan, ...visible.filter((k) => k.id !== pinnedKirtan.id)]
     : visible;
+  const [sharedKirtan, setSharedKirtan] = useState<KirtanSummary | null>(null);
+  const [sharedCardDismissed, setSharedCardDismissed] = useState(false);
+  const hasVisibleSharedCard = !!sharedKirtan && !sharedCardDismissed;
+  const shouldHideFeatured =
+    hasVisibleSharedCard && sharedKirtan.id === featuredKirtan?.id;
+
+  function handleSharedKirtan(kirtan: KirtanSummary) {
+    setPinnedKirtan(kirtan);
+    setSharedKirtan(kirtan);
+    setSharedCardDismissed(false);
+  }
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-[linear-gradient(180deg,_#f5d7d0_0%,_#f6e4de_18%,_#f7ece7_42%,_#f8f2ef_100%)] text-stone-900">
@@ -159,7 +171,7 @@ export default function LeadPageClient({
             kirtans={visible}
             onSelect={select}
             isActive={isActive}
-            onPin={setPinnedKirtan}
+            onPin={handleSharedKirtan}
           />
         </Suspense>
         <SubpageHeader
@@ -168,8 +180,26 @@ export default function LeadPageClient({
           backHref="/explore/leads"
         />
 
-        {featuredKirtan ? (
-          <div className="-mt-6">
+        <div className="-mt-6">
+          <SharedKirtanFeature
+            kirtan={sharedKirtan}
+            isActive={sharedKirtan ? isActive(sharedKirtan) : false}
+            isPlaying={sharedKirtan ? isPlaying(sharedKirtan) : false}
+            isLoading={sharedKirtan ? isAudioLoading(sharedKirtan) : false}
+            onToggle={() => {
+              if (sharedKirtan) toggle(sharedKirtan);
+            }}
+            onEnqueue={enqueue}
+            onDequeue={dequeueById}
+            isQueued={sharedKirtan ? isQueued(sharedKirtan.id) : false}
+            onToggleFavorite={toggleFavorite}
+            isFavorited={sharedKirtan ? isFavorited(sharedKirtan.id) : false}
+            onDismissedChange={setSharedCardDismissed}
+          />
+        </div>
+
+        {featuredKirtan && !shouldHideFeatured ? (
+          <div className={hasVisibleSharedCard ? "mt-4" : "-mt-6"}>
             <FeaturedKirtanCard
               kirtan={featuredKirtan}
               isActive={isActive(featuredKirtan)}

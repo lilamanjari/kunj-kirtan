@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import AudioPlayerBar from "./AudioPlayerBar";
 import type { KirtanSummary } from "@/types/kirtan";
 
@@ -60,6 +60,7 @@ vi.mock("@/lib/hooks/useKirtanShare", () => ({
 
 describe("AudioPlayerBar queue sheet", () => {
   beforeEach(() => {
+    cleanup();
     playMock.mockReset();
     pauseMock.mockReset();
     dequeueByIdMock.mockReset();
@@ -81,5 +82,15 @@ describe("AudioPlayerBar queue sheet", () => {
     fireEvent.click(screen.getByRole("button", { name: "Open queue" }));
     fireEvent.click(screen.getByRole("button", { name: "Remove from queue" }));
     expect(dequeueByIdMock).toHaveBeenCalledWith("queued-1");
+  });
+
+  it("calls the share handler when the share button is clicked", () => {
+    shareMock.mockResolvedValue({ copied: false });
+
+    render(<AudioPlayerBar />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Share" }));
+
+    expect(shareMock).toHaveBeenCalledWith(currentKirtan);
   });
 });

@@ -11,6 +11,7 @@ import KirtanListItem from "@/lib/components/KirtanListItem";
 import type { KirtanSummary } from "@/types/kirtan";
 import type { OccasionResponse } from "@/types/occasions";
 import KirtanDeepLinkHandler from "@/lib/components/KirtanDeepLinkHandler";
+import SharedKirtanFeature from "@/lib/components/SharedKirtanFeature";
 import SubpageHeader from "@/lib/components/SubpageHeader";
 import FeaturedKirtanCard from "@/lib/components/FeaturedKirtanCard";
 import { occasionsPalette } from "@/lib/theme/pagePalettes";
@@ -36,9 +37,14 @@ export default function OccasionDetailClient({
     select,
   } = useAudioPlayer();
   const [pinnedKirtan, setPinnedKirtan] = useState<KirtanSummary | null>(null);
+  const [sharedKirtan, setSharedKirtan] = useState<KirtanSummary | null>(null);
+  const [sharedCardDismissed, setSharedCardDismissed] = useState(false);
 
   const visible = initialData.kirtans ?? [];
   const featured = initialData.featured ?? null;
+  const hasVisibleSharedCard = !!sharedKirtan && !sharedCardDismissed;
+  const shouldHideFeatured =
+    hasVisibleSharedCard && sharedKirtan.id === featured?.id;
   const pinnedId = pinnedKirtan?.id ?? null;
   const flatKirtans = visible.filter((k) => k.id !== pinnedId);
   const bhajans = flatKirtans.filter((k) => k.type === "BHJ");
@@ -66,6 +72,12 @@ export default function OccasionDetailClient({
     );
   }
 
+  function handleSharedKirtan(kirtan: KirtanSummary) {
+    setPinnedKirtan(kirtan);
+    setSharedKirtan(kirtan);
+    setSharedCardDismissed(false);
+  }
+
   return (
     <div className="relative min-h-screen overflow-hidden bg-[linear-gradient(180deg,_#f5d7d0_0%,_#f6e4de_18%,_#f7ece7_42%,_#f8f2ef_100%)] text-stone-900">
       <main className="relative z-10 mx-auto max-w-md px-5 py-6 space-y-8">
@@ -74,7 +86,7 @@ export default function OccasionDetailClient({
             kirtans={visible}
             onSelect={select}
             isActive={isActive}
-            onPin={setPinnedKirtan}
+            onPin={handleSharedKirtan}
           />
         </Suspense>
         <SubpageHeader
@@ -83,8 +95,26 @@ export default function OccasionDetailClient({
           backHref="/explore/occasions"
         />
 
-        {featured ? (
-          <div className="relative z-20 -mt-6">
+        <div className="relative z-20 -mt-6">
+          <SharedKirtanFeature
+            kirtan={sharedKirtan}
+            isActive={sharedKirtan ? isActive(sharedKirtan) : false}
+            isPlaying={sharedKirtan ? isPlaying(sharedKirtan) : false}
+            isLoading={sharedKirtan ? isLoading(sharedKirtan) : false}
+            onToggle={() => {
+              if (sharedKirtan) toggle(sharedKirtan);
+            }}
+            onEnqueue={enqueue}
+            onDequeue={dequeueById}
+            isQueued={sharedKirtan ? isQueued(sharedKirtan.id) : false}
+            onToggleFavorite={toggleFavorite}
+            isFavorited={sharedKirtan ? isFavorited(sharedKirtan.id) : false}
+            onDismissedChange={setSharedCardDismissed}
+          />
+        </div>
+
+        {featured && !shouldHideFeatured ? (
+          <div className={`relative z-20 ${hasVisibleSharedCard ? "mt-4" : "-mt-6"}`}>
             <FeaturedKirtanCard
               kirtan={featured}
               isActive={isActive(featured)}

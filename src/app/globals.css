@@ -8,6 +8,21 @@
   --theme-player-green-mid: #79a14f;
   --theme-player-green-hover: #80ab52;
   --theme-player-green-bright: #93c45e;
+  --theme-green-surface-border: #d9e7d0;
+  --theme-green-surface-text: #445643;
+  --theme-green-surface-shadow: rgba(94, 129, 86, 0.2);
+  --theme-green-surface-bg: rgba(247, 252, 244, 0.94);
+  --theme-green-surface-grad-start: rgba(252, 255, 250, 0.98);
+  --theme-green-surface-grad-mid: rgba(240, 248, 232, 0.94);
+  --theme-green-surface-grad-end: rgba(220, 235, 205, 0.9);
+  --theme-green-surface-ring: rgba(189, 216, 176, 0.7);
+  --theme-green-surface-label: #6f8d66;
+  --theme-green-surface-context: #76906d;
+  --theme-green-surface-meta: #71836b;
+  --theme-green-surface-leadsinger: #5b6d55;
+  --theme-green-surface-button-border: #d4e5ca;
+  --theme-green-surface-button-text: #6f8b60;
+  --theme-green-surface-button-shadow: rgba(116, 148, 98, 0.16);
   --theme-featured-play-start: var(--theme-player-green);
   --theme-featured-play-end: var(--theme-player-green-mid);
   --theme-featured-play-hover-start: var(--theme-player-green-hover);
@@ -117,6 +132,21 @@ body {
 
 .animate-toast-in {
   animation: toast-in 220ms ease-out;
+}
+
+@keyframes shared-card-in {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-shared-card-in {
+  animation: shared-card-in 280ms ease-out;
 }
 
 input[type="range"] {

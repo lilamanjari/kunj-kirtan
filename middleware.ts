@@ -13,6 +13,14 @@ function isAdminApiPath(pathname: string) {
   return pathname === "/api/admin" || pathname.startsWith("/api/admin/");
 }
 
+function isLocalHostname(hostname: string) {
+  return (
+    hostname === "localhost" ||
+    hostname === "127.0.0.1" ||
+    hostname === "::1"
+  );
+}
+
 function isBypassedPath(pathname: string) {
   return (
     pathname.startsWith("/api") ||
@@ -36,6 +44,24 @@ function invalidAdminConfigResponse() {
   return new NextResponse("ADMIN_USERNAME or ADMIN_PASSWORD is not configured", {
     status: 500,
   });
+}
+
+function enforceHttpsForAdmin(request: NextRequest) {
+  const forwardedProto = request.headers.get("x-forwarded-proto");
+  const hostname = request.nextUrl.hostname;
+
+  if (isLocalHostname(hostname)) {
+    return null;
+  }
+
+  if (request.nextUrl.protocol === "https:" || forwardedProto === "https") {
+    return null;
+  }
+
+  const redirectUrl = request.nextUrl.clone();
+  redirectUrl.protocol = "https:";
+
+  return NextResponse.redirect(redirectUrl, 307);
 }
 
 function isAuthorizedAdminRequest(request: NextRequest) {
@@ -73,6 +99,11 @@ export function middleware(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
 
   if (isAdminPath(pathname) || isAdminApiPath(pathname)) {
+    const httpsRedirect = enforceHttpsForAdmin(request);
+    if (httpsRedirect) {
+      return httpsRedirect;
+    }
+
     const auth = isAuthorizedAdminRequest(request);
     if (!auth.ok) {
       return auth.response;

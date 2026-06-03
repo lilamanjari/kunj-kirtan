@@ -31,6 +31,10 @@ vi.mock("@/lib/components/FeaturedKirtanCard", () => ({
   default: () => <div>Featured</div>,
 }));
 
+vi.mock("@/lib/components/SharedKirtanFeature", () => ({
+  default: () => null,
+}));
+
 vi.mock("@/lib/components/SubpageHeader", () => ({
   default: ({ title }: { title: string }) => <div>{title}</div>,
 }));
