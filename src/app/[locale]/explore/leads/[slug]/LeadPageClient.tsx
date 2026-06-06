@@ -8,6 +8,7 @@ import {
 } from "@bradleyhodges/sfsymbols";
 import { useAudioPlayer } from "@/lib/audio/AudioPlayerContext";
 import KirtanListItem from "@/lib/components/KirtanListItem";
+import LeadSingerAvatar from "@/lib/components/LeadSingerAvatar";
 import type { KirtanSummary, KirtanType } from "@/types/kirtan";
 import type { LeadListState, LeadResponse } from "@/types/leads";
 import KirtanDeepLinkHandler from "@/lib/components/KirtanDeepLinkHandler";
@@ -17,6 +18,7 @@ import FeaturedKirtanCard from "@/lib/components/FeaturedKirtanCard";
 import SubpageHeader from "@/lib/components/SubpageHeader";
 import { leadsPalette } from "@/lib/theme/pagePalettes";
 import { useDictionary } from "@/lib/i18n/LocaleProvider";
+import { getKirtanCardText } from "@/lib/kirtanCardPresentation";
 
 export default function LeadPageClient({
   slug,
@@ -212,6 +214,19 @@ export default function LeadPageClient({
               onToggleFavorite={toggleFavorite}
               isFavorited={isFavorited(featuredKirtan.id)}
               palette={leadsPalette.featuredCard}
+              titleOverride={getKirtanCardText(featuredKirtan).title}
+              subtitleOverride={getKirtanCardText(featuredKirtan).subtitle}
+              artwork={
+                <LeadSingerAvatar
+                  name={featuredKirtan.lead_singer}
+                  imageUrl={featuredKirtan.lead_singer_image_url}
+                  alt={featuredKirtan.lead_singer_image_alt}
+                  size="featured"
+                  className="h-full w-full bg-[radial-gradient(circle_at_top,_rgba(255,251,247,0.96),rgba(244,230,221,0.86))]"
+                  imageClassName="h-full w-full object-cover"
+                  textClassName="absolute inset-0 flex items-center justify-center text-[1.55rem] font-semibold uppercase tracking-[0.02em] text-[#8e6254]"
+                />
+              }
             />
           </div>
         ) : null}
@@ -293,6 +308,18 @@ export default function LeadPageClient({
                 <KirtanListItem
                   key={k.id}
                   kirtan={k}
+                  leadingVisual={
+                    <LeadSingerAvatar
+                      name={k.lead_singer}
+                      imageUrl={k.lead_singer_image_url}
+                      alt={k.lead_singer_image_alt}
+                    />
+                  }
+                  titleOverride={getKirtanCardText(k).title}
+                  subtitleOverride={getKirtanCardText(k).subtitle}
+                  useShortDate
+                  truncateSangaAt={10}
+                  stackActionsOnMobile
                   isActive={isActive(k)}
                   isPlaying={isPlaying(k)}
                   isLoading={isAudioLoading(k)}

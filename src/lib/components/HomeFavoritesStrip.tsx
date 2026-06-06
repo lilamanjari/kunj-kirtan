@@ -1,12 +1,14 @@
 "use client";
 
-import Image from "next/image";
 import { useAudioPlayer } from "@/lib/audio/AudioPlayerContext";
 import { formatKirtanDuration } from "@/lib/kirtanPresentation";
 import type { KirtanSummary } from "@/types/kirtan";
 import HomeRailKirtanCard from "@/lib/components/HomeRailKirtanCard";
 import HomeRailActionButtons from "@/lib/components/HomeRailActionButtons";
-import { durationPillClassName } from "@/lib/theme/componentThemes";
+import {
+  durationPillClassName,
+  homeSectionEyebrowClassName,
+} from "@/lib/theme/componentThemes";
 import { radiusClassNames } from "@/lib/theme/radii";
 import LocalizedLink from "@/lib/components/LocalizedLink";
 import { useDictionary } from "@/lib/i18n/LocaleProvider";
@@ -14,18 +16,6 @@ import { useDictionary } from "@/lib/i18n/LocaleProvider";
 type HomeFavoritesStripProps = {
   favorites: KirtanSummary[];
   loaded: boolean;
-};
-
-const FAVORITES_BG_IMAGE_OPACITY = 1;
-const FAVORITES_HEADER_OVERLAY = {
-  start: 0.62,
-  middle: 0.34,
-  end: 0,
-};
-const FAVORITES_CARDS_OVERLAY = {
-  start: 0,
-  middle: 0,
-  end: 0,
 };
 
 export default function HomeFavoritesStrip({
@@ -51,53 +41,25 @@ export default function HomeFavoritesStrip({
   const previewFavorites = favorites.slice(0, 4);
 
   return (
-    <section className="relative -mx-5 px-5 py-5">
-      <div aria-hidden="true" className="absolute inset-0">
-        <Image
-          src="/Favorites Background.jpeg"
-          alt=""
-          fill
-          sizes="(max-width: 768px) 100vw, 480px"
-          className="object-cover object-[38%_22%]"
-          style={{ opacity: FAVORITES_BG_IMAGE_OPACITY }}
-        />
-      </div>
-      <div
-        aria-hidden="true"
-        className="absolute inset-x-0 top-0 h-28"
-        style={{
-          background: `linear-gradient(180deg, rgba(49,28,35,${FAVORITES_HEADER_OVERLAY.start}) 0%, rgba(49,28,35,${FAVORITES_HEADER_OVERLAY.middle}) 55%, rgba(49,28,35,${FAVORITES_HEADER_OVERLAY.end}) 100%)`,
-        }}
-      />
-      <div
-        aria-hidden="true"
-        className="absolute inset-x-0 bottom-0 top-20"
-        style={{
-          background: `linear-gradient(180deg, rgba(255,248,245,${FAVORITES_CARDS_OVERLAY.start}) 0%, rgba(255,250,248,${FAVORITES_CARDS_OVERLAY.middle}) 24%, rgba(255,252,250,${FAVORITES_CARDS_OVERLAY.end}) 100%)`,
-        }}
-      />
-
+    <section className="relative bg-transparent">
       <div className="relative flex items-center justify-between gap-3">
         <div>
-          <h2 className="text-sm font-semibold uppercase tracking-[0.16em] text-white/92">
+          <h2 className={homeSectionEyebrowClassName}>
             {dictionary.common.favorites}
           </h2>
-          <p className="mt-1 text-sm text-white/82">
-            {dictionary.home.favoritesSubtitle}
-          </p>
         </div>
         <div className="shrink-0">
           <LocalizedLink
             href="/favorites"
-            className={`border border-rose-200/90 bg-white/88 px-3 py-1.5 text-xs font-medium text-[#9b5e52] shadow-sm transition hover:bg-rose-50 ${radiusClassNames.button}`}
+            className={`border border-[color:var(--theme-page-home-border)] bg-white/88 px-3 py-1.5 text-xs font-medium text-[color:var(--theme-page-home-muted)] shadow-sm transition hover:bg-white ${radiusClassNames.button}`}
           >
             {dictionary.common.viewAll}
           </LocalizedLink>
         </div>
       </div>
 
-      <div className="relative mt-4 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        <div className="flex gap-3 overflow-y-visible py-1 pl-2 pr-8">
+      <div className="relative mt-2 overflow-x-auto bg-transparent pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="flex gap-3 overflow-y-visible bg-transparent py-1 pl-2 pr-8">
           {previewFavorites.map((kirtan) => {
             const durationLabel = formatKirtanDuration(kirtan.duration_seconds);
             const active = isActive(kirtan);
@@ -111,7 +73,6 @@ export default function HomeFavoritesStrip({
                 isPlaying={isPlaying(kirtan)}
                 isLoading={isLoading(kirtan)}
                 onActivate={() => play(kirtan)}
-                opacity={0.85}
                 leadingSlot={
                   <HomeRailActionButtons
                     kirtan={kirtan}

@@ -16,6 +16,8 @@ import SubpageHeader from "@/lib/components/SubpageHeader";
 import FeaturedKirtanCard from "@/lib/components/FeaturedKirtanCard";
 import { occasionsPalette } from "@/lib/theme/pagePalettes";
 import { useDictionary } from "@/lib/i18n/LocaleProvider";
+import LeadSingerAvatar from "@/lib/components/LeadSingerAvatar";
+import { getKirtanCardText } from "@/lib/kirtanCardPresentation";
 
 export default function OccasionDetailClient({
   initialData,
@@ -57,6 +59,18 @@ export default function OccasionDetailClient({
           <KirtanListItem
             key={k.id}
             kirtan={k}
+            leadingVisual={
+              <LeadSingerAvatar
+                name={k.lead_singer}
+                imageUrl={k.lead_singer_image_url}
+                alt={k.lead_singer_image_alt}
+              />
+            }
+            titleOverride={getKirtanCardText(k).title}
+            subtitleOverride={getKirtanCardText(k).subtitle}
+            useShortDate
+            truncateSangaAt={10}
+            stackActionsOnMobile
             isActive={isActive(k)}
             isPlaying={isPlaying(k)}
             isLoading={isLoading(k)}
@@ -132,6 +146,8 @@ export default function OccasionDetailClient({
                   : undefined
               }
               palette={occasionsPalette.featuredCard}
+              titleOverride={getKirtanCardText(featured).title}
+              subtitleOverride={getKirtanCardText(featured).subtitle}
             />
           </div>
         ) : null}

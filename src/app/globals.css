@@ -3,18 +3,16 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
-  --theme-player-green: #5c7a3c;
+  --theme-player-green: #5d7850;
   --theme-player-green-soft: #dce6d1;
   --theme-player-green-mid: #79a14f;
-  --theme-player-green-hover: #80ab52;
-  --theme-player-green-bright: #93c45e;
+  --theme-player-green-hover: #5b6d55;
+  --theme-player-green-bright: #76906d;
+  --theme-player-icon: #fffdf8;
   --theme-green-surface-border: #d9e7d0;
   --theme-green-surface-text: #445643;
   --theme-green-surface-shadow: rgba(94, 129, 86, 0.2);
   --theme-green-surface-bg: rgba(247, 252, 244, 0.94);
-  --theme-green-surface-grad-start: rgba(252, 255, 250, 0.98);
-  --theme-green-surface-grad-mid: rgba(240, 248, 232, 0.94);
-  --theme-green-surface-grad-end: rgba(220, 235, 205, 0.9);
   --theme-green-surface-ring: rgba(189, 216, 176, 0.7);
   --theme-green-surface-label: #6f8d66;
   --theme-green-surface-context: #76906d;
@@ -23,13 +21,9 @@
   --theme-green-surface-button-border: #d4e5ca;
   --theme-green-surface-button-text: #6f8b60;
   --theme-green-surface-button-shadow: rgba(116, 148, 98, 0.16);
-  --theme-featured-play-start: var(--theme-player-green);
-  --theme-featured-play-end: var(--theme-player-green-mid);
-  --theme-featured-play-hover-start: var(--theme-player-green-hover);
-  --theme-featured-play-hover-end: var(--theme-player-green-bright);
   --theme-cool-rose: #d49897;
-  --theme-duration-pill-bg: #edf7e1;
-  --theme-duration-pill-text: #5c7a3c;
+  --theme-duration-pill-bg: #dce8d1;
+  --theme-duration-pill-text: #4c6a36;
   --theme-harmonium-pill-bg: #fef3c7;
   --theme-harmonium-pill-text: #b45309;
   --theme-icon-button-border-rest: #efd4cb;
@@ -38,7 +32,7 @@
   --theme-icon-button-text-rest: #cc7680;
   --theme-favorite-border-active: #f3c2ce;
   --theme-favorite-bg-active: #fff1f5;
-  --theme-favorite-text-active: #c45d74;
+  --theme-favorite-text-active: #b66e63;
   --theme-queue-border-active: #93c45e;
   --theme-queue-bg-active: #dce6d1;
   --theme-queue-text-active: #5c7a3c;
@@ -47,8 +41,38 @@
   --theme-audio-progress: var(--theme-player-green);
   --theme-audio-queue-pill-bg: var(--theme-player-green-soft);
   --theme-audio-queue-pill-text: var(--theme-player-green);
-  --theme-radius-surface: 1.3rem; /* FeaturedKirtanCard and featured occasion card */
-  --theme-radius-card: 0.8rem; /* KirtanListItem, BrowseLinkList, RailCards */
+  --theme-page-home-bg: #fbf4ef;
+  --theme-page-home-surface: #fcfaf8;
+  --theme-page-home-surface-strong: #fffaf5;
+  --theme-page-home-border: #e8ddd5;
+  --theme-page-home-shadow: rgba(150, 109, 84, 0.12);
+  --theme-page-home-text: #4d2f28;
+  --theme-page-home-muted: #9a7c6d;
+  --theme-page-home-soft-text: #b38b78;
+  --theme-page-home-section-label: #b66e63;
+  --theme-page-home-occasion-surface: rgba(244, 249, 238, 0.96);
+  --theme-page-home-occasion-border: #d6e4cb;
+  --theme-page-home-occasion-text: #456041;
+  --theme-page-home-occasion-muted: #6e8668;
+  --theme-vrata-title: #3f5e2f;
+  --theme-vrata-text: #5d7850;
+  --theme-vrata-label: #6b8a59;
+  --theme-vrata-overlay: linear-gradient(
+    90deg,
+    #eef3e6 0%,
+    #f3f7ee 45%,
+    rgba(243, 247, 238, 0.35) 70%,
+    rgba(243, 247, 238, 0) 100%
+  );
+  --theme-page-home-discovery-rose: #f8eee8;
+  --theme-page-home-discovery-gold: #faf2e2;
+  --theme-page-home-discovery-sage: #edf4ee;
+  --theme-page-home-discovery-blush: #f8efec;
+  --theme-page-home-rare-gem-border: rgba(229, 192, 91, 0.38);
+  --theme-page-home-rare-gem-glow: rgba(231, 199, 112, 0.38);
+  --theme-page-home-rare-gem-sheen: rgba(245, 211, 116, 0.8);
+  --theme-radius-surface: 0.7rem; /* FeaturedKirtanCard and featured occasion card */
+  --theme-radius-card: 0.7rem; /* KirtanListItem, BrowseLinkList, RailCards */
   --theme-radius-tile: 1rem; /* Explore tiles on home page */
   --theme-radius-button: 0.375rem; /* About button and home button */
   --theme-radius-badge: 0.75rem; /* Used for duration and other pills */
@@ -58,8 +82,7 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-inter);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -72,11 +95,15 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-inter), Arial, Helvetica, sans-serif;
 }
 
 .font-script {
-  font-family: var(--font-dancing-script);
+  font-family: var(--font-dancing-script), "Times New Roman", serif;
+}
+
+.font-display {
+  font-family: var(--font-cormorant-garamond), "Times New Roman", serif;
 }
 @keyframes equalize {
   0% {

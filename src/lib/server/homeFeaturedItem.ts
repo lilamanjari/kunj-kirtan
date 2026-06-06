@@ -24,6 +24,7 @@ export type HomeCurrentOccasion = {
   slug: string;
   header: string | null;
   subtitle: string | null;
+  endsAt: string | null;
 };
 
 function isActiveNow(item: FeaturedItemRow, now: Date) {
@@ -95,6 +96,7 @@ export async function fetchHomeCurrentOccasion() {
       ...(tag as TagRow),
       header: item.title_override,
       subtitle: item.subtitle,
+      endsAt: item.ends_at ?? null,
     } satisfies HomeCurrentOccasion,
     error: null,
   };

@@ -72,6 +72,7 @@ import type {
 import KirtanListItem from "@/lib/components/KirtanListItem";
 import KirtanDeepLinkHandler from "@/lib/components/KirtanDeepLinkHandler";
 import SharedKirtanFeature from "@/lib/components/SharedKirtanFeature";
+import CollectionCardGrid from "@/lib/components/CollectionCardGrid";
 import { fetchWithStatus } from "@/lib/net/fetchWithStatus";
 import FeaturedKirtanCard from "@/lib/components/FeaturedKirtanCard";
 import SubpageHeader from "@/lib/components/SubpageHeader";
@@ -79,6 +80,12 @@ import { bhajansPalette } from "@/lib/theme/pagePalettes";
 import AlphabetRail from "@/lib/components/AlphabetRail";
 import { ALPHABET } from "@/lib/alphabets";
 import { useDictionary } from "@/lib/i18n/LocaleProvider";
+import LeadSingerAvatar from "@/lib/components/LeadSingerAvatar";
+import { getKirtanCardText } from "@/lib/kirtanCardPresentation";
+import { displayHeadingClassName } from "@/lib/theme/componentThemes";
+import { buildSharedCollectionCard } from "@/lib/collectionCardPresets";
+
+type CollectionFilterKey = "ALL" | "HISTORICAL_TREASURES" | "RARE_GEMS";
 
 type BhajanItem = KirtanSummary;
 
@@ -178,6 +185,7 @@ export default function BhajansPageClient({
   const [hasFetchedOnce, setHasFetchedOnce] = useState(
     (initialData.bhajans?.length ?? 0) > 0,
   );
+  const [totalCount, setTotalCount] = useState(initialData.total_count ?? 0);
   const [isLoadingList, setIsLoadingList] = useState(false);
   const [hasMore, setHasMore] = useState(Boolean(initialData.has_more));
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -193,6 +201,14 @@ export default function BhajansPageClient({
   const [featured, setFeatured] = useState<KirtanSummary | null>(
     initialData.featured ?? null,
   );
+  const [collectionCounts, setCollectionCounts] = useState(
+    initialData.collection_counts ?? {
+      historical_treasures: 0,
+      rare_gems: 0,
+    },
+  );
+  const [collectionFilter, setCollectionFilter] =
+    useState<CollectionFilterKey>("ALL");
   const [alphabetIndex, setAlphabetIndex] = useState<BhajanAlphabetIndex>(
     initialData.alphabet_index ?? {},
   );
@@ -271,6 +287,17 @@ export default function BhajansPageClient({
     resumeAutoLoad();
   }
 
+  const collectionCards = [
+    buildSharedCollectionCard(
+      "HISTORICAL_TREASURES",
+      `${collectionCounts.historical_treasures} bhajans`,
+    ),
+    buildSharedCollectionCard(
+      "RARE_GEMS",
+      `${collectionCounts.rare_gems} bhajans`,
+    ),
+  ];
+
   const loadPreviousPage = useCallback(async () => {
     if (!loadedWindow || !hasBefore || isLoadingPrevious || !prevCursor) return;
 
@@ -281,6 +308,7 @@ export default function BhajansPageClient({
 
     const params = new URLSearchParams();
     if (search) params.set("search", search);
+    if (collectionFilter !== "ALL") params.set("collection", collectionFilter);
     params.set("limit", "20");
     params.set("before_title", prevCursor.title);
     params.set("before_id", prevCursor.id);
@@ -291,6 +319,15 @@ export default function BhajansPageClient({
       );
       const data = (await res.json()) as BhajansResponse;
       setBhajanMap((prev) => mergeBhajans(prev, data.bhajans ?? []));
+      if (typeof data.total_count === "number") {
+        setTotalCount(data.total_count);
+      }
+      setCollectionCounts(
+        data.collection_counts ?? {
+          historical_treasures: 0,
+          rare_gems: 0,
+        },
+      );
       setHasBefore(Boolean(data.has_before));
       setPrevCursor(data.prev_cursor ?? null);
 
@@ -310,7 +347,14 @@ export default function BhajansPageClient({
       setIsLoadingPrevious(false);
       setLoadingBeforeLetter(null);
     }
-  }, [hasBefore, isLoadingPrevious, loadedWindow, prevCursor, search]);
+  }, [
+    collectionFilter,
+    hasBefore,
+    isLoadingPrevious,
+    loadedWindow,
+    prevCursor,
+    search,
+  ]);
 
   useEffect(() => {
     if (!hasInitializedSearch.current) {
@@ -320,6 +364,7 @@ export default function BhajansPageClient({
 
     const params = new URLSearchParams();
     if (search) params.set("search", search);
+    if (collectionFilter !== "ALL") params.set("collection", collectionFilter);
     params.set("limit", "20");
     const url = `/api/explore/bhajans?${params.toString()}`;
     fetchWithStatus(url)
@@ -337,12 +382,23 @@ export default function BhajansPageClient({
           ),
         } satisfies TopPageSnapshot;
         setBhajanMap(toBhajanMap(data.bhajans ?? []));
+        if (typeof data.total_count === "number") {
+          setTotalCount(data.total_count);
+        } else if (typeof initialData.total_count === "number") {
+          setTotalCount(initialData.total_count);
+        }
         setHasBefore(Boolean(data.has_before));
         setHasMore(Boolean(data.has_more));
         setPrevCursor(data.prev_cursor ?? null);
         setNextCursor(data.next_cursor ?? null);
         setHasFetchedOnce(true);
         setFeatured(data.featured ?? null);
+        setCollectionCounts(
+          data.collection_counts ?? {
+            historical_treasures: 0,
+            rare_gems: 0,
+          },
+        );
         setAlphabetIndex(data.alphabet_index ?? {});
         setLoadedWindow(nextTopPageSnapshot.window);
         setTopPageSnapshot(nextTopPageSnapshot);
@@ -352,7 +408,7 @@ export default function BhajansPageClient({
         setActiveBrowseLetter(null);
       })
       .finally(() => setIsLoadingList(false));
-  }, [search]);
+  }, [search, collectionFilter, initialData.total_count]);
 
   const syncVisibleLetter = useCallback(() => {
     // The rail highlight follows the letter header nearest the top of the
@@ -472,6 +528,9 @@ export default function BhajansPageClient({
 
         const params = new URLSearchParams();
         if (search) params.set("search", search);
+        if (collectionFilter !== "ALL") {
+          params.set("collection", collectionFilter);
+        }
         params.set("limit", "20");
         params.set("cursor_title", nextCursor.title);
         params.set("cursor_id", nextCursor.id);
@@ -480,6 +539,15 @@ export default function BhajansPageClient({
           .then((res) => res.json())
           .then((data: BhajansResponse) => {
             setBhajanMap((prev) => mergeBhajans(prev, data.bhajans ?? []));
+            if (typeof data.total_count === "number") {
+              setTotalCount(data.total_count);
+            }
+            setCollectionCounts(
+              data.collection_counts ?? {
+                historical_treasures: 0,
+                rare_gems: 0,
+              },
+            );
             setHasMore(Boolean(data.has_more));
             setNextCursor(data.next_cursor ?? null);
             if (loadedWindow && data.bhajans?.length) {
@@ -505,7 +573,14 @@ export default function BhajansPageClient({
 
     observer.observe(node);
     return () => observer.disconnect();
-  }, [hasMore, isLoadingMore, loadedWindow, nextCursor, search]);
+  }, [
+    collectionFilter,
+    hasMore,
+    isLoadingMore,
+    loadedWindow,
+    nextCursor,
+    search,
+  ]);
 
   const sortedBhajans = useMemo(() => {
     return Array.from(bhajanMap.values()).sort(compareBhajans);
@@ -535,6 +610,16 @@ export default function BhajansPageClient({
 
   const shouldShowCollectionActions =
     renderedBhajans.length > 1 || isLoadingList;
+  const baseBhajanTotal =
+    initialData.total_count ?? totalCount ?? renderedBhajans.length;
+  const visibleBhajanTotal =
+    totalCount ?? initialData.total_count ?? renderedBhajans.length;
+  const shouldShowFilteredBhajanHeading =
+    collectionFilter !== "ALL" && !isLoadingList;
+  const bhajanHeadingText =
+    shouldShowFilteredBhajanHeading
+      ? `${visibleBhajanTotal}/${baseBhajanTotal} Bhajans`
+      : `${baseBhajanTotal} Bhajans`;
 
   const availableLetters = useMemo(() => {
     return new Set(Object.keys(alphabetIndex));
@@ -628,6 +713,7 @@ export default function BhajansPageClient({
     let didScheduleScroll = false;
     const params = new URLSearchParams();
     if (search) params.set("search", search);
+    if (collectionFilter !== "ALL") params.set("collection", collectionFilter);
     params.set("limit", "20");
     params.set("start_title", startCursor.title);
     params.set("start_id", startCursor.id);
@@ -642,6 +728,17 @@ export default function BhajansPageClient({
       // window to the fetched slice so subsequent up/down loading grows from
       // that letter naturally.
       setBhajanMap((prev) => mergeBhajans(prev, items));
+      if (typeof data.total_count === "number") {
+        setTotalCount(data.total_count);
+      } else if (typeof initialData.total_count === "number") {
+        setTotalCount(initialData.total_count);
+      }
+      setCollectionCounts(
+        data.collection_counts ?? {
+          historical_treasures: 0,
+          rare_gems: 0,
+        },
+      );
       setHasBefore(Boolean(data.has_before));
       setHasMore(Boolean(data.has_more));
       setPrevCursor(data.prev_cursor ?? null);
@@ -680,7 +777,7 @@ export default function BhajansPageClient({
           />
         </Suspense>
         <SubpageHeader
-          title={dictionary.explore.bhajans}
+          title={undefined}
           backLabel={dictionary.common.home}
           backHref="/"
         />
@@ -717,69 +814,89 @@ export default function BhajansPageClient({
               onToggleFavorite={toggleFavorite}
               isFavorited={isFavorited(featured.id)}
               palette={bhajansPalette.featuredCard}
+              titleOverride={getKirtanCardText(featured).title}
+              subtitleOverride={getKirtanCardText(featured).subtitle}
             />
           </div>
         ) : null}
 
-        <div className="flex items-center gap-2">
-          <div className="relative min-w-0 flex-1">
-            <input
-              type="text"
-              placeholder="Search bhajans…"
-              value={search}
-              onChange={(e) => {
-                setIsLoadingList(true);
-                resetPagination();
-                setSearch(e.target.value);
-              }}
-              className="min-w-0 w-full rounded-xl border border-[#ead5db] bg-white/92 px-4 py-2 pr-10 text-sm text-[#67474f] shadow-sm focus:border-[#d8a8b6] focus:outline-none focus:ring-1 focus:ring-[#d8a8b6]"
-            />
-            {search ? (
-              <button
-                type="button"
-                onClick={() => {
+        <div className="space-y-2">
+          <h1
+            className={`${displayHeadingClassName} px-0.5 text-[1.2rem] leading-none text-[#5d3b33]`}
+          >
+            {bhajanHeadingText}
+          </h1>
+
+          <div className="flex items-center gap-2">
+            <div className="relative min-w-0 flex-1">
+              <input
+                type="text"
+                placeholder="Search bhajans…"
+                value={search}
+                onChange={(e) => {
                   setIsLoadingList(true);
                   resetPagination();
-                  setSearch("");
+                  setSearch(e.target.value);
                 }}
-                aria-label="Clear search"
-                title="Clear search"
-                className="absolute right-3 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full bg-[#f3dfe5] text-[0.8rem] font-semibold leading-none text-[#8f6774] transition hover:bg-[#ecd1d9]"
-              >
-                ×
-              </button>
+                className="min-w-0 w-full rounded-xl border border-[#ead5db] bg-white/92 px-4 py-2 pr-10 text-sm text-[#67474f] shadow-sm focus:border-[#d8a8b6] focus:outline-none focus:ring-1 focus:ring-[#d8a8b6]"
+              />
+              {search ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsLoadingList(true);
+                    resetPagination();
+                    setSearch("");
+                  }}
+                  aria-label="Clear search"
+                  title="Clear search"
+                  className="absolute right-3 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full bg-[#f3dfe5] text-[0.8rem] font-semibold leading-none text-[#8f6774] transition hover:bg-[#ecd1d9]"
+                >
+                  ×
+                </button>
+              ) : null}
+            </div>
+
+            {shouldShowCollectionActions ? (
+              <div className="flex shrink-0 gap-2">
+                <button
+                  type="button"
+                  onClick={() => playCollection(renderedBhajans)}
+                  aria-label={dictionary.actions.playAll}
+                  title={dictionary.actions.playAll}
+                  disabled={renderedBhajans.length <= 1}
+                  className="flex h-8 w-8 items-center justify-center rounded-full border border-[#ead5db] bg-white text-[#8f6774] shadow-sm transition hover:bg-[#fff6f8] disabled:pointer-events-none disabled:opacity-40"
+                >
+                  <SFIcon icon={sfPlaySquareStackFill} className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    playCollection(renderedBhajans, { shuffle: true })
+                  }
+                  aria-label={dictionary.actions.shuffle}
+                  title={dictionary.actions.shuffle}
+                  disabled={renderedBhajans.length <= 1}
+                  className="flex h-8 w-8 items-center justify-center rounded-full border border-[#ead5db] bg-white text-[#8f6774] shadow-sm transition hover:bg-[#fff6f8] disabled:pointer-events-none disabled:opacity-40"
+                >
+                  <SFIcon icon={sfShuffleCircle} className="h-4 w-4" />
+                </button>
+              </div>
             ) : null}
           </div>
 
-          {shouldShowCollectionActions ? (
-            <div className="flex shrink-0 gap-2">
-              <button
-                type="button"
-                onClick={() => playCollection(renderedBhajans)}
-                aria-label={dictionary.actions.playAll}
-                title={dictionary.actions.playAll}
-                disabled={renderedBhajans.length <= 1}
-                className="flex h-8 w-8 items-center justify-center rounded-full border border-[#ead5db] bg-white text-[#8f6774] shadow-sm transition hover:bg-[#fff6f8] disabled:pointer-events-none disabled:opacity-40"
-              >
-                <SFIcon icon={sfPlaySquareStackFill} className="h-4 w-4" />
-              </button>
-              <button
-                type="button"
-                onClick={() =>
-                  playCollection(renderedBhajans, { shuffle: true })
-                }
-                aria-label={dictionary.actions.shuffle}
-                title={dictionary.actions.shuffle}
-                disabled={renderedBhajans.length <= 1}
-                className="flex h-8 w-8 items-center justify-center rounded-full border border-[#ead5db] bg-white text-[#8f6774] shadow-sm transition hover:bg-[#fff6f8] disabled:pointer-events-none disabled:opacity-40"
-              >
-                <SFIcon icon={sfShuffleCircle} className="h-4 w-4" />
-              </button>
-            </div>
-          ) : null}
+          <CollectionCardGrid
+            cards={collectionCards}
+            selectedKey={collectionFilter}
+            onSelect={(key) => {
+              setIsLoadingList(true);
+              resetPagination();
+              setCollectionFilter((current) => (current === key ? "ALL" : key));
+            }}
+          />
         </div>
 
-        <div ref={listSectionRef} className="relative">
+        <div ref={listSectionRef} className="relative -mt-2 sm:-mt-1">
           {availableLetters.size > 0 ? (
             <AlphabetRail
               letters={ALPHABET}
@@ -793,7 +910,7 @@ export default function BhajansPageClient({
           ) : null}
 
           <div className="flex items-start gap-3">
-            <ul ref={listContentRef} className="min-w-0 flex-1 space-y-3">
+            <ul ref={listContentRef} className="min-w-0 flex-1 space-y-0">
               {isLoadingList ? (
                 <li className="rounded-xl border border-dashed border-[#ead5db] bg-white/88 px-4 py-6">
                   <div className="space-y-3">
@@ -820,8 +937,8 @@ export default function BhajansPageClient({
                           ref={loadPreviousRef}
                           className={
                             isLoadingPrevious
-                              ? "mb-3 rounded-xl border border-dashed border-[#ead5db] bg-white/80 px-3 py-2 text-center text-[0.68rem] uppercase tracking-[0.18em] text-[#aa8591]"
-                              : "mb-3 h-px overflow-hidden opacity-0"
+                              ? "mb-1 rounded-xl border border-dashed border-[#ead5db] bg-white/80 px-3 py-2 text-center text-[0.68rem] uppercase tracking-[0.18em] text-[#aa8591]"
+                              : "mb-1 h-px overflow-hidden opacity-0"
                           }
                           aria-hidden={!isLoadingPrevious}
                         >
@@ -834,7 +951,7 @@ export default function BhajansPageClient({
                         ref={(node) => {
                           letterRefs.current[row.letter] = node;
                         }}
-                        className="pt-1 text-[0.7rem] font-semibold uppercase tracking-[0.28em] text-[#9b6a5f]"
+                        className="pb-1 pt-0 font-[family:var(--font-inter)] text-[0.7rem] font-semibold uppercase tracking-[0.28em] text-[#9b6a5f]"
                       >
                         {row.letter}
                       </li>
@@ -843,6 +960,20 @@ export default function BhajansPageClient({
                     <Fragment key={getBrowseEntryId(row.bhajan)}>
                       <KirtanListItem
                         kirtan={row.bhajan}
+                        leadingVisual={
+                          <LeadSingerAvatar
+                            name={row.bhajan.lead_singer}
+                            imageUrl={row.bhajan.lead_singer_image_url}
+                            alt={row.bhajan.lead_singer_image_alt}
+                          />
+                        }
+                        titleOverride={getKirtanCardText(row.bhajan).title}
+                        subtitleOverride={
+                          getKirtanCardText(row.bhajan).subtitle
+                        }
+                        useShortDate
+                        truncateSangaAt={10}
+                        stackActionsOnMobile
                         isActive={isActive(row.bhajan)}
                         isPlaying={isPlaying(row.bhajan)}
                         isLoading={isLoading(row.bhajan)}
@@ -857,7 +988,7 @@ export default function BhajansPageClient({
                       getBrowseEntryId(row.bhajan) === loadedWindow.end.id ? (
                         <li
                           ref={loadMoreRef}
-                          className="mt-3 rounded-xl border border-dashed border-[#ead5db] bg-white/80 px-3 py-2 text-center text-[0.68rem] uppercase tracking-[0.18em] text-[#aa8591]"
+                          className="mt-1 rounded-xl border border-dashed border-[#ead5db] bg-white/80 px-3 py-2 text-center text-[0.68rem] uppercase tracking-[0.18em] text-[#aa8591]"
                         >
                           {isLoadingMore
                             ? dictionary.explore.loadingMore

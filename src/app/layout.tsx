@@ -1,23 +1,18 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { Geist, Geist_Mono, Dancing_Script } from "next/font/google";
+import { Cormorant_Garamond, Inter } from "next/font/google";
 import "./globals.css";
 import { Analytics } from "@vercel/analytics/react";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const cormorantGaramond = Cormorant_Garamond({
+  variable: "--font-cormorant-garamond",
   subsets: ["latin"],
-});
-
-const dancingScript = Dancing_Script({
-  variable: "--font-dancing-script",
-  subsets: ["latin"],
-  weight: ["600", "700"],
+  weight: ["600"],
 });
 
 export const metadata: Metadata = {
@@ -60,7 +55,7 @@ export default async function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${dancingScript.variable} antialiased`}
+        className={`${inter.variable} ${cormorantGaramond.variable} antialiased`}
       >
         <Suspense fallback={null}>{children}</Suspense>
         <Analytics />

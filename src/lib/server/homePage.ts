@@ -4,6 +4,8 @@ import { fetchKirtanTagFlags } from "@/lib/server/kirtanTags";
 import { getDailyRareGem } from "@/lib/server/featured";
 import { getDisplayKirtanTitle } from "@/lib/server/bhajanDisplayTitle";
 import { fetchHomeCurrentOccasion } from "@/lib/server/homeFeaturedItem";
+import { fetchLeadDirectory, OTHER_LEAD_ID } from "@/lib/server/leadDirectory";
+import { fetchPrimaryLeadSingerImages } from "@/lib/server/leadSingerImages";
 import type { HomeData } from "@/types/home";
 import type { KirtanSummary, PlayableKirtanRow } from "@/types/kirtan";
 
@@ -17,13 +19,24 @@ function toKirtanSummary(
   kirtan: PlayableKirtanRow,
   harmoniumIds: Set<string>,
   rareGemIds: Set<string>,
+  imagesByLeadSingerId: Map<
+    string,
+    { url: string; alt_text: string | null; width: number | null; height: number | null }
+  >,
 ): KirtanSummary {
+  const leadSingerImage = kirtan.lead_singer_id
+    ? imagesByLeadSingerId.get(kirtan.lead_singer_id)
+    : null;
+
   return {
     id: kirtan.id,
     audio_url: kirtan.audio_url ?? "",
     type: kirtan.type,
     title: getDisplayKirtanTitle(kirtan),
     lead_singer: kirtan.lead_singer,
+    lead_singer_id: kirtan.lead_singer_id ?? null,
+    lead_singer_image_url: leadSingerImage?.url ?? null,
+    lead_singer_image_alt: leadSingerImage?.alt_text ?? kirtan.lead_singer,
     recorded_date: kirtan.recorded_date,
     recorded_date_precision: kirtan.recorded_date_precision ?? null,
     sanga: kirtan.sanga,
@@ -212,6 +225,48 @@ async function buildHomePageData() {
     return { data: null, error: featuredOccasion.error, status: 500 };
   }
 
+  const [
+    mahaMantraCountResult,
+    bhajanCountResult,
+    occasionsCountResult,
+    leadDirectoryResult,
+  ] = await Promise.all([
+    supabase
+      .from("playable_kirtans")
+      .select("id", { count: "exact", head: true })
+      .eq("type", "MM"),
+    supabase
+      .from("playable_bhajan_titles")
+      .select("browse_id", { count: "exact", head: true }),
+    supabase
+      .from("tags")
+      .select("id", { count: "exact", head: true })
+      .eq("category", "occasion")
+      .eq("published", true)
+      .eq("browse_visible", true),
+    fetchLeadDirectory(),
+  ]);
+
+  if (mahaMantraCountResult.error) {
+    return { data: null, error: mahaMantraCountResult.error.message, status: 500 };
+  }
+
+  if (bhajanCountResult.error) {
+    return { data: null, error: bhajanCountResult.error.message, status: 500 };
+  }
+
+  if (occasionsCountResult.error) {
+    return { data: null, error: occasionsCountResult.error.message, status: 500 };
+  }
+
+  if (leadDirectoryResult.error) {
+    return { data: null, error: leadDirectoryResult.error, status: 500 };
+  }
+
+  const leadSingerCount = leadDirectoryResult.leads.filter(
+    (lead) => lead.id !== OTHER_LEAD_ID,
+  ).length;
+
   const rareGemCandidateIds =
     rareGemTags?.map((row) => row.kirtan_id).filter(Boolean) ?? [];
   let recommendedRows: PlayableKirtanRow[] = [];
@@ -260,20 +315,44 @@ async function buildHomePageData() {
     return { data: null, error: tagError, status: 500 };
   }
 
+  const leadSingerIds = Array.from(
+    new Set(
+      [
+        featured.kirtan?.lead_singer_id,
+        ...recentRows.map((k) => k.lead_singer_id),
+        ...popularRows.map((k) => k.lead_singer_id),
+        ...recommendedRows.map((k) => k.lead_singer_id),
+      ].filter((value): value is string => Boolean(value)),
+    ),
+  );
+  const { imagesByLeadSingerId, error: imageError } =
+    await fetchPrimaryLeadSingerImages(leadSingerIds);
+
+  if (imageError) {
+    return { data: null, error: imageError, status: 500 };
+  }
+
   if (featuredId && featuredKirtan && featured.kirtan) {
+    const leadSingerImage = featured.kirtan.lead_singer_id
+      ? imagesByLeadSingerId.get(featured.kirtan.lead_singer_id)
+      : null;
     featuredKirtan.title = getDisplayKirtanTitle(featured.kirtan);
+    featuredKirtan.lead_singer_id = featured.kirtan.lead_singer_id ?? null;
+    featuredKirtan.lead_singer_image_url = leadSingerImage?.url ?? null;
+    featuredKirtan.lead_singer_image_alt =
+      leadSingerImage?.alt_text ?? featured.kirtan.lead_singer;
     featuredKirtan.has_harmonium = harmoniumIds.has(featuredId);
     featuredKirtan.is_rare_gem = rareGemIds.has(featuredId);
   }
 
   const recentlyAddedKirtans: KirtanSummary[] = recentRows.map((k) =>
-    toKirtanSummary(k, harmoniumIds, rareGemIds),
+    toKirtanSummary(k, harmoniumIds, rareGemIds, imagesByLeadSingerId),
   );
   const popularSummaries: KirtanSummary[] = popularRows.map((k) =>
-    toKirtanSummary(k, harmoniumIds, rareGemIds),
+    toKirtanSummary(k, harmoniumIds, rareGemIds, imagesByLeadSingerId),
   );
   const recommendedSummaries: KirtanSummary[] = recommendedRows.map((k) =>
-    toKirtanSummary(k, harmoniumIds, rareGemIds),
+    toKirtanSummary(k, harmoniumIds, rareGemIds, imagesByLeadSingerId),
   );
 
   const data = {
@@ -285,10 +364,26 @@ async function buildHomePageData() {
       : null,
     current_occasion: featuredOccasion.data,
     entry_points: [
-      { id: "MM", label: "Maha Mantras" },
-      { id: "BHJ", label: "Bhajans" },
-      { id: "LEADS", label: "Lead Singers" },
-      { id: "OCCASIONS", label: "Occasions" },
+      {
+        id: "MM",
+        label: "Maha Mantras",
+        count: mahaMantraCountResult.count ?? null,
+      },
+      {
+        id: "BHJ",
+        label: "Bhajans",
+        count: bhajanCountResult.count ?? null,
+      },
+      {
+        id: "LEADS",
+        label: "Lead Singers",
+        count: leadSingerCount,
+      },
+      {
+        id: "OCCASIONS",
+        label: "Occasions",
+        count: occasionsCountResult.count ?? null,
+      },
     ],
     popular: popularSummaries.filter((k) => k.id !== featuredKirtan?.id),
     recommended: recommendedSummaries,

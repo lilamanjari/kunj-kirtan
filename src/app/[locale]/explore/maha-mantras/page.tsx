@@ -1,3 +1,5 @@
+// Server route entry for the localized Maha Mantra page.
+// It fetches the initial server payload and hands it to the client UI component.
 import MahaMantrasPageClient from "./MahaMantrasPageClient";
 import { getMahaMantrasPageData } from "@/lib/server/mahaMantrasPage";
 

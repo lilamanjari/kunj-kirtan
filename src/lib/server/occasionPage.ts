@@ -6,6 +6,7 @@ import { getDailyRareGem } from "@/lib/server/featured";
 import { getDisplayKirtanTitle } from "@/lib/server/bhajanDisplayTitle";
 import { compareOccasionKirtans } from "@/lib/server/occasionCurations";
 import type { OccasionResponse } from "@/types/occasions";
+import { fetchPrimaryLeadSingerImages } from "@/lib/server/leadSingerImages";
 
 const getCachedOccasionPageData = unstable_cache(
   async (slug: string) => {
@@ -68,11 +69,21 @@ const getCachedOccasionPageData = unstable_cache(
     if (featured.kirtan?.id) {
       kirtanIds.unshift(featured.kirtan.id);
     }
+    const leadSingerIds = Array.from(
+      new Set(
+        [
+          featured.kirtan?.lead_singer_id,
+          ...(kirtans ?? []).map((k) => k.lead_singer_id),
+        ].filter((value): value is string => Boolean(value)),
+      ),
+    );
     const { harmoniumIds, rareGemIds, error: flagsError } =
       await fetchKirtanTagFlags(kirtanIds);
+    const { imagesByLeadSingerId, error: imageError } =
+      await fetchPrimaryLeadSingerImages(leadSingerIds);
 
-    if (flagsError) {
-      return { data: null, error: flagsError, status: 500 };
+    if (flagsError || imageError) {
+      return { data: null, error: flagsError ?? imageError ?? "Unknown error", status: 500 };
     }
 
     const { personNamesById, error: personError } =
@@ -89,6 +100,13 @@ const getCachedOccasionPageData = unstable_cache(
         type: k.type as KirtanType,
         title: getDisplayKirtanTitle(k),
         lead_singer: k.lead_singer,
+        lead_singer_id: k.lead_singer_id ?? null,
+        lead_singer_image_url: k.lead_singer_id
+          ? imagesByLeadSingerId.get(k.lead_singer_id)?.url ?? null
+          : null,
+        lead_singer_image_alt: k.lead_singer_id
+          ? imagesByLeadSingerId.get(k.lead_singer_id)?.alt_text ?? k.lead_singer
+          : k.lead_singer,
         recorded_date: k.recorded_date,
         recorded_date_precision: k.recorded_date_precision ?? null,
         sanga: k.sanga,
@@ -106,6 +124,14 @@ const getCachedOccasionPageData = unstable_cache(
           type: featured.kirtan.type as KirtanType,
           title: getDisplayKirtanTitle(featured.kirtan),
           lead_singer: featured.kirtan.lead_singer,
+          lead_singer_id: featured.kirtan.lead_singer_id ?? null,
+          lead_singer_image_url: featured.kirtan.lead_singer_id
+            ? imagesByLeadSingerId.get(featured.kirtan.lead_singer_id)?.url ?? null
+            : null,
+          lead_singer_image_alt: featured.kirtan.lead_singer_id
+            ? imagesByLeadSingerId.get(featured.kirtan.lead_singer_id)?.alt_text ??
+              featured.kirtan.lead_singer
+            : featured.kirtan.lead_singer,
           recorded_date: featured.kirtan.recorded_date,
           recorded_date_precision:
             featured.kirtan.recorded_date_precision ?? null,

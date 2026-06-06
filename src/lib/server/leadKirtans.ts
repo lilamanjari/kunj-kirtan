@@ -1,6 +1,7 @@
 import { supabase } from "@/lib/supabase";
 import { fetchKirtanTagFlags } from "@/lib/server/kirtanTags";
 import { getDisplayKirtanTitle } from "@/lib/server/bhajanDisplayTitle";
+import { fetchPrimaryLeadSingerImages } from "@/lib/server/leadSingerImages";
 import {
   fetchLeadDirectory,
   OTHER_LEAD_ID,
@@ -267,6 +268,11 @@ export async function fetchTaggedLeadKirtansPage({
   const ids = rows.map((row) => row.id);
   const { harmoniumIds, rareGemIds, error: tagError } =
     await fetchKirtanTagFlags(ids);
+  const portraitLeadSingerIds = rows
+    .map((row) => row.lead_singer_id)
+    .filter((value): value is string => Boolean(value));
+  const { imagesByLeadSingerId, error: imageError } =
+    await fetchPrimaryLeadSingerImages(portraitLeadSingerIds);
 
   if (tagError) {
     return {
@@ -277,20 +283,38 @@ export async function fetchTaggedLeadKirtansPage({
     };
   }
 
-  const kirtans: KirtanSummary[] = rows.map((k) => ({
-    id: k.id,
-    audio_url: k.audio_url ?? "",
-    type: k.type as KirtanType,
-    title: getDisplayKirtanTitle(k),
-    lead_singer: k.lead_singer,
-    recorded_date: k.recorded_date,
-    recorded_date_precision: k.recorded_date_precision ?? null,
-    sanga: k.sanga,
-    duration_seconds: k.duration_seconds,
-    sequence_num: k.sequence_num ?? null,
-    has_harmonium: harmoniumIds.has(k.id),
-    is_rare_gem: rareGemIds.has(k.id),
-  }));
+  if (imageError) {
+    return {
+      kirtans: [] as KirtanSummary[],
+      hasMore: false,
+      nextCursor: null as LeadCursor,
+      error: imageError,
+    };
+  }
+
+  const kirtans: KirtanSummary[] = rows.map((k) => {
+    const leadSingerImage = k.lead_singer_id
+      ? imagesByLeadSingerId.get(k.lead_singer_id)
+      : null;
+
+    return {
+      id: k.id,
+      audio_url: k.audio_url ?? "",
+      type: k.type as KirtanType,
+      title: getDisplayKirtanTitle(k),
+      lead_singer: k.lead_singer,
+      lead_singer_id: k.lead_singer_id ?? null,
+      lead_singer_image_url: leadSingerImage?.url ?? null,
+      lead_singer_image_alt: leadSingerImage?.alt_text ?? k.lead_singer,
+      recorded_date: k.recorded_date,
+      recorded_date_precision: k.recorded_date_precision ?? null,
+      sanga: k.sanga,
+      duration_seconds: k.duration_seconds,
+      sequence_num: k.sequence_num ?? null,
+      has_harmonium: harmoniumIds.has(k.id),
+      is_rare_gem: rareGemIds.has(k.id),
+    };
+  });
 
   return {
     kirtans,

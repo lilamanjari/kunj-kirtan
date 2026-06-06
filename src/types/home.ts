@@ -13,9 +13,14 @@ export type HomeData = {
     slug: string;
     header: string | null;
     subtitle: string | null;
+    endsAt: string | null;
   } | null;
 
-  entry_points: { id: string; label: string }[];
+  entry_points: {
+    id: string;
+    label: string;
+    count: number | null;
+  }[];
 
   popular: KirtanSummary[];
 

@@ -1,9 +1,11 @@
+// Cached server loader for the initial Maha Mantra page payload.
+// This powers SSR for the first page load and caches the default first-page query.
 import { unstable_cache } from "next/cache";
 import { supabase } from "@/lib/supabase";
-import type { KirtanSummary, PlayableKirtanRow } from "@/types/kirtan";
-import { fetchKirtanTagFlags } from "@/lib/server/kirtanTags";
+import type { PlayableKirtanRow } from "@/types/kirtan";
 import { getDailyRareGem } from "@/lib/server/featured";
-import { formatKirtanTitle } from "@/lib/kirtanTitle";
+import { fetchMahaMantraCollectionCounts } from "@/lib/server/mahaMantraCollections";
+import { buildMahaMantraPresentation } from "@/lib/server/mahaMantraPresentation";
 import type { MahaMantrasResponse } from "@/types/maha-mantras";
 
 const getCachedMahaMantrasPageData = unstable_cache(
@@ -13,10 +15,30 @@ const getCachedMahaMantrasPageData = unstable_cache(
       return { data: null, error: featured.error, status: 500 };
     }
 
+    const { count: totalCount, error: totalCountError } = await supabase
+      .from("playable_kirtans")
+      .select("id", { count: "exact", head: true })
+      .eq("type", "MM");
+
+    if (totalCountError) {
+      return { data: null, error: totalCountError.message, status: 500 };
+    }
+
+    const { counts: collectionCounts, error: collectionCountsError } =
+      await fetchMahaMantraCollectionCounts();
+
+    if (collectionCountsError || !collectionCounts) {
+      return {
+        data: null,
+        error: collectionCountsError ?? "Failed to load collection counts",
+        status: 500,
+      };
+    }
+
     const { data, error } = await supabase
       .from("playable_kirtans")
       .select(
-        "id, audio_url, type, title, lead_singer, recorded_date, recorded_date_precision, sanga, duration_seconds, created_at, sequence_num",
+        "id, audio_url, type, title, lead_singer, lead_singer_id, recorded_date, recorded_date_precision, sanga, duration_seconds, created_at, sequence_num",
       )
       .eq("type", "MM")
       .order("recorded_date", { ascending: false, nullsFirst: false })
@@ -32,52 +54,21 @@ const getCachedMahaMantrasPageData = unstable_cache(
     const page = hasMore ? rows.slice(0, 20) : rows;
     const last = page[page.length - 1];
 
-    const ids = page.map((k) => k.id);
-    if (featured.kirtan?.id) {
-      ids.unshift(featured.kirtan.id);
+    const {
+      mantras,
+      featuredKirtan,
+      error: presentationError,
+    } = await buildMahaMantraPresentation(page, featured.kirtan);
+
+    if (presentationError) {
+      return { data: null, error: presentationError, status: 500 };
     }
-    const { harmoniumIds, rareGemIds, error: tagError } =
-      await fetchKirtanTagFlags(ids);
-
-    if (tagError) {
-      return { data: null, error: tagError, status: 500 };
-    }
-
-    const mantras: KirtanSummary[] = page.map((k) => ({
-      id: k.id,
-      audio_url: k.audio_url ?? "",
-      type: "MM",
-      title: formatKirtanTitle("MM", k.title),
-      lead_singer: k.lead_singer,
-      recorded_date: k.recorded_date,
-      recorded_date_precision: k.recorded_date_precision ?? null,
-      sanga: k.sanga,
-      duration_seconds: k.duration_seconds,
-      sequence_num: k.sequence_num ?? null,
-      has_harmonium: harmoniumIds.has(k.id),
-      is_rare_gem: rareGemIds.has(k.id),
-    }));
-
-    const featuredKirtan: KirtanSummary | null = featured.kirtan
-      ? {
-          id: featured.kirtan.id,
-          audio_url: featured.kirtan.audio_url ?? "",
-          type: "MM",
-          title: formatKirtanTitle("MM", featured.kirtan.title),
-          lead_singer: featured.kirtan.lead_singer,
-          recorded_date: featured.kirtan.recorded_date,
-          recorded_date_precision: featured.kirtan.recorded_date_precision ?? null,
-          sanga: featured.kirtan.sanga,
-          duration_seconds: featured.kirtan.duration_seconds,
-          sequence_num: featured.kirtan.sequence_num ?? null,
-          has_harmonium: harmoniumIds.has(featured.kirtan.id),
-          is_rare_gem: rareGemIds.has(featured.kirtan.id),
-        }
-      : null;
 
     return {
       data: {
         mantras,
+        total_count: totalCount ?? mantras.length,
+        collection_counts: collectionCounts,
         has_more: hasMore,
         next_cursor: last
           ? { recorded_date: last.recorded_date, id: last.id }
