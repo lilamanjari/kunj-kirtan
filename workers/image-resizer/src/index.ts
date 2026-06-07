@@ -9,6 +9,11 @@ const DEFAULT_WIDTH = 320;
 const DEFAULT_QUALITY = 82;
 const MAX_DIMENSION = 1600;
 const MAX_QUALITY = 95;
+// Intentionally short during the redesign phase so image/art swaps and 404
+// fixes do not stay sticky in caches for days. Revisit once the design is
+// stable and asset URLs are treated as immutable.
+const DESIGN_PHASE_EDGE_TTL_SECONDS = 60 * 60;
+const DESIGN_PHASE_BROWSER_TTL_SECONDS = 60 * 60;
 const ALLOWED_FITS = new Set(["scale-down", "contain", "cover", "crop", "pad"]);
 const ALLOWED_FORMATS = new Set(["auto", "webp", "avif", "jpeg", "png"]);
 
@@ -53,6 +58,7 @@ function json(body: unknown, status = 200) {
     status,
     headers: {
       "content-type": "application/json; charset=utf-8",
+      "cache-control": "no-store, max-age=0",
     },
   });
 }
@@ -114,7 +120,7 @@ const imageResizerWorker = {
 
     const response = await fetch(sourceUrl.toString(), {
       cf: {
-        cacheTtl: 60 * 60 * 24 * 30,
+        cacheTtl: DESIGN_PHASE_EDGE_TTL_SECONDS,
         cacheEverything: true,
         image: {
           fit,
@@ -139,7 +145,10 @@ const imageResizerWorker = {
     }
 
     const headers = new Headers(response.headers);
-    headers.set("cache-control", "public, max-age=31536000, immutable");
+    headers.set(
+      "cache-control",
+      `public, max-age=${DESIGN_PHASE_BROWSER_TTL_SECONDS}, stale-while-revalidate=86400`,
+    );
     headers.set("x-image-key", key);
     headers.set("x-image-width", String(width));
     headers.set("x-image-fit", fit);

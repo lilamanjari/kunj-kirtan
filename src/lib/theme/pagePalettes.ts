@@ -32,7 +32,7 @@ export const greenSurfaceTheme = {
 export const homePalette: PagePalette = {
   featuredCard: {
     cardClassName:
-      "border border-[color:var(--theme-page-home-border)] bg-[color:var(--theme-page-home-surface)] text-[color:var(--theme-page-home-text)] shadow-[0_18px_34px_var(--theme-page-home-shadow)]",
+      "border border-[color:var(--theme-page-home-border)] bg-[color:var(--theme-page-home-discovery-blush)] text-[color:var(--theme-page-home-text)] shadow-[0_18px_34px_var(--theme-page-home-shadow)]",
     cardStyle: {
       backgroundColor: "var(--theme-page-home-surface)",
     },

@@ -177,7 +177,7 @@ export default function LeadPageClient({
           />
         </Suspense>
         <SubpageHeader
-          title={initialData.lead.display_name}
+          title={undefined}
           backLabel={dictionary.explore.leadsBackLabel}
           backHref="/explore/leads"
         />

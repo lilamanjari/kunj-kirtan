@@ -3,6 +3,8 @@ export type LeadItem = {
   display_name: string;
   slug: string;
   count: number;
+  image_url?: string | null;
+  image_alt?: string | null;
 };
 
 export type LeadGroup = {
