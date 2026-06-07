@@ -169,6 +169,7 @@ const getCachedOtherLeadPageData = unstable_cache(
       error: tagError,
     } = await fetchKirtanTagFlags(ids);
     const leadSingerIds = [
+      leadId,
       ...rows.map((k) => k.lead_singer_id).filter(Boolean),
       featuredData?.lead_singer_id,
     ].filter((value): value is string => Boolean(value));
@@ -220,7 +221,7 @@ const getCachedOtherLeadPageData = unstable_cache(
 );
 
 const getCachedSingleLeadPageData = unstable_cache(
-  async (leadId: string, displayName: string) => {
+  async (leadId: string, displayName: string, homeSangaName: string | null) => {
     const { counts, error: countsError } = await fetchLeadCounts(leadId);
     if (countsError) {
       throw new LeadPageDataError(countsError);
@@ -283,6 +284,10 @@ const getCachedSingleLeadPageData = unstable_cache(
       lead: {
         id: leadId,
         display_name: displayName,
+        image_url: safeImagesByLeadSingerId.get(leadId)?.url ?? null,
+        image_alt:
+          safeImagesByLeadSingerId.get(leadId)?.alt_text ?? displayName,
+        home_sanga_name: homeSangaName,
       },
       counts,
       active_type: activeType,
@@ -334,7 +339,7 @@ async function loadLeadPageData(slug: string): Promise<{
   // do not remain stuck behind a cached 404 in production.
   const { data: lead, error: leadError } = await supabase
     .from("lead_singers")
-    .select("id, display_name")
+    .select("id, display_name, home_sanga, sangas:home_sanga(name)")
     .eq("slug", slug)
     .maybeSingle();
 
@@ -342,7 +347,14 @@ async function loadLeadPageData(slug: string): Promise<{
     return { data: null, error: "Lead singer not found", status: 404 };
   }
 
-  const data = await getCachedSingleLeadPageData(lead.id, lead.display_name);
+  const homeSangaName = Array.isArray(lead.sangas)
+    ? lead.sangas[0]?.name ?? null
+    : lead.sangas?.name ?? null;
+  const data = await getCachedSingleLeadPageData(
+    lead.id,
+    lead.display_name,
+    homeSangaName,
+  );
   return { data, error: null, status: 200 };
 }
 

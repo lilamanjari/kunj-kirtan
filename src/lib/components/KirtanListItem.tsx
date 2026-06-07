@@ -71,6 +71,7 @@ export default function KirtanListItem({
   const subtitleText =
     subtitleOverride ??
     `${sequenceLabel ? `${sequenceLabel} by ` : ""}${kirtan.lead_singer ?? ""}`;
+  const hasSubtitle = Boolean(subtitleText.trim());
   const borderTint = getListItemBorderTint(kirtan);
   const displaySanga =
     truncateSangaAt && kirtan.sanga && kirtan.sanga.length > truncateSangaAt
@@ -87,6 +88,10 @@ export default function KirtanListItem({
           kirtan.recorded_date_precision,
         )
     : "";
+  const metadataText =
+    displaySanga && recordedDateLabel
+      ? `${displaySanga} • ${recordedDateLabel}`
+      : displaySanga || recordedDateLabel;
   const cardBackground = kirtan.is_rare_gem
     ? "bg-[rgba(255,250,241,0.96)]"
     : isActive
@@ -149,23 +154,22 @@ export default function KirtanListItem({
             </div>
           ) : null}
         </div>
-        <div className="mt-0.5 flex items-center gap-1 leading-none">
-          <p className="truncate text-xs text-(--theme-page-home-muted)">
-            {subtitleText}
-          </p>
-        </div>
+        {hasSubtitle ? (
+          <div className="mt-0.5 flex items-center gap-1 leading-none">
+            <p className="truncate text-xs text-(--theme-page-home-muted)">
+              {subtitleText}
+            </p>
+          </div>
+        ) : null}
         <div
           className={`text-xs leading-none text-(--theme-page-home-muted) ${
             stackActionsOnMobile
-              ? "mt-1 grid grid-cols-[1fr_auto] items-end gap-x-2 gap-y-1 sm:-mt-3 sm:flex sm:items-end sm:justify-between"
-              : "-mt-3 flex items-end justify-between gap-0"
+              ? `${hasSubtitle ? "mt-1" : "mt-0.5"} grid grid-cols-[1fr_auto] items-end gap-x-2 gap-y-1 sm:${hasSubtitle ? "-mt-3" : "-mt-2"} sm:flex sm:items-end sm:justify-between`
+              : `${hasSubtitle ? "-mt-3" : "-mt-2"} flex items-end justify-between gap-0`
           }`}
         >
           <div className="min-w-0 flex-1 self-center sm:self-auto">
-            <span className="truncate">
-              {displaySanga ? `${displaySanga} • ` : ""}
-              {recordedDateLabel}
-            </span>
+            <span className="truncate">{metadataText}</span>
           </div>
           <div
             className={`flex shrink-0 items-center gap-1 ${

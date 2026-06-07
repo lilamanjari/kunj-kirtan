@@ -10,6 +10,12 @@ type SubpageHeaderProps = {
   subtitle?: string;
   backHref?: string;
   backLabel?: string;
+  backgroundImageSrc?: string;
+  backgroundImageAlt?: string;
+  heightClassName?: string;
+  overlayClassName?: string;
+  bottomWashClassName?: string;
+  backgroundImageFit?: "cover" | "contain";
 };
 
 export default function SubpageHeader({
@@ -17,6 +23,12 @@ export default function SubpageHeader({
   subtitle,
   backHref = "/",
   backLabel = "Home",
+  backgroundImageSrc,
+  backgroundImageAlt = "",
+  heightClassName,
+  overlayClassName,
+  bottomWashClassName,
+  backgroundImageFit = "cover",
 }: SubpageHeaderProps) {
   const dictionary = useDictionary();
   const titleValue = title ?? "";
@@ -39,17 +51,50 @@ export default function SubpageHeader({
 
   return (
     <header className="relative -mx-5 -mt-6 overflow-hidden">
-      <div className="relative h-[6.7rem] sm:h-[8.8rem]">
-        <Image
-          src="/KunjKirtan-Sub-Header.png"
-          alt=""
-          fill
-          priority
-          sizes="(max-width: 768px) 100vw, 448px"
-          className="object-cover"
-          style={{ objectPosition: "center 42%" }}
+      <div
+        className={`relative ${
+          backgroundImageFit === "contain"
+            ? ""
+            : heightClassName ?? "h-[6.7rem] sm:h-[8.8rem]"
+        }`}
+      >
+        {backgroundImageSrc ? (
+          backgroundImageFit === "contain" ? (
+            <img
+              key={backgroundImageSrc}
+              src={backgroundImageSrc}
+              alt={backgroundImageAlt}
+              className="block h-auto w-full"
+            />
+          ) : (
+            <img
+              key={backgroundImageSrc}
+              src={backgroundImageSrc}
+              alt={backgroundImageAlt}
+              className="absolute inset-0 h-full w-full object-cover"
+              style={{ objectPosition: "center 42%" }}
+            />
+          )
+        ) : (
+          <Image
+            src="/KunjKirtan-Sub-Header.png"
+            alt=""
+            fill
+            priority
+            sizes="(max-width: 768px) 100vw, 448px"
+            className="object-cover"
+            style={{ objectPosition: "center 42%" }}
+          />
+        )}
+        {bottomWashClassName ? (
+          <div className={`absolute inset-x-0 bottom-0 ${bottomWashClassName}`} />
+        ) : null}
+        <div
+          className={`absolute inset-0 ${
+            overlayClassName ??
+            "bg-[linear-gradient(180deg,rgba(255,248,243,0.03)_0%,rgba(255,248,243,0)_58%,rgba(246,228,222,0.5)_78%,rgba(246,228,222,0.95)_100%)]"
+          }`}
         />
-        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,248,243,0.03)_0%,rgba(255,248,243,0)_58%,rgba(246,228,222,0.5)_78%,rgba(246,228,222,0.95)_100%)]" />
         <LocalizedLink
           href="/"
           aria-label={dictionary.actions.goToHomePage}
