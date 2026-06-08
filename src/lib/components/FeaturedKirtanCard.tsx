@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import Equalizer from "@/lib/components/Equalizer";
 import LeadSingerAvatar from "@/lib/components/LeadSingerAvatar";
+import { buildBucketImageUrl, buildTransformedImageUrl } from "@/lib/media";
 import { formatKirtanTitle } from "@/lib/kirtanTitle";
 import {
   formatKirtanDuration,
@@ -86,7 +87,7 @@ export default function FeaturedKirtanCard({
         alt={kirtan.lead_singer_image_alt}
         size="featured"
         className="h-full w-full bg-[radial-gradient(circle_at_top,_rgba(255,251,247,0.96),rgba(244,230,221,0.86))]"
-        imageClassName="h-full w-full object-cover"
+        imageClassName="h-full w-full object-cover opacity-90"
         textClassName="absolute inset-0 flex items-center justify-center text-[1.55rem] font-semibold uppercase tracking-[0.02em] text-[#8e6254]"
       />
     ) : null;
@@ -94,6 +95,16 @@ export default function FeaturedKirtanCard({
     palette?.cardClassName ??
     "border border-[color:var(--theme-page-home-border)] bg-[color:var(--theme-page-home-surface)] text-[color:var(--theme-page-home-text)] shadow-[0_18px_34px_var(--theme-page-home-shadow)]";
   const cardToneStyle = palette?.cardStyle;
+  const backgroundArtworkSrc = buildTransformedImageUrl(
+    buildBucketImageUrl("page-art/home-featured-background.png"),
+    {
+      width: 1200,
+      height: 720,
+      fit: "cover",
+      format: "png",
+      quality: 82,
+    },
+  );
 
   return (
     <section
@@ -105,6 +116,25 @@ export default function FeaturedKirtanCard({
       `}
       style={cardToneStyle}
     >
+      {backgroundArtworkSrc ? (
+        <div className="pointer-events-none absolute inset-0 overflow-hidden">
+          <img
+            src={backgroundArtworkSrc}
+            alt=""
+            loading="lazy"
+            decoding="async"
+            className="h-full w-full object-cover object-[78%_center] opacity-90"
+          />
+        </div>
+      ) : null}
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background:
+            "linear-gradient(90deg, rgba(246,240,234,0.94) 0%, rgba(246,240,234,0.98) 18%, rgba(246,240,234,0.88) 32%, rgba(246,240,234,0.68) 46%, rgba(246,240,234,0.84) 58%, rgba(246,240,234,0.52) 72%, rgba(246,240,234,0.18) 88%, rgba(246,240,234,0.06) 100%)",
+        }}
+      />
+
       {onDismiss ? (
         <button
           type="button"
@@ -116,7 +146,7 @@ export default function FeaturedKirtanCard({
           <SFIcon icon={sfXmark} className="h-3.5 w-3.5" />
         </button>
       ) : null}
-      <div className={onDismiss ? "pr-12" : undefined}>
+      <div className={`relative z-10 ${onDismiss ? "pr-12" : ""}`}>
         <p
           className={`text-xs font-medium uppercase tracking-[0.16em] ${
             palette?.featuredLabelColor ?? "text-white/58"
@@ -127,7 +157,7 @@ export default function FeaturedKirtanCard({
       </div>
       {contextLine ? (
         <p
-          className={`mt-1 text-sm font-medium ${
+          className={`relative z-10 mt-1 text-sm font-medium ${
             palette?.contextLineColor ?? "text-[#e4b6a7]"
           }`}
         >
@@ -135,51 +165,46 @@ export default function FeaturedKirtanCard({
         </p>
       ) : null}
 
-      <div className="mt-2.5">
-        <div className="flex items-start gap-3.5 sm:gap-4">
+      <div className="relative z-10 mt-3">
+        <div className="flex items-start gap-4 sm:gap-5">
           {artwork || defaultArtwork ? (
             <div
-              className={`flex h-[5rem] w-[5rem] shrink-0 items-center justify-center overflow-hidden bg-white/40 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.28)] sm:h-[6.1rem] sm:w-[6.1rem] ${radiusClassNames.card}`}
+              className={`flex h-[8.5rem] w-[7.25rem] shrink-0 items-end justify-center overflow-hidden bg-white/20 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.22)] sm:h-[11.5rem] sm:w-[8.8rem] ${radiusClassNames.card}`}
             >
               {artwork ?? defaultArtwork}
             </div>
           ) : null}
-          <div className="min-w-0 flex-1">
+          <div className="min-w-0 flex-1 pt-2 sm:pt-4">
             <h1
-              className={`${displayHeadingClassName} pr-1 text-[1.28rem] leading-[0.98] sm:pr-4 sm:text-[1.48rem]`}
+              className={`${displayHeadingClassName} max-w-[13ch] pr-1 text-[1.35rem] leading-[0.98] sm:max-w-[11ch] sm:pr-4 sm:text-[2.1rem]`}
             >
               {titleText}
             </h1>
 
             <div className="mt-1">
               <p
-                className={`text-[0.84rem] leading-snug sm:text-[0.88rem] ${palette?.leadsingerLabelColor ?? "text-stone-300"}`}
+                className={`text-[1rem] leading-snug sm:text-[1.15rem] ${palette?.leadsingerLabelColor ?? "text-stone-300"}`}
               >
                 {subtitleText}
               </p>
             </div>
-
-            {kirtan.recorded_date ? (
-              <div
-                className={`mt-1 text-[10px] sm:hidden ${
-                  palette?.metadataLabelColor ?? "text-stone-400"
-                }`}
-              >
-                {formatDateShort(
-                  kirtan.recorded_date,
-                  kirtan.recorded_date_precision,
-                )}
-              </div>
-            ) : null}
           </div>
         </div>
 
-        <div className="mt-2 flex items-end justify-between gap-3 sm:hidden">
+        <div className="mt-4 flex items-end justify-between gap-3 sm:hidden">
           <div
             className={`flex shrink-0 items-center gap-1.5 whitespace-nowrap text-[10px] ${
               palette?.metadataLabelColor ?? "text-stone-400"
             }`}
           >
+            {kirtan.recorded_date ? (
+              <span>
+                {formatDateShort(
+                  kirtan.recorded_date,
+                  kirtan.recorded_date_precision,
+                )}
+              </span>
+            ) : null}
             {kirtan.has_harmonium ? (
               <span
                 className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
@@ -239,7 +264,9 @@ export default function FeaturedKirtanCard({
                     onEnqueue(kirtan);
                   }}
                   className={`flex h-7 w-7 items-center justify-center rounded-full border text-xs transition ${
-                    isQueued ? queueActiveClassName : iconButtonInactiveClassName
+                    isQueued
+                      ? queueActiveClassName
+                      : iconButtonInactiveClassName
                   }`}
                   aria-label={
                     isQueued
@@ -274,7 +301,7 @@ export default function FeaturedKirtanCard({
           ) : null}
         </div>
 
-        <div className="mt-2 hidden items-end justify-between gap-2 sm:flex">
+        <div className="mt-5 hidden items-end justify-between gap-2 sm:flex">
           <div
             className={`flex shrink-0 items-center gap-1.5 whitespace-nowrap text-[10px] ${
               palette?.metadataLabelColor ?? "text-stone-400"
@@ -352,7 +379,9 @@ export default function FeaturedKirtanCard({
                     onEnqueue(kirtan);
                   }}
                   className={`flex h-7 w-7 items-center justify-center rounded-full border text-xs transition ${
-                    isQueued ? queueActiveClassName : iconButtonInactiveClassName
+                    isQueued
+                      ? queueActiveClassName
+                      : iconButtonInactiveClassName
                   }`}
                   aria-label={
                     isQueued

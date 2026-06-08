@@ -20,6 +20,7 @@ const railCardArtworkFiles = [
   "/kartika.png",
   "/keshava-vrata.png",
   "/yamuna.png",
+  "/kund.png",
 ] as const;
 
 export function formatKirtanDuration(seconds?: number | null) {
