@@ -11,6 +11,9 @@ export type LeadResponse = {
   lead: {
     id: string;
     display_name: string;
+    image_url?: string | null;
+    image_alt?: string | null;
+    home_sanga_name?: string | null;
   };
   counts: LeadCounts;
   active_type: KirtanType | null;

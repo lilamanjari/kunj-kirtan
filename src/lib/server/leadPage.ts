@@ -2,6 +2,7 @@ import { unstable_cache } from "next/cache";
 import { supabase } from "@/lib/supabase";
 import { fetchKirtanTagFlags } from "@/lib/server/kirtanTags";
 import { getDailyRareGem } from "@/lib/server/featured";
+import { fetchPrimaryLeadSingerImages } from "@/lib/server/leadSingerImages";
 import type {
   KirtanSummary,
   PlayableKirtanRow,
@@ -50,6 +51,10 @@ function mapFeaturedKirtan(
   featuredData: PlayableKirtanRow | null,
   harmoniumIds: Set<string>,
   rareGemIds: Set<string>,
+  leadSingerImage?: {
+    url: string;
+    alt_text: string | null;
+  } | null,
 ): KirtanSummary | null {
   if (!featuredData) return null;
 
@@ -59,6 +64,9 @@ function mapFeaturedKirtan(
     type: featuredData.type,
     title: getDisplayKirtanTitle(featuredData),
     lead_singer: featuredData.lead_singer,
+    lead_singer_id: featuredData.lead_singer_id ?? null,
+    lead_singer_image_url: leadSingerImage?.url ?? null,
+    lead_singer_image_alt: leadSingerImage?.alt_text ?? featuredData.lead_singer,
     recorded_date: featuredData.recorded_date,
     recorded_date_precision: normalizeRecordedDatePrecision(
       featuredData.recorded_date_precision,
@@ -71,27 +79,42 @@ function mapFeaturedKirtan(
   };
 }
 
+type LeadSingerImageMap = Map<
+  string,
+  { url: string; alt_text: string | null; width: number | null; height: number | null }
+>;
+
 function mapLeadKirtans(
   rows: PlayableKirtanRow[],
   harmoniumIds: Set<string>,
   rareGemIds: Set<string>,
+  imagesByLeadSingerId: LeadSingerImageMap,
 ): KirtanSummary[] {
-  return rows.map((k) => ({
-    id: k.id,
-    audio_url: k.audio_url ?? "",
-    type: k.type,
-    title: getDisplayKirtanTitle(k),
-    lead_singer: k.lead_singer,
-    recorded_date: k.recorded_date,
-    recorded_date_precision: normalizeRecordedDatePrecision(
-      k.recorded_date_precision,
-    ),
-    sanga: k.sanga,
-    duration_seconds: k.duration_seconds,
-    sequence_num: k.sequence_num ?? null,
-    has_harmonium: harmoniumIds.has(k.id),
-    is_rare_gem: rareGemIds.has(k.id),
-  }));
+  return rows.map((k) => {
+    const leadSingerImage = k.lead_singer_id
+      ? imagesByLeadSingerId.get(k.lead_singer_id)
+      : null;
+
+    return {
+      id: k.id,
+      audio_url: k.audio_url ?? "",
+      type: k.type,
+      title: getDisplayKirtanTitle(k),
+      lead_singer: k.lead_singer,
+      lead_singer_id: k.lead_singer_id ?? null,
+      lead_singer_image_url: leadSingerImage?.url ?? null,
+      lead_singer_image_alt: leadSingerImage?.alt_text ?? k.lead_singer,
+      recorded_date: k.recorded_date,
+      recorded_date_precision: normalizeRecordedDatePrecision(
+        k.recorded_date_precision,
+      ),
+      sanga: k.sanga,
+      duration_seconds: k.duration_seconds,
+      sequence_num: k.sequence_num ?? null,
+      has_harmonium: harmoniumIds.has(k.id),
+      is_rare_gem: rareGemIds.has(k.id),
+    };
+  });
 }
 
 const getCachedOtherLeadPageData = unstable_cache(
@@ -145,9 +168,23 @@ const getCachedOtherLeadPageData = unstable_cache(
       rareGemIds,
       error: tagError,
     } = await fetchKirtanTagFlags(ids);
+    const leadSingerIds = [
+      leadId,
+      ...rows.map((k) => k.lead_singer_id).filter(Boolean),
+      featuredData?.lead_singer_id,
+    ].filter((value): value is string => Boolean(value));
+    const {
+      imagesByLeadSingerId,
+      error: imageError,
+    } = await fetchPrimaryLeadSingerImages(leadSingerIds);
     if (tagError) {
       console.error("Lead page tag flag lookup failed for others:", tagError);
     }
+    if (imageError) {
+      console.error("Lead page image lookup failed for others:", imageError);
+    }
+    const safeImagesByLeadSingerId =
+      imageError ? new Map<string, never>() : imagesByLeadSingerId;
 
     const data: LeadResponse = {
       lead: {
@@ -162,11 +199,15 @@ const getCachedOtherLeadPageData = unstable_cache(
         rows,
         tagError ? new Set() : harmoniumIds,
         tagError ? new Set() : rareGemIds,
+        safeImagesByLeadSingerId,
       ),
       featured: mapFeaturedKirtan(
         featuredError ? null : featuredData,
         tagError ? new Set() : harmoniumIds,
         tagError ? new Set() : rareGemIds,
+        featuredData?.lead_singer_id
+          ? safeImagesByLeadSingerId.get(featuredData.lead_singer_id)
+          : null,
       ),
     };
 
@@ -180,7 +221,7 @@ const getCachedOtherLeadPageData = unstable_cache(
 );
 
 const getCachedSingleLeadPageData = unstable_cache(
-  async (leadId: string, displayName: string) => {
+  async (leadId: string, displayName: string, homeSangaName: string | null) => {
     const { counts, error: countsError } = await fetchLeadCounts(leadId);
     if (countsError) {
       throw new LeadPageDataError(countsError);
@@ -222,14 +263,31 @@ const getCachedSingleLeadPageData = unstable_cache(
       rareGemIds,
       error: tagError,
     } = await fetchKirtanTagFlags(ids);
+    const leadSingerIds = [
+      ...rows.map((k) => k.lead_singer_id).filter(Boolean),
+      featuredData?.lead_singer_id,
+    ].filter((value): value is string => Boolean(value));
+    const {
+      imagesByLeadSingerId,
+      error: imageError,
+    } = await fetchPrimaryLeadSingerImages(leadSingerIds);
     if (tagError) {
       console.error(`Lead page tag flag lookup failed for ${leadId}:`, tagError);
     }
+    if (imageError) {
+      console.error(`Lead page image lookup failed for ${leadId}:`, imageError);
+    }
+    const safeImagesByLeadSingerId =
+      imageError ? new Map<string, never>() : imagesByLeadSingerId;
 
     const data: LeadResponse = {
       lead: {
         id: leadId,
         display_name: displayName,
+        image_url: safeImagesByLeadSingerId.get(leadId)?.url ?? null,
+        image_alt:
+          safeImagesByLeadSingerId.get(leadId)?.alt_text ?? displayName,
+        home_sanga_name: homeSangaName,
       },
       counts,
       active_type: activeType,
@@ -239,11 +297,15 @@ const getCachedSingleLeadPageData = unstable_cache(
         rows,
         tagError ? new Set() : harmoniumIds,
         tagError ? new Set() : rareGemIds,
+        safeImagesByLeadSingerId,
       ),
       featured: mapFeaturedKirtan(
         featuredError ? null : featuredData,
         tagError ? new Set() : harmoniumIds,
         tagError ? new Set() : rareGemIds,
+        featuredData?.lead_singer_id
+          ? safeImagesByLeadSingerId.get(featuredData.lead_singer_id)
+          : null,
       ),
     };
 
@@ -277,7 +339,7 @@ async function loadLeadPageData(slug: string): Promise<{
   // do not remain stuck behind a cached 404 in production.
   const { data: lead, error: leadError } = await supabase
     .from("lead_singers")
-    .select("id, display_name")
+    .select("id, display_name, home_sanga, sangas:home_sanga(name)")
     .eq("slug", slug)
     .maybeSingle();
 
@@ -285,7 +347,14 @@ async function loadLeadPageData(slug: string): Promise<{
     return { data: null, error: "Lead singer not found", status: 404 };
   }
 
-  const data = await getCachedSingleLeadPageData(lead.id, lead.display_name);
+  const homeSangaName = Array.isArray(lead.sangas)
+    ? lead.sangas[0]?.name ?? null
+    : lead.sangas?.name ?? null;
+  const data = await getCachedSingleLeadPageData(
+    lead.id,
+    lead.display_name,
+    homeSangaName,
+  );
   return { data, error: null, status: 200 };
 }
 

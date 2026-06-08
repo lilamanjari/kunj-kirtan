@@ -5,6 +5,12 @@ import { fetchKirtanTagFlags } from "@/lib/server/kirtanTags";
 import { getDailyRareGem } from "@/lib/server/featured";
 import { ServerTiming, jsonWithServerTiming } from "@/lib/server/serverTiming";
 import { buildBhajanAlphabetIndex } from "@/lib/server/bhajanAlphabet";
+import { fetchBhajanLeadSingerImagesByKirtanId } from "@/lib/server/bhajanLeadImages";
+import {
+  fetchBhajanCollectionCounts,
+  fetchBhajanCollectionKirtanIds,
+  type BhajanCollectionKey,
+} from "@/lib/server/bhajanCollections";
 
 export const revalidate = 86400;
 
@@ -37,6 +43,8 @@ export async function GET(req: Request) {
   const startId = searchParams.get("start_id");
   const beforeTitle = searchParams.get("before_title");
   const beforeId = searchParams.get("before_id");
+  const collectionKey =
+    (searchParams.get("collection") as BhajanCollectionKey | null) ?? "ALL";
   const normalizedSearch = search ? normalizeSearchText(search) : null;
   const shouldIncludeAlphabetIndex =
     !cursorTitle && !cursorId && !startTitle && !startId && !beforeTitle && !beforeId;
@@ -52,10 +60,23 @@ export async function GET(req: Request) {
   }
 
   let alphabetIndexResult: BhajanAlphabetIndex | null = null;
+  const { counts: collectionCounts, error: collectionCountsError } =
+    await timing.measure("collection-counts", () =>
+      fetchBhajanCollectionCounts(),
+    );
+
+  if (collectionCountsError || !collectionCounts) {
+    return jsonWithServerTiming(
+      { error: collectionCountsError ?? "Failed to load collection counts" },
+      timing,
+      { status: 500 },
+    );
+  }
+
   if (shouldIncludeAlphabetIndex) {
     try {
       alphabetIndexResult = await timing.measure("alphabet", () =>
-        buildBhajanAlphabetIndex(search),
+        buildBhajanAlphabetIndex(search, collectionKey),
       );
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to build alphabet index";
@@ -66,6 +87,39 @@ export async function GET(req: Request) {
   const isBeforeQuery = Boolean(beforeTitle && beforeId);
   const isStartQuery = Boolean(startTitle && startId);
   let query = supabase.from("playable_bhajan_titles").select("*");
+  if (collectionKey !== "ALL") {
+    const { ids: collectionIds, error: collectionError } = await timing.measure(
+      "collection-ids",
+      () => fetchBhajanCollectionKirtanIds(collectionKey),
+    );
+
+    if (collectionError) {
+      return jsonWithServerTiming(
+        { error: collectionError },
+        timing,
+        { status: 500 },
+      );
+    }
+
+    if (!collectionIds || collectionIds.length === 0) {
+      return jsonWithServerTiming(
+        {
+          bhajans: [],
+          total_count: 0,
+          collection_counts: collectionCounts,
+          has_more: false,
+          has_before: false,
+          next_cursor: null,
+          prev_cursor: null,
+          featured: null,
+          alphabet_index: alphabetIndexResult ?? undefined,
+        },
+        timing,
+      );
+    }
+
+    query = query.in("kirtan_id", collectionIds);
+  }
 
   if (normalizedSearch) {
     query = query.ilike("searchable_text", `%${normalizedSearch}%`);
@@ -161,9 +215,17 @@ export async function GET(req: Request) {
     "tags",
     () => fetchKirtanTagFlags(ids),
   );
+  const { imagesByKirtanId, error: imageError } = await timing.measure(
+    "lead-images",
+    () => fetchBhajanLeadSingerImagesByKirtanId(ids),
+  );
 
-  if (tagError) {
-    return jsonWithServerTiming({ error: tagError }, timing, { status: 500 });
+  if (tagError || imageError) {
+    return jsonWithServerTiming(
+      { error: tagError ?? imageError },
+      timing,
+      { status: 500 },
+    );
   }
 
   const bhajans: KirtanSummary[] = rows.map((k) => ({
@@ -173,6 +235,9 @@ export async function GET(req: Request) {
     type: k.type,
     title: k.title,
     lead_singer: k.lead_singer,
+    lead_singer_image_url: imagesByKirtanId.get(k.kirtan_id)?.url ?? null,
+    lead_singer_image_alt:
+      imagesByKirtanId.get(k.kirtan_id)?.alt_text ?? k.lead_singer,
     recorded_date: k.recorded_date,
     recorded_date_precision: k.recorded_date_precision ?? null,
     sanga: k.sanga,
@@ -189,6 +254,12 @@ export async function GET(req: Request) {
         type: featured.kirtan.type,
         title: featured.kirtan.title,
         lead_singer: featured.kirtan.lead_singer,
+        lead_singer_id: featured.kirtan.lead_singer_id ?? null,
+        lead_singer_image_url:
+          imagesByKirtanId.get(featured.kirtan.id)?.url ?? null,
+        lead_singer_image_alt:
+          imagesByKirtanId.get(featured.kirtan.id)?.alt_text ??
+          featured.kirtan.lead_singer,
         recorded_date: featured.kirtan.recorded_date,
         recorded_date_precision: featured.kirtan.recorded_date_precision ?? null,
         sanga: featured.kirtan.sanga,
@@ -202,6 +273,12 @@ export async function GET(req: Request) {
   return jsonWithServerTiming(
     {
       bhajans,
+      total_count: collectionKey === "HISTORICAL_TREASURES"
+        ? collectionCounts.historical_treasures
+        : collectionKey === "RARE_GEMS"
+          ? collectionCounts.rare_gems
+          : undefined,
+      collection_counts: collectionCounts,
       has_more: hasMore,
       has_before: hasBefore,
       next_cursor: nextCursor,

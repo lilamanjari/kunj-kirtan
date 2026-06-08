@@ -3,6 +3,7 @@ import type { LeadItem } from "@/types/explore";
 import type { KirtanType } from "@/types/kirtan";
 import type { LeadCounts } from "@/types/leads";
 import { compareLeadDirectoryItems } from "@/lib/server/occasionCurations";
+import { fetchPrimaryLeadSingerImages } from "@/lib/server/leadSingerImages";
 
 export const OTHER_LEAD_THRESHOLD = 2;
 export const OTHER_LEAD_ID = "others";
@@ -58,6 +59,19 @@ export async function fetchLeadDirectory() {
     };
   }
 
+  const leadIds = (leads ?? []).map((lead) => lead.id);
+  const { imagesByLeadSingerId, error: imagesError } =
+    await fetchPrimaryLeadSingerImages(leadIds);
+
+  if (imagesError) {
+    return {
+      leads: [] as LeadItem[],
+      otherLeadIds: [] as string[],
+      otherCounts: emptyLeadCounts(),
+      error: imagesError,
+    };
+  }
+
   const countsByLead = new Map<string, LeadCounts>();
   for (const row of (kirtans ?? []) as LeadTypeCountRow[]) {
     if (!row.lead_singer_id) continue;
@@ -89,6 +103,9 @@ export async function fetchLeadDirectory() {
       display_name: lead.display_name,
       slug: lead.slug,
       count: lead.total,
+      image_url: imagesByLeadSingerId.get(lead.id)?.url ?? null,
+      image_alt:
+        imagesByLeadSingerId.get(lead.id)?.alt_text ?? lead.display_name,
     }));
 
   const others = aggregates.filter(
@@ -110,6 +127,8 @@ export async function fetchLeadDirectory() {
       display_name: OTHER_LEAD_LABEL,
       slug: OTHER_LEAD_SLUG,
       count: otherTotal,
+      image_url: null,
+      image_alt: OTHER_LEAD_LABEL,
     });
   }
 

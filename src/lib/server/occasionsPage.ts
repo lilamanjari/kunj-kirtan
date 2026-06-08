@@ -5,6 +5,7 @@ type Occasion = {
   id: string;
   name: string;
   slug: string;
+  count: number;
 };
 
 const getCachedOccasionsPageData = unstable_cache(
@@ -21,8 +22,35 @@ const getCachedOccasionsPageData = unstable_cache(
       return { data: null, error: error.message, status: 500 };
     }
 
+    const occasionTags = (data ?? []) as Array<{
+      id: string;
+      name: string;
+      slug: string;
+    }>;
+    const slugs = occasionTags.map((occasion) => occasion.slug);
+    const { data: tagLinks, error: tagLinksError } = slugs.length
+      ? await supabase
+          .from("kirtan_tag_slugs")
+          .select("slug")
+          .in("slug", slugs)
+      : { data: [], error: null };
+
+    if (tagLinksError) {
+      return { data: null, error: tagLinksError.message, status: 500 };
+    }
+
+    const countsBySlug = new Map<string, number>();
+    for (const row of tagLinks ?? []) {
+      countsBySlug.set(row.slug, (countsBySlug.get(row.slug) ?? 0) + 1);
+    }
+
     return {
-      data: { occasions: (data ?? []) as Occasion[] },
+      data: {
+        occasions: occasionTags.map((occasion) => ({
+          ...occasion,
+          count: countsBySlug.get(occasion.slug) ?? 0,
+        })) as Occasion[],
+      },
       error: null,
       status: 200,
     };

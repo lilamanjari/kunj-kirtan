@@ -1,6 +1,10 @@
 import { supabase } from "@/lib/supabase";
 import { ALPHABET } from "@/lib/alphabets";
 import type { BhajanAlphabetIndex, BhajanCursor } from "@/types/bhajans";
+import {
+  fetchBhajanCollectionKirtanIds,
+  type BhajanCollectionKey,
+} from "@/lib/server/bhajanCollections";
 
 function normalizeSearchText(input: string) {
   return input
@@ -12,8 +16,21 @@ function normalizeSearchText(input: string) {
     .replace(/\s+/g, " ");
 }
 
-export async function buildBhajanAlphabetIndex(search: string | null) {
+export async function buildBhajanAlphabetIndex(
+  search: string | null,
+  collection: BhajanCollectionKey = "ALL",
+) {
   const normalizedSearch = search ? normalizeSearchText(search) : null;
+  const { ids: collectionIds, error: collectionError } =
+    await fetchBhajanCollectionKirtanIds(collection);
+
+  if (collectionError) {
+    throw new Error(collectionError);
+  }
+
+  if (collection !== "ALL" && (!collectionIds || collectionIds.length === 0)) {
+    return {} satisfies BhajanAlphabetIndex;
+  }
 
   const entries = await Promise.all(
     ALPHABET.map(async (letter) => {
@@ -27,6 +44,9 @@ export async function buildBhajanAlphabetIndex(search: string | null) {
 
       if (normalizedSearch) {
         query = query.ilike("searchable_text", `%${normalizedSearch}%`);
+      }
+      if (collection !== "ALL" && collectionIds) {
+        query = query.in("kirtan_id", collectionIds);
       }
 
       const { data, error } = await query;

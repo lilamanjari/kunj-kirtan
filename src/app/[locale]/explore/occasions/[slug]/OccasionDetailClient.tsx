@@ -16,6 +16,8 @@ import SubpageHeader from "@/lib/components/SubpageHeader";
 import FeaturedKirtanCard from "@/lib/components/FeaturedKirtanCard";
 import { occasionsPalette } from "@/lib/theme/pagePalettes";
 import { useDictionary } from "@/lib/i18n/LocaleProvider";
+import LeadSingerAvatar from "@/lib/components/LeadSingerAvatar";
+import { getKirtanCardText } from "@/lib/kirtanCardPresentation";
 
 export default function OccasionDetailClient({
   initialData,
@@ -52,11 +54,23 @@ export default function OccasionDetailClient({
 
   function renderKirtanList(kirtans: KirtanSummary[]) {
     return (
-      <ul className="mt-3 space-y-3">
+      <ul className="mt-2 space-y-0">
         {kirtans.map((k) => (
           <KirtanListItem
             key={k.id}
             kirtan={k}
+            leadingVisual={
+              <LeadSingerAvatar
+                name={k.lead_singer}
+                imageUrl={k.lead_singer_image_url}
+                alt={k.lead_singer_image_alt}
+              />
+            }
+            titleOverride={getKirtanCardText(k).title}
+            subtitleOverride={getKirtanCardText(k).subtitle}
+            useShortDate
+            truncateSangaAt={10}
+            stackActionsOnMobile
             isActive={isActive(k)}
             isPlaying={isPlaying(k)}
             isLoading={isLoading(k)}
@@ -90,7 +104,8 @@ export default function OccasionDetailClient({
           />
         </Suspense>
         <SubpageHeader
-          title={initialData.tag.name}
+          title={undefined}
+          subtitle={undefined}
           backLabel={dictionary.explore.occasionsBackLabel}
           backHref="/explore/occasions"
         />
@@ -132,15 +147,14 @@ export default function OccasionDetailClient({
                   : undefined
               }
               palette={occasionsPalette.featuredCard}
+              titleOverride={getKirtanCardText(featured).title}
+              subtitleOverride={getKirtanCardText(featured).subtitle}
             />
           </div>
         ) : null}
 
         <section>
           <div className="flex items-center justify-between gap-3">
-            <h2 className="text-xs uppercase tracking-wide text-stone-500">
-              {dictionary.explore.kirtans}
-            </h2>
             {visible.length > 1 ? (
               <div className="flex items-center gap-2">
                 <button
@@ -166,7 +180,7 @@ export default function OccasionDetailClient({
           </div>
 
           {pinnedKirtan ? (
-            <div className="mt-4">
+            <div className="mt-3">
               <p className="px-1 text-xs font-semibold uppercase tracking-[0.18em] text-[#9b6a5f]">
                 {dictionary.common.selected}
               </p>
@@ -179,7 +193,7 @@ export default function OccasionDetailClient({
               {dictionary.explore.noKirtansFound}
             </p>
           ) : (
-            <div className="mt-4 space-y-6">
+            <div className="mt-3 space-y-5">
               {bhajans.length > 0 ? (
                 <section>
                   <h3 className="px-1 text-sm font-semibold text-[#8c5c4a]">

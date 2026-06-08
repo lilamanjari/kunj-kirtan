@@ -1,4 +1,5 @@
 import { getDailyRareGem } from "@/lib/server/featured";
+import { fetchPrimaryLeadSingerImages } from "@/lib/server/leadSingerImages";
 import type { KirtanSummary } from "@/types/kirtan";
 import { ServerTiming, jsonWithServerTiming } from "@/lib/server/serverTiming";
 import { getDisplayKirtanTitle } from "@/lib/server/bhajanDisplayTitle";
@@ -131,12 +132,35 @@ export async function GET(
       );
     }
 
+    const { imagesByLeadSingerId, error: imageError } = await timing.measure(
+      "featured-image",
+      () =>
+        fetchPrimaryLeadSingerImages(
+          featuredData.lead_singer_id ? [featuredData.lead_singer_id] : [],
+        ),
+    );
+
+    if (imageError) {
+      return jsonWithServerTiming(
+        { error: imageError },
+        timing,
+        { status: 500 },
+      );
+    }
+
+    const leadSingerImage = featuredData.lead_singer_id
+      ? imagesByLeadSingerId.get(featuredData.lead_singer_id)
+      : null;
+
     featured = {
       id: featuredData.id,
       audio_url: featuredData.audio_url ?? "",
       type: featuredData.type,
       title: getDisplayKirtanTitle(featuredData),
       lead_singer: featuredData.lead_singer,
+      lead_singer_id: featuredData.lead_singer_id ?? null,
+      lead_singer_image_url: leadSingerImage?.url ?? null,
+      lead_singer_image_alt: leadSingerImage?.alt_text ?? featuredData.lead_singer,
       recorded_date: featuredData.recorded_date,
       recorded_date_precision: featuredData.recorded_date_precision ?? null,
       sanga: featuredData.sanga,

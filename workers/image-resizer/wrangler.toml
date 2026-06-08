@@ -1,0 +1,12 @@
+name = "kunjkirtan-image-resizer"
+main = "src/index.ts"
+compatibility_date = "2025-06-01"
+
+[vars]
+# Point this at the public origin that serves the original full-size files.
+# Keep it different from the Worker route itself to avoid request loops.
+ORIGINAL_IMAGES_BASE_URL = "https://origin-img.kunjkirtan.com"
+
+[[routes]]
+pattern = "img.kunjkirtan.com"
+custom_domain = true

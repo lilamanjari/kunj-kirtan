@@ -14,7 +14,25 @@ export const queueActiveClassName =
   "cursor-pointer border-[color:var(--theme-queue-border-active)] bg-[color:var(--theme-queue-bg-active)] text-[color:var(--theme-queue-text-active)]";
 
 export const featuredPlayButtonClassName =
-  "bg-gradient-to-r from-[color:var(--theme-player-green)] to-[color:var(--theme-player-green-mid)] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.25)] hover:from-[color:var(--theme-player-green-hover)] hover:to-[color:var(--theme-player-green-bright)]";
+  "bg-[color:var(--theme-player-green)] text-[color:var(--theme-player-icon)] shadow-[0_14px_30px_rgba(92,122,60,0.22)] hover:bg-[color:var(--theme-player-green-hover)]";
+
+export const playCircleButtonClassName =
+  "inline-flex items-center justify-center rounded-full border border-[color:var(--theme-green-surface-button-border)] bg-[color:var(--theme-player-green)] text-[color:var(--theme-player-icon)] shadow-[0_10px_22px_rgba(92,122,60,0.18)] transition group-hover:translate-x-0.5 group-hover:bg-[color:var(--theme-player-green-hover)]";
+
+export const neutralCircleButtonClassName =
+  "inline-flex items-center justify-center rounded-full border border-white/70 bg-white/74 text-[color:var(--theme-page-home-muted)] shadow-[0_8px_18px_rgba(150,109,84,0.08)] transition group-hover:translate-x-0.5";
+
+export const homeSectionEyebrowClassName =
+  "text-sm font-semibold uppercase tracking-[0.16em] text-[color:var(--theme-page-home-section-label)]";
+
+export const homeSurfaceCardClassName =
+  "border border-[color:var(--theme-page-home-border)] bg-[color:var(--theme-page-home-surface)] text-[color:var(--theme-page-home-text)] shadow-[0_18px_34px_var(--theme-page-home-shadow)]";
+
+export const homeSurfaceCardActiveClassName =
+  "ring-2 ring-[color:var(--theme-green-surface-ring)]";
+
+export const displayHeadingClassName =
+  "[font-family:var(--font-cormorant-garamond),serif] font-semibold tracking-[-0.01em]";
 
 export const audioProgressColor = "var(--theme-audio-progress)";
 

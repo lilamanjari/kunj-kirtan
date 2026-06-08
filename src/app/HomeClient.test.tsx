@@ -55,6 +55,7 @@ vi.mock("@/lib/audio/AudioPlayerContext", () => ({
 }));
 
 vi.mock("@/lib/i18n/LocaleProvider", () => ({
+  useLocale: () => "en",
   useDictionary: () => ({
     common: {
       discover: "Discover",

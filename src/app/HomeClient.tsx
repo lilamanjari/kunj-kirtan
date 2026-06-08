@@ -11,56 +11,109 @@ import HomeRecommendedStrip from "@/lib/components/HomeRecommendedStrip";
 import KirtanListItem from "@/lib/components/KirtanListItem";
 import KirtanDeepLinkHandler from "@/lib/components/KirtanDeepLinkHandler";
 import SharedKirtanFeature from "@/lib/components/SharedKirtanFeature";
-import {
-  greenSurfaceTheme,
-  homePalette,
-} from "@/lib/theme/pagePalettes";
+import { greenSurfaceTheme, homePalette } from "@/lib/theme/pagePalettes";
 import { radiusClassNames } from "@/lib/theme/radii";
 import Image from "next/image";
 import LocalizedLink from "@/lib/components/LocalizedLink";
-import { useDictionary } from "@/lib/i18n/LocaleProvider";
+import { useDictionary, useLocale } from "@/lib/i18n/LocaleProvider";
+import { SFIcon } from "@bradleyhodges/sfsymbols-react";
+import {
+  sfCalendar,
+  sfMusicMicrophone,
+  sfMusicNote,
+  sfMusicNoteList,
+} from "@bradleyhodges/sfsymbols";
+import {
+  displayHeadingClassName,
+  homeSectionEyebrowClassName,
+  neutralCircleButtonClassName,
+} from "@/lib/theme/componentThemes";
+import { formatDateLong, parseDateSafe } from "@/lib/utils/date";
+import LeadSingerAvatar from "@/lib/components/LeadSingerAvatar";
+import { getKirtanCardText } from "@/lib/kirtanCardPresentation";
 
 const exploreTileStyles: Record<
   string,
   {
-    backgroundImage: string;
-    overlay: string;
-    accent: string;
-    title: string;
+    icon: typeof sfMusicNote;
+    customIconSrc?: string;
+    customIcon?: "lead-microphone";
+    backgroundColor: string;
+    iconColor: string;
   }
 > = {
   MM: {
-    backgroundImage: "none", //"url('/Popular-background-2.jpg')",
-    overlay:
-      "linear-gradient(145deg, rgba(255,251,246,0.94) 0%, rgba(252,243,236,0.92) 56%, rgba(222,199,194,0.9) 100%)",
-    accent: "rgba(230, 213, 209, 0.32)",
-    title: "",
+    icon: sfMusicNote,
+    customIconSrc: "/nitai-gauranga-icon.svg",
+    backgroundColor: "var(--theme-page-home-discovery-rose)",
+    iconColor: "#b56f57",
   },
   BHJ: {
-    backgroundImage: "none", //"url('/Favorites Background.jpeg')",
-    overlay:
-      "linear-gradient(145deg, rgba(255, 250, 246,0.94) 0%, rgba(241,231,213,0.92) 56%, rgba(187,137,45,0.4) 100%)",
-    accent: "rgba(235, 220, 192, 0.34)",
-    title: "",
+    icon: sfMusicNoteList,
+    customIconSrc: "/harmonium.png",
+    backgroundColor: "var(--theme-page-home-discovery-gold)",
+    iconColor: "#8b7533",
   },
   LEADS: {
-    backgroundImage: "none", //"url('/Favorites Background.jpeg')",
-    overlay:
-      "linear-gradient(145deg, rgba(255,255,255,0.95) 0%, rgba(253,243,218,0.72) 56%, rgba(245,196,72,0.5) 100%)",
-    accent: "rgba(253, 243, 218, 0.34)",
-    title: "",
+    icon: sfMusicMicrophone,
+    backgroundColor: "var(--theme-page-home-discovery-sage)",
+    iconColor: "#4f806e",
   },
   OCCASIONS: {
-    backgroundImage: "none", //"url('/Popular-background-2.jpg')",
-    overlay:
-      "linear-gradient(145deg, rgba(250,236,236,0.75) 0%, rgba(253,243,218,0.5) 56%, rgba(206,69,69,0.2) 100%)",
-    accent: "rgba(245, 218, 218, 0.32)",
-    title: "",
+    icon: sfCalendar,
+    backgroundColor: "var(--theme-page-home-discovery-blush)",
+    iconColor: "#b56553",
   },
 };
 
+function formatDiscoverDetail(
+  id: string,
+  count: number | null,
+  fallbackLabel: string,
+) {
+  if (count === null) {
+    return fallbackLabel;
+  }
+
+  switch (id) {
+    case "MM":
+      return `${count} ${count === 1 ? "kirtan" : "kirtans"}`;
+    case "BHJ":
+      return `${count} ${count === 1 ? "bhajan" : "bhajans"}`;
+    case "LEADS":
+      return `${count} ${count === 1 ? "singer" : "singers"}`;
+    case "OCCASIONS":
+      return `${count} festivals and vratas`;
+    default:
+      return fallbackLabel;
+  }
+}
+
+function getDaysUntil(dateStr: string | null) {
+  const target = parseDateSafe(dateStr);
+  if (!target) return null;
+
+  const now = new Date();
+  const startOfToday = Date.UTC(
+    now.getUTCFullYear(),
+    now.getUTCMonth(),
+    now.getUTCDate(),
+  );
+  const startOfTarget = Date.UTC(
+    target.getUTCFullYear(),
+    target.getUTCMonth(),
+    target.getUTCDate(),
+  );
+
+  return Math.max(
+    0,
+    Math.ceil((startOfTarget - startOfToday) / (1000 * 60 * 60 * 24)),
+  );
+}
+
 export default function HomeClient({ data }: { data: HomeData }) {
   const dictionary = useDictionary();
+  const locale = useLocale();
   const {
     isPlaying,
     isLoading,
@@ -99,6 +152,43 @@ export default function HomeClient({ data }: { data: HomeData }) {
     LEADS: dictionary.explore.leadSingers,
     OCCASIONS: dictionary.explore.occasions,
   };
+  const entryPointDetails: Record<string, string> = {
+    MM: formatDiscoverDetail(
+      "MM",
+      data.entry_points?.find((item) => item.id === "MM")?.count ?? null,
+      "Kirtans",
+    ),
+    BHJ: formatDiscoverDetail(
+      "BHJ",
+      data.entry_points?.find((item) => item.id === "BHJ")?.count ?? null,
+      "Bhajans",
+    ),
+    LEADS: formatDiscoverDetail(
+      "LEADS",
+      data.entry_points?.find((item) => item.id === "LEADS")?.count ?? null,
+      "Singers",
+    ),
+    OCCASIONS: formatDiscoverDetail(
+      "OCCASIONS",
+      data.entry_points?.find((item) => item.id === "OCCASIONS")?.count ?? null,
+      "Festivals & vratas",
+    ),
+  };
+  const currentOccasionEndsInDays = getDaysUntil(
+    data.current_occasion?.endsAt ?? null,
+  );
+  const currentOccasionEndsLabel =
+    currentOccasionEndsInDays === null
+      ? null
+      : currentOccasionEndsInDays === 0
+        ? dictionary.home.currentVrataEndsToday
+        : dictionary.home.currentVrataEndsIn.replace(
+            "{days}",
+            String(currentOccasionEndsInDays),
+          );
+  const currentOccasionEndDate = data.current_occasion?.endsAt
+    ? formatDateLong(data.current_occasion.endsAt, "day", locale)
+    : null;
   function handleSharedKirtan(kirtan: KirtanSummary) {
     setPinnedKirtan(kirtan);
     setSharedKirtan(kirtan);
@@ -106,7 +196,7 @@ export default function HomeClient({ data }: { data: HomeData }) {
   }
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[linear-gradient(180deg,_#f5d7d0_0%,_#f6e4de_18%,_#f7ece7_42%,_#f8f2ef_100%)] text-stone-900">
+    <div className="relative min-h-screen overflow-hidden bg-[color:var(--theme-page-home-bg)] text-stone-900">
       <main className="relative z-10 mx-auto max-w-md space-y-6">
         <div className="relative">
           <Image
@@ -117,9 +207,9 @@ export default function HomeClient({ data }: { data: HomeData }) {
             priority
             className="h-auto w-full object-cover"
           />
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-36 bg-gradient-to-b from-transparent via-[#f2cdc4]/42 via-55% to-[#f6e4de]" />
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-b from-transparent to-[color:var(--theme-page-home-bg)]" />
         </div>
-        <div className="px-5 space-y-8 -mt-12">
+        <div className="-mt-10 space-y-8 px-5">
           <Suspense fallback={null}>
             <KirtanDeepLinkHandler
               kirtans={recentlyAdded}
@@ -156,11 +246,96 @@ export default function HomeClient({ data }: { data: HomeData }) {
               onToggleFavorite={toggleFavorite}
               isFavorited={isFavorited(primaryAction.kirtan.id)}
               palette={homePalette.featuredCard}
+              titleOverride={getKirtanCardText(primaryAction.kirtan).title}
+              subtitleOverride={getKirtanCardText(primaryAction.kirtan).subtitle}
             />
           )}
 
+          {data.current_occasion ? (
+            <section className="relative">
+              <LocalizedLink
+                href={`/explore/occasions/${data.current_occasion.slug}`}
+                className={`group relative block min-h-[15rem] overflow-hidden border shadow-[0_20px_42px_rgba(116,148,98,0.12)] backdrop-blur-sm transition hover:-translate-y-0.5 ${radiusClassNames.surface}`}
+                style={{
+                  backgroundColor: "var(--theme-page-home-occasion-surface)",
+                  borderColor: "var(--theme-page-home-occasion-border)",
+                  boxShadow: `0 20px 42px ${greenSurfaceTheme.shadowColor}`,
+                  color: "var(--theme-vrata-title)",
+                }}
+              >
+                <div className="absolute inset-0 overflow-hidden">
+                  <Image
+                    src="/Purushottama-Vrata.png"
+                    alt=""
+                    fill
+                    sizes="100vw"
+                    className="object-cover object-[76%_center]"
+                  />
+                </div>
+                <div
+                  className="absolute inset-0"
+                  style={{
+                    background:
+                      "linear-gradient(106deg, #EEF3E6 0%, #F3F7EE 43%, rgba(243,247,238,0.45) 61%, rgba(243,247,238,0.14) 74%, rgba(243,247,238,0) 86%)",
+                  }}
+                />
+
+                <div className="relative flex min-h-[15rem] items-end justify-between gap-4 px-5 py-5">
+                  <div className="flex min-h-full max-w-[66%] flex-1 flex-col justify-between">
+                    <p
+                      className={`text-[0.95rem] uppercase leading-none tracking-[0.16em] text-(--theme-vrata-label) ${displayHeadingClassName}`}
+                    >
+                      {data.current_occasion.header ??
+                        dictionary.home.currentVrata}
+                    </p>
+                    <h2
+                      className={`mt-3 text-[1.8rem] leading-[0.94] text-[color:var(--theme-vrata-title)] ${displayHeadingClassName}`}
+                    >
+                      {data.current_occasion.name}
+                    </h2>
+                    <p className="mt-2 max-w-[14rem] text-sm font-medium leading-[1.45] text-[color:var(--theme-vrata-text)]">
+                      {data.current_occasion.subtitle ??
+                        dictionary.home.currentVrataSubtitle}
+                    </p>
+
+                    {currentOccasionEndsLabel ? (
+                      <div className="mt-5 flex items-center gap-3">
+                        <span className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[color:var(--theme-vrata-title)] text-white shadow-[0_10px_22px_rgba(63,94,47,0.24)]">
+                          <SFIcon
+                            icon={sfCalendar}
+                            className="h-5.5 w-5.5 opacity-100"
+                          />
+                        </span>
+                        <div className="min-w-0">
+                          <p className="text-[1.05rem] font-medium text-[color:var(--theme-vrata-text)]">
+                            {currentOccasionEndsLabel}
+                          </p>
+                          {currentOccasionEndDate ? (
+                            <p className="mt-0.5 text-sm text-[color:var(--theme-vrata-text)]">
+                              {currentOccasionEndDate}
+                            </p>
+                          ) : null}
+                        </div>
+                      </div>
+                    ) : null}
+                  </div>
+                  <span
+                    className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full border bg-white/92 text-xl backdrop-blur-sm transition group-hover:translate-x-0.5"
+                    style={{
+                      borderColor: greenSurfaceTheme.buttonBorderColor,
+                      color: greenSurfaceTheme.buttonTextColor,
+                      boxShadow: `0 8px 18px ${greenSurfaceTheme.buttonShadowColor}`,
+                    }}
+                  >
+                    →
+                  </span>
+                </div>
+              </LocalizedLink>
+            </section>
+          ) : null}
+
           <section>
-            <h2 className="px-5 text-sm font-semibold uppercase tracking-[0.16em] text-stone-500">
+            <h2 className={`px-1 ${homeSectionEyebrowClassName}`}>
               {dictionary.common.discover}
             </h2>
 
@@ -174,26 +349,52 @@ export default function HomeClient({ data }: { data: HomeData }) {
                     <LocalizedLink
                       key={e.id}
                       href={href}
-                      className={`group relative flex min-h-[8.75rem] items-center justify-center overflow-hidden border px-4 py-4 text-center shadow-[0_12px_28px_rgba(156,113,93,0.12)] transition hover:-translate-y-0.5 hover:shadow-[0_16px_34px_rgba(156,113,93,0.16)] ${radiusClassNames.tile}`}
+                      className={`group relative flex min-h-[7.75rem] flex-col justify-between overflow-hidden border px-4 py-3 text-left shadow-[0_12px_28px_rgba(156,113,93,0.08)] transition hover:-translate-y-0.5 hover:shadow-[0_16px_34px_rgba(156,113,93,0.12)] ${radiusClassNames.tile}`}
                       style={{
-                        backgroundImage: `${tileStyle?.overlay ?? "linear-gradient(180deg, rgba(255,250,246,0.9) 0%, rgba(247,239,235,0.86) 100%)"}, ${tileStyle?.backgroundImage ?? "none"}`,
-                        backgroundSize: "cover",
-                        backgroundPosition: "center",
-                        borderColor:
-                          tileStyle?.accent ?? "rgba(214, 185, 170, 0.38)",
+                        backgroundColor: tileStyle?.backgroundColor,
+                        borderColor: "var(--theme-page-home-border)",
                       }}
                     >
-                      <div
-                        className="pointer-events-none absolute inset-0 opacity-90 transition group-hover:opacity-100"
-                        style={{
-                          background:
-                            "radial-gradient(circle at top, rgba(255,255,255,0.3), transparent 45%)",
-                        }}
-                      />
-
-                      <span className="relative max-w-[8ch] text-[1.48rem] font-semibold leading-[1.05] text-[#5a443d]">
-                        {entryPointTitles[e.id] ?? tileStyle?.title ?? e.label}
-                      </span>
+                      {tileStyle?.customIconSrc ? (
+                        <Image
+                          src={tileStyle.customIconSrc}
+                          alt=""
+                          width={32}
+                          height={20}
+                          className={`w-auto self-start ${
+                            e.id === "BHJ"
+                              ? "-ml-1 -mt-2 h-12 mix-blend-multiply"
+                              : e.id === "LEADS"
+                                ? "h-9 opacity-85"
+                                : "h-7"
+                          }`}
+                        />
+                      ) : (
+                        <SFIcon
+                          icon={tileStyle?.icon ?? sfMusicNote}
+                          className={
+                            e.id === "OCCASIONS" ? "h-7 w-7" : "h-8 w-8"
+                          }
+                          style={{ color: tileStyle?.iconColor }}
+                        />
+                      )}
+                      <div className="relative mt-4 flex w-full items-end justify-between gap-3">
+                        <div className="min-w-0">
+                          <span
+                            className={`block max-w-[11ch] text-[1.22rem] leading-[0.98] text-[color:var(--theme-page-home-text)] ${displayHeadingClassName}`}
+                          >
+                            {entryPointTitles[e.id] ?? e.label}
+                          </span>
+                          <span className="mt-1.5 block max-w-[10ch] text-[0.84rem] leading-[1.2] text-[color:var(--theme-page-home-muted)]">
+                            {entryPointDetails[e.id]}
+                          </span>
+                        </div>
+                        <span
+                          className={`h-10 w-10 shrink-0 ${neutralCircleButtonClassName}`}
+                        >
+                          →
+                        </span>
+                      </div>
                     </LocalizedLink>
                   );
                 }
@@ -211,58 +412,7 @@ export default function HomeClient({ data }: { data: HomeData }) {
             </div>
           </section>
 
-          {data.current_occasion ? (
-            <section className="relative">
-              <LocalizedLink
-                href={`/explore/occasions/${data.current_occasion.slug}`}
-                className={`group block border border-[#cfe0c6] p-6 text-[#4f5f45] shadow-[0_20px_42px_rgba(116,148,98,0.18)] backdrop-blur-sm transition hover:-translate-y-0.5 ${radiusClassNames.surface}`}
-                style={{
-                  backgroundColor: greenSurfaceTheme.backgroundColor,
-                  backgroundImage: greenSurfaceTheme.gradient,
-                  borderColor: greenSurfaceTheme.borderColor,
-                  boxShadow: `0 20px 42px ${greenSurfaceTheme.shadowColor}`,
-                  color: greenSurfaceTheme.textColor,
-                }}
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <p
-                      className={`text-xs font-semibold uppercase tracking-[0.16em] ${greenSurfaceTheme.labelClassName}`}
-                    >
-                      {data.current_occasion.header ??
-                        dictionary.home.currentVrata}
-                    </p>
-                    <p
-                      className={`mt-2 text-sm font-medium ${greenSurfaceTheme.contextClassName}`}
-                    >
-                      {data.current_occasion.subtitle ??
-                        dictionary.home.currentVrataSubtitle}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="mt-5 flex items-center justify-between gap-4">
-                  <div>
-                    <h2 className="text-[1.9rem] font-semibold leading-[1.05] text-[#445643]">
-                      {data.current_occasion.name}
-                    </h2>
-                  </div>
-                  <span
-                    className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full border bg-white/88 text-xl backdrop-blur-sm transition group-hover:translate-x-0.5"
-                    style={{
-                      borderColor: greenSurfaceTheme.buttonBorderColor,
-                      color: greenSurfaceTheme.buttonTextColor,
-                      boxShadow: `0 8px 18px ${greenSurfaceTheme.buttonShadowColor}`,
-                    }}
-                  >
-                    →
-                  </span>
-                </div>
-              </LocalizedLink>
-            </section>
-          ) : null}
-
-          <div className="space-y-0">
+          <div className="space-y-3">
             <HomeFavoritesStrip
               favorites={favorites}
               loaded={favoritesLoaded}
@@ -272,16 +422,28 @@ export default function HomeClient({ data }: { data: HomeData }) {
           </div>
 
           <section>
-            <h2 className="text-sm font-semibold uppercase tracking-[0.16em] text-stone-500">
+            <h2 className={homeSectionEyebrowClassName}>
               {dictionary.common.recentlyAdded}
             </h2>
 
-            <ul className="mt-3 space-y-3">
+            <ul className="mt-3 space-y-0">
               {renderedRecentlyAdded.map((k) => {
                 return (
                   <KirtanListItem
                     key={k.id}
                     kirtan={k}
+                    leadingVisual={
+                      <LeadSingerAvatar
+                        name={k.lead_singer}
+                        imageUrl={k.lead_singer_image_url}
+                        alt={k.lead_singer_image_alt}
+                      />
+                    }
+                    titleOverride={getKirtanCardText(k).title}
+                    subtitleOverride={getKirtanCardText(k).subtitle}
+                    useShortDate
+                    truncateSangaAt={10}
+                    stackActionsOnMobile
                     isActive={isActive(k)}
                     isPlaying={isPlaying(k)}
                     isLoading={isLoading(k)}

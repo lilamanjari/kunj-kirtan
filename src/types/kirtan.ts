@@ -25,6 +25,9 @@ export type KirtanSummary = {
   type: KirtanType;
   title: string;
   lead_singer: string | null;
+  lead_singer_id?: string | null;
+  lead_singer_image_url?: string | null;
+  lead_singer_image_alt?: string | null;
   recorded_date: string | null;
   recorded_date_precision?: RecordedDatePrecision | null;
   sanga: string;
@@ -47,6 +50,7 @@ export type PlayableBhajanTitleRow = {
   audio_url: string | null;
   type: KirtanType;
   lead_singer: string | null;
+  lead_singer_id?: string | null;
   recorded_date: string | null;
   recorded_date_precision?: RecordedDatePrecision | null;
   sanga: string;

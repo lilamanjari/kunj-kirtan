@@ -2,10 +2,26 @@ import type { KirtanSummary } from "@/types/kirtan";
 
 type RailCardPalette = {
   borderTint: string;
-  topGlow: string;
-  bottomTint: string;
-  midGlow: string;
+  backgroundTint: string;
 };
+
+const railCardArtworkFiles = [
+  "/garland.png",
+  "/harmonium-art.png",
+  "/karatalas.png",
+  "/lotus.png",
+  "/peacockfeather.png",
+  "/butterpot.png",
+  "/vrindavan.png",
+  "/katyayani.png",
+  "/house-program.png",
+  "/ladies-kirtan.png",
+  "/mrdanga.png",
+  "/kartika.png",
+  "/keshava-vrata.png",
+  "/yamuna.png",
+  "/kund.png",
+] as const;
 
 export function formatKirtanDuration(seconds?: number | null) {
   if (seconds === null || seconds === undefined || !Number.isFinite(seconds)) {
@@ -46,34 +62,30 @@ export function getKirtanTintHue(kirtan: Pick<KirtanSummary, "id" | "type">) {
 
 export function getRailCardPalette(
   kirtan: Pick<KirtanSummary, "id" | "type" | "is_rare_gem">,
-  opacity = 0.9,
 ): RailCardPalette {
   if (kirtan.is_rare_gem) {
     return {
-      borderTint: "rgba(251, 191, 36, 0.65)",
-      topGlow: `rgba(255, 251, 242, ${opacity})`,
-      bottomTint: `rgba(255, 252, 246, ${opacity})`,
-      midGlow: `rgba(255,255,255,${opacity})`,
+      borderTint: "var(--theme-page-home-rare-gem-border)",
+      backgroundTint: "rgba(255, 250, 241, 0.96)",
     };
   }
 
-  const tintHue = getKirtanTintHue(kirtan);
-
   return {
-    borderTint: `hsla(${tintHue}, 72%, 82%, 1)`,
-    topGlow: `hsla(${tintHue}, 70%, 98%, ${opacity})`,
-    bottomTint: `hsla(${tintHue}, 58%, 96%, ${opacity})`,
-    midGlow: `rgba(255,255,255,${opacity})`,
+    borderTint: "var(--theme-page-home-border)",
+    backgroundTint: "var(--theme-page-home-surface-strong)",
   };
+}
+
+export function getRailCardArtworkSrc(kirtan: Pick<KirtanSummary, "id">) {
+  return railCardArtworkFiles[hashHue(kirtan.id) % railCardArtworkFiles.length];
 }
 
 export function getListItemBorderTint(
   kirtan: Pick<KirtanSummary, "id" | "type" | "is_rare_gem">,
 ) {
   if (kirtan.is_rare_gem) {
-    return "rgba(251, 191, 36, 0.65)";
+    return "var(--theme-page-home-rare-gem-border)";
   }
 
-  const tintHue = getKirtanTintHue(kirtan);
-  return `hsla(${tintHue}, 70%, 85%, 1)`;
+  return "var(--theme-page-home-border)";
 }

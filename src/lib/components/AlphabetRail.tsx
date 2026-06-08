@@ -47,7 +47,7 @@ export default function AlphabetRail({
                 stopRailTap(event);
                 onReset();
               }}
-              className="mb-1 flex h-6 w-6 items-center justify-center rounded-full text-[0.62rem] font-semibold leading-none text-[#9b6a5f] transition hover:bg-[#f7e7df] hover:text-[#7f5146]"
+              className="mb-1 flex h-6 w-6 items-center justify-center rounded-full font-[family:var(--font-inter)] text-[0.62rem] font-semibold leading-none text-[#9b6a5f] transition hover:bg-[#f7e7df] hover:text-[#7f5146]"
               aria-label={dictionary.actions.backToTop}
               title={dictionary.actions.backToTop}
             >
@@ -77,7 +77,7 @@ export default function AlphabetRail({
                   onSelectLetter(letter);
                 }}
                 disabled={!isAvailable}
-                className={`relative flex h-5 w-5 items-center justify-center rounded-full text-[0.58rem] font-semibold leading-none transition ${
+                className={`relative flex h-5 w-5 items-center justify-center rounded-full font-[family:var(--font-inter)] text-[0.58rem] font-semibold leading-none transition ${
                   isAvailable
                     ? isPending
                       ? "bg-[#ead5db] text-[#7f5146] shadow-sm"

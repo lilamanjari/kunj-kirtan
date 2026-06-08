@@ -2,6 +2,9 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { GET } from "./route";
 
 const fetchKirtanTagFlagsMock = vi.fn();
+const fetchBhajanLeadSingerImagesByKirtanIdMock = vi.fn();
+const fetchBhajanCollectionCountsMock = vi.fn();
+const fetchBhajanCollectionKirtanIdsMock = vi.fn();
 
 vi.mock("@/lib/server/kirtanTags", () => ({
   fetchKirtanTagFlags: (...args: unknown[]) => fetchKirtanTagFlagsMock(...args),
@@ -12,6 +15,18 @@ vi.mock("@/lib/server/featured", () => ({
     kirtan: null,
     error: null,
   }),
+}));
+
+vi.mock("@/lib/server/bhajanLeadImages", () => ({
+  fetchBhajanLeadSingerImagesByKirtanId: (...args: unknown[]) =>
+    fetchBhajanLeadSingerImagesByKirtanIdMock(...args),
+}));
+
+vi.mock("@/lib/server/bhajanCollections", () => ({
+  fetchBhajanCollectionCounts: (...args: unknown[]) =>
+    fetchBhajanCollectionCountsMock(...args),
+  fetchBhajanCollectionKirtanIds: (...args: unknown[]) =>
+    fetchBhajanCollectionKirtanIdsMock(...args),
 }));
 
 type MockResult = { data: unknown; error: null | { message: string } };
@@ -56,9 +71,27 @@ function createMockBuilder(result: MockResult): MockBuilder {
 beforeEach(() => {
   fromMock.mockClear();
   fetchKirtanTagFlagsMock.mockReset();
+  fetchBhajanLeadSingerImagesByKirtanIdMock.mockReset();
+  fetchBhajanCollectionCountsMock.mockReset();
+  fetchBhajanCollectionKirtanIdsMock.mockReset();
   fetchKirtanTagFlagsMock.mockResolvedValue({
     harmoniumIds: new Set<string>(),
     rareGemIds: new Set<string>(),
+    error: null,
+  });
+  fetchBhajanLeadSingerImagesByKirtanIdMock.mockResolvedValue({
+    imagesByKirtanId: new Map<string, never>(),
+    error: null,
+  });
+  fetchBhajanCollectionCountsMock.mockResolvedValue({
+    counts: {
+      historical_treasures: 0,
+      rare_gems: 0,
+    },
+    error: null,
+  });
+  fetchBhajanCollectionKirtanIdsMock.mockResolvedValue({
+    ids: null,
     error: null,
   });
 });

@@ -110,6 +110,7 @@ describe("GET /api/explore/maha-mantras", () => {
     const json = await res.json();
 
     expect(json.mantras).toHaveLength(2);
+    expect(json.total_count).toBe(2);
     expect(json.has_more).toBe(true);
     expect(json.next_cursor).toEqual({
       recorded_date: "2020-01-02",

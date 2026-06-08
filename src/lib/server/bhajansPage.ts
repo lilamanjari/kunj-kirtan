@@ -5,6 +5,8 @@ import { fetchKirtanTagFlags } from "@/lib/server/kirtanTags";
 import { getDailyRareGem } from "@/lib/server/featured";
 import { unstable_cache } from "next/cache";
 import { buildBhajanAlphabetIndex } from "@/lib/server/bhajanAlphabet";
+import { fetchBhajanLeadSingerImagesByKirtanId } from "@/lib/server/bhajanLeadImages";
+import { fetchBhajanCollectionCounts } from "@/lib/server/bhajanCollections";
 
 const getCachedBhajanAlphabetIndex = unstable_cache(
   async () => buildBhajanAlphabetIndex(null),
@@ -40,8 +42,22 @@ const getCachedBhajansPageData = unstable_cache(
       .order("browse_id", { ascending: true })
       .limit(21);
 
-    if (error) {
-      return { data: null, error: error.message, status: 500 };
+    const { count: totalCount, error: countError } = await supabase
+      .from("playable_bhajan_titles")
+      .select("browse_id", { count: "exact", head: true });
+    const { counts: collectionCounts, error: collectionCountsError } =
+      await fetchBhajanCollectionCounts();
+
+    if (error || countError || collectionCountsError || !collectionCounts) {
+      return {
+        data: null,
+        error:
+          error?.message ??
+          countError?.message ??
+          collectionCountsError ??
+          "Failed to load bhajans",
+        status: 500,
+      };
     }
 
     const rows = ((data ?? []) as PlayableBhajanTitleRow[]).slice(0, 20);
@@ -57,9 +73,11 @@ const getCachedBhajansPageData = unstable_cache(
     }
     const { harmoniumIds, rareGemIds, error: tagError } =
       await fetchKirtanTagFlags(ids);
+    const { imagesByKirtanId, error: imageError } =
+      await fetchBhajanLeadSingerImagesByKirtanId(ids);
 
-    if (tagError) {
-      return { data: null, error: tagError, status: 500 };
+    if (tagError || imageError) {
+      return { data: null, error: tagError ?? imageError ?? "Unknown error", status: 500 };
     }
 
     const bhajans: KirtanSummary[] = rows.map((k) => ({
@@ -69,6 +87,9 @@ const getCachedBhajansPageData = unstable_cache(
       type: k.type,
       title: k.title,
       lead_singer: k.lead_singer,
+      lead_singer_image_url: imagesByKirtanId.get(k.kirtan_id)?.url ?? null,
+      lead_singer_image_alt:
+        imagesByKirtanId.get(k.kirtan_id)?.alt_text ?? k.lead_singer,
       recorded_date: k.recorded_date,
       recorded_date_precision: k.recorded_date_precision ?? null,
       sanga: k.sanga,
@@ -85,6 +106,12 @@ const getCachedBhajansPageData = unstable_cache(
           type: featured.kirtan.type,
           title: featured.kirtan.title,
           lead_singer: featured.kirtan.lead_singer,
+          lead_singer_id: featured.kirtan.lead_singer_id ?? null,
+          lead_singer_image_url:
+            imagesByKirtanId.get(featured.kirtan.id)?.url ?? null,
+          lead_singer_image_alt:
+            imagesByKirtanId.get(featured.kirtan.id)?.alt_text ??
+            featured.kirtan.lead_singer,
           recorded_date: featured.kirtan.recorded_date,
           recorded_date_precision: featured.kirtan.recorded_date_precision ?? null,
           sanga: featured.kirtan.sanga,
@@ -98,6 +125,8 @@ const getCachedBhajansPageData = unstable_cache(
     return {
       data: {
         bhajans,
+        total_count: totalCount ?? 0,
+        collection_counts: collectionCounts,
         has_more: hasMore,
         has_before: false,
         next_cursor: nextCursor,

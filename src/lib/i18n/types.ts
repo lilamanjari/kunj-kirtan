@@ -39,10 +39,13 @@ export type AppDictionary = {
     duration10To20: string;
     duration20To30: string;
     durationOver30: string;
+    mahaMantrasCount: string;
   };
   home: {
     currentVrata: string;
     currentVrataSubtitle: string;
+    currentVrataEndsIn: string;
+    currentVrataEndsToday: string;
     favoritesSubtitle: string;
     recommended: string;
     recommendedSubtitle: string;
