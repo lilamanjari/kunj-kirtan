@@ -414,7 +414,7 @@ export default function LeadPageClient({
                     rounded-full px-4 py-1.5 text-xs font-medium transition
                     ${
                       active
-                        ? "bg-[color:var(--theme-player-green)] text-white shadow-sm"
+                        ? "bg-(--theme-player-green) text-white shadow-sm"
                         : "border border-[#efd4cb] bg-white text-[#7e665c] hover:bg-[#fff8f4]"
                     }
                   `}
@@ -427,31 +427,6 @@ export default function LeadPageClient({
         ) : null}
 
         <section className="-mt-7">
-          <div className="flex items-center justify-end gap-3">
-            {visible.length > 1 ? (
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => playCollection(visible)}
-                  aria-label={dictionary.actions.playAll}
-                  title={dictionary.actions.playAll}
-                  className="flex h-8 w-8 items-center justify-center rounded-full border border-[#e5d7cf] bg-white text-[#9b7466] shadow-sm hover:bg-[#fff8f4]"
-                >
-                  <SFIcon icon={sfPlaySquareStackFill} className="h-4 w-4" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => playCollection(visible, { shuffle: true })}
-                  aria-label={dictionary.actions.shuffle}
-                  title={dictionary.actions.shuffle}
-                  className="flex h-8 w-8 items-center justify-center rounded-full border border-[#d7e7d8] bg-white text-[#6f9873] shadow-sm hover:bg-[#f5fbf5]"
-                >
-                  <SFIcon icon={sfShuffleCircle} className="h-4 w-4" />
-                </button>
-              </div>
-            ) : null}
-          </div>
-
           {isListLoading ? (
             <div className="mt-2 rounded-xl border border-dashed border-[#e5d7cf] bg-white/88 px-4 py-6">
               <div className="space-y-3">
@@ -468,7 +443,7 @@ export default function LeadPageClient({
               {dictionary.explore.noKirtansFound}
             </p>
           ) : (
-            <div className="-mt-1 space-y-5">
+            <div className="mt-13 space-y-5">
               {groupedKirtans.map((group) => (
                 <section key={group.year} className="space-y-2">
                   <div className="flex items-center gap-3 px-1">
@@ -478,6 +453,38 @@ export default function LeadPageClient({
                       {group.year}
                     </h3>
                     <div className="h-px flex-1 bg-gradient-to-r from-[rgba(214,167,137,0.55)] to-transparent" />
+                    <div className="flex items-center justify-end gap-3">
+                      {visible.length > 1 ? (
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => playCollection(visible)}
+                            aria-label={dictionary.actions.playAll}
+                            title={dictionary.actions.playAll}
+                            className="flex h-8 w-8 items-center justify-center rounded-full border border-[#e5d7cf] bg-white text-[#9b7466] shadow-sm hover:bg-[#fff8f4]"
+                          >
+                            <SFIcon
+                              icon={sfPlaySquareStackFill}
+                              className="h-4 w-4"
+                            />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              playCollection(visible, { shuffle: true })
+                            }
+                            aria-label={dictionary.actions.shuffle}
+                            title={dictionary.actions.shuffle}
+                            className="flex h-8 w-8 items-center justify-center rounded-full border border-[#d7e7d8] bg-white text-[#6f9873] shadow-sm hover:bg-[#f5fbf5]"
+                          >
+                            <SFIcon
+                              icon={sfShuffleCircle}
+                              className="h-4 w-4"
+                            />
+                          </button>
+                        </div>
+                      ) : null}
+                    </div>
                   </div>
                   <ul className="space-y-0">
                     {group.items.map((k) => (

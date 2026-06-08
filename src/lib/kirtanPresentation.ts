@@ -5,6 +5,23 @@ type RailCardPalette = {
   backgroundTint: string;
 };
 
+const railCardArtworkFiles = [
+  "/garland.png",
+  "/harmonium-art.png",
+  "/karatalas.png",
+  "/lotus.png",
+  "/peacockfeather.png",
+  "/butterpot.png",
+  "/vrindavan.png",
+  "/katyayani.png",
+  "/house-program.png",
+  "/ladies-kirtan.png",
+  "/mrdanga.png",
+  "/kartika.png",
+  "/keshava-vrata.png",
+  "/yamuna.png",
+] as const;
+
 export function formatKirtanDuration(seconds?: number | null) {
   if (seconds === null || seconds === undefined || !Number.isFinite(seconds)) {
     return "";
@@ -56,6 +73,10 @@ export function getRailCardPalette(
     borderTint: "var(--theme-page-home-border)",
     backgroundTint: "var(--theme-page-home-surface-strong)",
   };
+}
+
+export function getRailCardArtworkSrc(kirtan: Pick<KirtanSummary, "id">) {
+  return railCardArtworkFiles[hashHue(kirtan.id) % railCardArtworkFiles.length];
 }
 
 export function getListItemBorderTint(

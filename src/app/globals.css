@@ -42,7 +42,7 @@
   --theme-audio-queue-pill-bg: var(--theme-player-green-soft);
   --theme-audio-queue-pill-text: var(--theme-player-green);
   --theme-page-home-bg: #fbf4ef;
-  --theme-page-home-surface: #fcfaf8;
+  --theme-page-home-surface: linear-gradient(180deg, #f8f2ec 0%, #f4ede7 100%);
   --theme-page-home-surface-strong: #fffaf5;
   --theme-page-home-border: #e8ddd5;
   --theme-page-home-shadow: rgba(150, 109, 84, 0.12);
