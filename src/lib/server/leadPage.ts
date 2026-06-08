@@ -169,7 +169,7 @@ const getCachedOtherLeadPageData = unstable_cache(
       error: tagError,
     } = await fetchKirtanTagFlags(ids);
     const leadSingerIds = [
-      leadId,
+      ...otherLeadIds,
       ...rows.map((k) => k.lead_singer_id).filter(Boolean),
       featuredData?.lead_singer_id,
     ].filter((value): value is string => Boolean(value));

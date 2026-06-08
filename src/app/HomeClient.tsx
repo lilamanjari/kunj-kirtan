@@ -200,7 +200,7 @@ export default function HomeClient({ data }: { data: HomeData }) {
       <main className="relative z-10 mx-auto max-w-md space-y-6">
         <div className="relative">
           <Image
-            src="/KunjKirtan-SrilaGurudeva-Header.jpeg"
+            src="/KunjKirtanHeader2.png"
             alt="Kunj Kirtan header artwork"
             width={1200}
             height={520}
@@ -247,7 +247,9 @@ export default function HomeClient({ data }: { data: HomeData }) {
               isFavorited={isFavorited(primaryAction.kirtan.id)}
               palette={homePalette.featuredCard}
               titleOverride={getKirtanCardText(primaryAction.kirtan).title}
-              subtitleOverride={getKirtanCardText(primaryAction.kirtan).subtitle}
+              subtitleOverride={
+                getKirtanCardText(primaryAction.kirtan).subtitle
+              }
             />
           )}
 
