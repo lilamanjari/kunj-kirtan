@@ -26,6 +26,20 @@ class LeadPageNotFoundError extends Error {}
 
 class LeadPageDataError extends Error {}
 
+type LeadSlugLookupRow = {
+  id: string;
+  display_name: string;
+  home_sanga: string | null;
+  sangas:
+    | {
+        name: string | null;
+      }
+    | Array<{
+        name: string | null;
+      }>
+    | null;
+};
+
 function isTransientFetchFailure(error: unknown) {
   if (!(error instanceof Error)) return false;
   return error.message.includes("fetch failed");
@@ -347,12 +361,13 @@ async function loadLeadPageData(slug: string): Promise<{
     return { data: null, error: "Lead singer not found", status: 404 };
   }
 
-  const homeSangaName = Array.isArray(lead.sangas)
-    ? lead.sangas[0]?.name ?? null
-    : lead.sangas?.name ?? null;
+  const typedLead = lead as LeadSlugLookupRow;
+  const homeSangaName = Array.isArray(typedLead.sangas)
+    ? typedLead.sangas[0]?.name ?? null
+    : typedLead.sangas?.name ?? null;
   const data = await getCachedSingleLeadPageData(
-    lead.id,
-    lead.display_name,
+    typedLead.id,
+    typedLead.display_name,
     homeSangaName,
   );
   return { data, error: null, status: 200 };
