@@ -96,7 +96,7 @@ export default function FeaturedKirtanCard({
     "border border-[color:var(--theme-page-home-border)] bg-[color:var(--theme-page-home-surface)] text-[color:var(--theme-page-home-text)] shadow-[0_18px_34px_var(--theme-page-home-shadow)]";
   const cardToneStyle = palette?.cardStyle;
   const backgroundArtworkSrc = buildTransformedImageUrl(
-    buildBucketImageUrl("page-art/home-featured-background.png"),
+    buildBucketImageUrl("page-art/vrindavan-background.png"),
     {
       width: 1200,
       height: 720,

@@ -102,15 +102,16 @@ export default function KirtanListItem({
     <li
       onClick={onToggle}
       className={`
-        group relative flex cursor-pointer items-start gap-3 border px-4 py-1.5 shadow-[0_14px_30px_rgba(120,53,15,0.10)] transition ${radiusClassNames.card}
+        group relative z-0 flex cursor-pointer items-start gap-3 overflow-visible border px-4 py-1.5 shadow-[0_14px_30px_rgba(120,53,15,0.10)] transition ${radiusClassNames.card}
         ${cardBackground}
         ${
           kirtan.is_rare_gem
-            ? "after:absolute after:left-5 after:right-28 after:top-0 after:h-px after:bg-gradient-to-r after:from-transparent after:via-[color:var(--theme-page-home-rare-gem-sheen)] after:to-transparent before:absolute before:inset-0 before:bg-[radial-gradient(circle_at_top_right,_var(--theme-page-home-rare-gem-glow),_transparent_38%)] before:opacity-80 before:content-['']"
+            ? "after:pointer-events-none after:absolute after:left-5 after:right-28 after:top-0 after:h-px after:bg-gradient-to-r after:from-transparent after:via-[color:var(--theme-page-home-rare-gem-sheen)] after:to-transparent before:pointer-events-none before:absolute before:inset-0 before:bg-[radial-gradient(circle_at_top_right,_var(--theme-page-home-rare-gem-glow),_transparent_38%)] before:opacity-80 before:content-['']"
             : ""
         }
         ${isActive && isPlaying ? "animate-breathe" : ""}
         ${isActive && !isPlaying ? "opacity-90" : ""}
+        ${isActive ? "z-20" : ""}
       `}
       style={{
         borderColor: borderTint,
@@ -125,7 +126,7 @@ export default function KirtanListItem({
           {leadingVisual}
         </div>
       ) : null}
-      <div className="min-w-0 flex-1">
+      <div className="relative z-[2] min-w-0 flex-1">
         <div className="flex items-start justify-between gap-0">
           <div className="min-w-0 flex-1">
             <p
@@ -172,7 +173,7 @@ export default function KirtanListItem({
             <span className="truncate">{metadataText}</span>
           </div>
           <div
-            className={`flex shrink-0 items-center gap-1 ${
+            className={`relative z-[3] flex shrink-0 items-center gap-1 ${
               stackActionsOnMobile ? "col-start-2 row-start-1 self-end sm:self-auto" : ""
             }`}
           >
@@ -248,7 +249,16 @@ export default function KirtanListItem({
                 {isQueued ? "✓" : "+"}
               </button>
             ) : null}
-            <span className={`h-7 w-7 shrink-0 ${playCircleButtonClassName}`}>
+            <button
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation();
+                onToggle();
+              }}
+              className={`h-7 w-7 shrink-0 ${playCircleButtonClassName}`}
+              aria-label={dictionary.actions.playOrPause}
+              title={dictionary.actions.playOrPause}
+            >
               {isActive && isLoading ? (
                 <span className="block h-3 w-3 animate-spin rounded-full border-2 border-stone-300 border-t-stone-600" />
               ) : isActive && isPlaying ? (
@@ -256,7 +266,7 @@ export default function KirtanListItem({
               ) : (
                 <SFIcon icon={sfPlayFill} className="h-3 w-3 transition" />
               )}
-            </span>
+            </button>
           </div>
         </div>
       </div>
