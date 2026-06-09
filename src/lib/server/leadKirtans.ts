@@ -2,12 +2,12 @@ import { supabase } from "@/lib/supabase";
 import { fetchKirtanTagFlags } from "@/lib/server/kirtanTags";
 import { getDisplayKirtanTitle } from "@/lib/server/bhajanDisplayTitle";
 import { fetchPrimaryLeadSingerImages } from "@/lib/server/leadSingerImages";
+import { fetchLeadDirectory } from "@/lib/server/leadDirectory";
 import {
-  fetchLeadDirectory,
   OTHER_LEAD_ID,
   OTHER_LEAD_LABEL,
   OTHER_LEAD_SLUG,
-} from "@/lib/server/leadDirectory";
+} from "@/lib/leadConstants";
 import type { KirtanSummary, KirtanType } from "@/types/kirtan";
 import type { LeadCounts, LeadCursor } from "@/types/leads";
 

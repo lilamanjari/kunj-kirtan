@@ -15,12 +15,12 @@ import {
   fetchLeadKirtansPage,
   firstAvailableLeadType,
 } from "@/lib/server/leadKirtans";
+import { fetchLeadDirectory } from "@/lib/server/leadDirectory";
 import {
-  fetchLeadDirectory,
   OTHER_LEAD_ID,
   OTHER_LEAD_LABEL,
   OTHER_LEAD_SLUG,
-} from "@/lib/server/leadDirectory";
+} from "@/lib/leadConstants";
 
 class LeadPageNotFoundError extends Error {}
 

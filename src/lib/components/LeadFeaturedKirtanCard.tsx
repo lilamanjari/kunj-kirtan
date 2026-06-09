@@ -32,6 +32,8 @@ type LeadFeaturedKirtanCardProps = {
   isQueued?: boolean;
   onToggleFavorite?: (kirtan: KirtanSummary) => void;
   isFavorited?: boolean;
+  titleOverride?: string;
+  subtitleOverride?: string;
 };
 
 export default function LeadFeaturedKirtanCard({
@@ -45,17 +47,24 @@ export default function LeadFeaturedKirtanCard({
   isQueued = false,
   onToggleFavorite,
   isFavorited = false,
+  titleOverride,
+  subtitleOverride,
 }: LeadFeaturedKirtanCardProps) {
   const dictionary = useDictionary();
   const locale = useLocale();
-  const titleText = `${kirtan.title}${getKirtanSequenceLabel(kirtan.sequence_num) ? ` ${getKirtanSequenceLabel(kirtan.sequence_num)}` : ""}`;
+  const titleText =
+    titleOverride ??
+    `${kirtan.title}${getKirtanSequenceLabel(kirtan.sequence_num) ? ` ${getKirtanSequenceLabel(kirtan.sequence_num)}` : ""}`;
   const dateLabel = formatDateShort(
     kirtan.recorded_date,
     kirtan.recorded_date_precision,
     locale,
   );
   const durationLabel = formatKirtanDuration(kirtan.duration_seconds);
-  const subtitleText = [dateLabel, durationLabel].filter(Boolean).join(" • ");
+  const computedSubtitleText = [dateLabel, durationLabel]
+    .filter(Boolean)
+    .join(" • ");
+  const subtitleText = subtitleOverride ?? computedSubtitleText;
   const artworkSrc = buildTransformedImageUrl(
     buildBucketImageUrl("page-art/leadsinger-featured.png"),
     {

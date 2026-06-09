@@ -4,8 +4,9 @@ import { fetchKirtanTagFlags } from "@/lib/server/kirtanTags";
 import { getDailyRareGem } from "@/lib/server/featured";
 import { getDisplayKirtanTitle } from "@/lib/server/bhajanDisplayTitle";
 import { fetchHomeCurrentOccasion } from "@/lib/server/homeFeaturedItem";
-import { fetchLeadDirectory, OTHER_LEAD_ID } from "@/lib/server/leadDirectory";
+import { fetchLeadDirectory } from "@/lib/server/leadDirectory";
 import { fetchPrimaryLeadSingerImages } from "@/lib/server/leadSingerImages";
+import { OTHER_LEAD_ID } from "@/lib/leadConstants";
 import type { HomeData } from "@/types/home";
 import type { KirtanSummary, PlayableKirtanRow } from "@/types/kirtan";
 

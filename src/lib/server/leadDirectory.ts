@@ -4,11 +4,13 @@ import type { KirtanType } from "@/types/kirtan";
 import type { LeadCounts } from "@/types/leads";
 import { compareLeadDirectoryItems } from "@/lib/server/occasionCurations";
 import { fetchPrimaryLeadSingerImages } from "@/lib/server/leadSingerImages";
-
-export const OTHER_LEAD_THRESHOLD = 2;
-export const OTHER_LEAD_ID = "others";
-export const OTHER_LEAD_SLUG = "others";
-export const OTHER_LEAD_LABEL = "Other Lead Singers";
+import { buildBucketImageUrl, buildTransformedImageUrl } from "@/lib/media";
+import {
+  OTHER_LEAD_THRESHOLD,
+  OTHER_LEAD_ID,
+  OTHER_LEAD_SLUG,
+  OTHER_LEAD_LABEL,
+} from "@/lib/leadConstants";
 
 type LeadTypeCountRow = {
   lead_singer_id: string | null;
@@ -119,6 +121,16 @@ export async function fetchLeadDirectory() {
     return acc;
   }, emptyLeadCounts());
   const otherTotal = otherCounts.MM + otherCounts.BHJ + otherCounts.HK;
+  const otherLeadImageUrl = buildTransformedImageUrl(
+    buildBucketImageUrl("page-art/other-lead-singers.png"),
+    {
+      width: 160,
+      height: 160,
+      fit: "cover",
+      format: "png",
+      quality: 82,
+    },
+  );
 
   const list = [...regularLeads];
   if (otherTotal > 0) {
@@ -127,7 +139,7 @@ export async function fetchLeadDirectory() {
       display_name: OTHER_LEAD_LABEL,
       slug: OTHER_LEAD_SLUG,
       count: otherTotal,
-      image_url: null,
+      image_url: otherLeadImageUrl ? `${otherLeadImageUrl}&v=1` : null,
       image_alt: OTHER_LEAD_LABEL,
     });
   }

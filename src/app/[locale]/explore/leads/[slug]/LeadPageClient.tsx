@@ -21,6 +21,7 @@ import SubpageHeader from "@/lib/components/SubpageHeader";
 import { useDictionary } from "@/lib/i18n/LocaleProvider";
 import { buildBucketImageUrl, buildTransformedImageUrl } from "@/lib/media";
 import { displayHeadingClassName } from "@/lib/theme/componentThemes";
+import { OTHER_LEAD_ID } from "@/lib/leadConstants";
 
 function getLeadPageListTitle(kirtan: KirtanSummary) {
   if (kirtan.sequence_num) {
@@ -179,6 +180,7 @@ export default function LeadPageClient({
   const hasVisibleSharedCard = !!sharedKirtan && !sharedCardDismissed;
   const shouldHideFeatured =
     hasVisibleSharedCard && sharedKirtan.id === featuredKirtan?.id;
+  const isOtherLeadView = initialData.lead.id === OTHER_LEAD_ID;
 
   function handleSharedKirtan(kirtan: KirtanSummary) {
     setPinnedKirtan(kirtan);
@@ -217,6 +219,22 @@ export default function LeadPageClient({
 
     return transformedUrl ? `${transformedUrl}&v=2` : undefined;
   }, []);
+  const otherLeadHeroImageSrc = useMemo(() => {
+    if (!isOtherLeadView) return undefined;
+
+    const transformedUrl = buildTransformedImageUrl(
+      buildBucketImageUrl("page-art/other-lead-singers.png"),
+      {
+        width: 560,
+        height: 720,
+        fit: "cover",
+        format: "png",
+        quality: 82,
+      },
+    );
+
+    return transformedUrl ? `${transformedUrl}&v=1` : undefined;
+  }, [isOtherLeadView]);
   const leadStatItems = [
     {
       key: "MM",
@@ -297,7 +315,7 @@ export default function LeadPageClient({
               <div className="relative h-full w-full overflow-hidden rounded-[1.3rem] bg-white/80">
                 <LeadSingerAvatar
                   name={initialData.lead.display_name}
-                  imageUrl={initialData.lead.image_url}
+                  imageUrl={otherLeadHeroImageSrc ?? initialData.lead.image_url}
                   alt={initialData.lead.image_alt}
                   size="featured"
                   className="h-full w-full bg-[radial-gradient(circle_at_top,_rgba(255,251,247,0.96),rgba(244,230,221,0.86))]"
@@ -386,6 +404,18 @@ export default function LeadPageClient({
           <div className={hasVisibleSharedCard ? "mt-4" : "-mt-6"}>
             <LeadFeaturedKirtanCard
               kirtan={featuredKirtan}
+              titleOverride={
+                isOtherLeadView
+                  ? getLeadPageListTitle(featuredKirtan)
+                  : undefined
+              }
+              subtitleOverride={
+                isOtherLeadView
+                  ? [featuredKirtan.lead_singer, featuredKirtan.recorded_date]
+                      .filter(Boolean)
+                      .join(" • ")
+                  : undefined
+              }
               isActive={isActive(featuredKirtan)}
               isPlaying={isPlaying(featuredKirtan)}
               isLoading={isAudioLoading(featuredKirtan)}
@@ -492,7 +522,9 @@ export default function LeadPageClient({
                         key={k.id}
                         kirtan={k}
                         titleOverride={getLeadPageListTitle(k)}
-                        subtitleOverride=""
+                        subtitleOverride={
+                          isOtherLeadView ? (k.lead_singer ?? "") : ""
+                        }
                         useShortDate
                         truncateSangaAt={25}
                         stackActionsOnMobile
