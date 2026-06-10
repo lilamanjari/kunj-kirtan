@@ -76,6 +76,10 @@ export function buildTransformedImageUrl(
   const url = new URL(imageUrl);
 
   if (getImageDeliveryMode() === "manual") {
+    if (url.pathname.includes("/derived/")) {
+      return url.toString();
+    }
+
     const width = options.width;
     const height = options.height;
 
