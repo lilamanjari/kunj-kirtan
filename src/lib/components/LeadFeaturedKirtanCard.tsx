@@ -2,7 +2,11 @@
 
 import Equalizer from "@/lib/components/Equalizer";
 import { useDictionary, useLocale } from "@/lib/i18n/LocaleProvider";
-import { buildBucketImageUrl, buildTransformedImageUrl } from "@/lib/media";
+import {
+  appendImageVersion,
+  buildBucketImageUrl,
+  buildTransformedImageUrl,
+} from "@/lib/media";
 import {
   featuredPlayButtonClassName,
   favoriteActiveClassName,
@@ -83,7 +87,7 @@ export default function LeadFeaturedKirtanCard({
       {artworkSrc ? (
         <div className="pointer-events-none absolute inset-0 overflow-hidden">
           <img
-            src={`${artworkSrc}&v=1`}
+            src={appendImageVersion(artworkSrc, "1") ?? artworkSrc}
             alt=""
             className="h-full w-full object-cover object-[76%_center]"
           />

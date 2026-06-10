@@ -4,7 +4,11 @@ import type { KirtanType } from "@/types/kirtan";
 import type { LeadCounts } from "@/types/leads";
 import { compareLeadDirectoryItems } from "@/lib/server/occasionCurations";
 import { fetchPrimaryLeadSingerImages } from "@/lib/server/leadSingerImages";
-import { buildBucketImageUrl, buildTransformedImageUrl } from "@/lib/media";
+import {
+  appendImageVersion,
+  buildBucketImageUrl,
+  buildTransformedImageUrl,
+} from "@/lib/media";
 import {
   OTHER_LEAD_THRESHOLD,
   OTHER_LEAD_ID,
@@ -139,7 +143,7 @@ export async function fetchLeadDirectory() {
       display_name: OTHER_LEAD_LABEL,
       slug: OTHER_LEAD_SLUG,
       count: otherTotal,
-      image_url: otherLeadImageUrl ? `${otherLeadImageUrl}&v=1` : null,
+      image_url: appendImageVersion(otherLeadImageUrl, "1"),
       image_alt: OTHER_LEAD_LABEL,
     });
   }

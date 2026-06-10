@@ -3,7 +3,11 @@
 import SubpageHeader from "@/lib/components/SubpageHeader";
 import ExploreBrowseCardList from "@/lib/components/ExploreBrowseCardList";
 import { useDictionary } from "@/lib/i18n/LocaleProvider";
-import { buildBucketImageUrl, buildTransformedImageUrl } from "@/lib/media";
+import {
+  appendImageVersion,
+  buildBucketImageUrl,
+  buildTransformedImageUrl,
+} from "@/lib/media";
 
 type Occasion = {
   id: string;
@@ -26,17 +30,17 @@ export default function OccasionsPageClient({
     id: occasion.id,
     title: occasion.name,
     countText: `${occasion.count} kirtans`,
-    imageSrc: buildTransformedImageUrl(
-      buildBucketImageUrl(`page-art/${occasion.slug}.png`),
-      {
+    imageSrc: appendImageVersion(
+      buildTransformedImageUrl(buildBucketImageUrl(`page-art/${occasion.slug}.png`), {
         width: 160,
         height: 160,
         fit: "cover",
         // Pinned during cache troubleshooting; we can likely switch back to
         // `auto` after the design pass and cache reset.
         format: "png",
-      },
-    )?.concat(`&v=${OCCASION_ART_VERSION}`) ?? null,
+      }),
+      OCCASION_ART_VERSION,
+    ),
     href: `/explore/occasions/${occasion.slug}`,
   }));
 

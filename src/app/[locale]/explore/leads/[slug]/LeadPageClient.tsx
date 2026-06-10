@@ -19,11 +19,23 @@ import { fetchWithStatus } from "@/lib/net/fetchWithStatus";
 import LeadFeaturedKirtanCard from "@/lib/components/LeadFeaturedKirtanCard";
 import SubpageHeader from "@/lib/components/SubpageHeader";
 import { useDictionary } from "@/lib/i18n/LocaleProvider";
-import { buildBucketImageUrl, buildTransformedImageUrl } from "@/lib/media";
+import {
+  appendImageVersion,
+  buildBucketImageUrl,
+  buildTransformedImageUrl,
+} from "@/lib/media";
 import { displayHeadingClassName } from "@/lib/theme/componentThemes";
 import { OTHER_LEAD_ID } from "@/lib/leadConstants";
 
 function getLeadPageListTitle(kirtan: KirtanSummary) {
+  if (kirtan.sequence_num) {
+    return `${kirtan.title} #${kirtan.sequence_num}`;
+  }
+
+  return kirtan.title;
+}
+
+function getOtherLeadsMahaMantraSubtitle(kirtan: KirtanSummary) {
   if (kirtan.sequence_num) {
     return `${kirtan.title} #${kirtan.sequence_num}`;
   }
@@ -217,7 +229,7 @@ export default function LeadPageClient({
       },
     );
 
-    return transformedUrl ? `${transformedUrl}&v=2` : undefined;
+    return appendImageVersion(transformedUrl, "2") ?? undefined;
   }, []);
   const otherLeadHeroImageSrc = useMemo(() => {
     if (!isOtherLeadView) return undefined;
@@ -233,7 +245,7 @@ export default function LeadPageClient({
       },
     );
 
-    return transformedUrl ? `${transformedUrl}&v=1` : undefined;
+    return appendImageVersion(transformedUrl, "1") ?? undefined;
   }, [isOtherLeadView]);
   const leadStatItems = [
     {
@@ -521,9 +533,17 @@ export default function LeadPageClient({
                       <KirtanListItem
                         key={k.id}
                         kirtan={k}
-                        titleOverride={getLeadPageListTitle(k)}
+                        titleOverride={
+                          isOtherLeadView && activeType === "MM"
+                            ? (k.lead_singer ?? getLeadPageListTitle(k))
+                            : getLeadPageListTitle(k)
+                        }
                         subtitleOverride={
-                          isOtherLeadView ? (k.lead_singer ?? "") : ""
+                          isOtherLeadView
+                            ? activeType === "MM"
+                              ? getOtherLeadsMahaMantraSubtitle(k)
+                              : (k.lead_singer ?? "")
+                            : ""
                         }
                         useShortDate
                         truncateSangaAt={25}

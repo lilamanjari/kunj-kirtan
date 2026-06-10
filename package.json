@@ -7,6 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "images:sync": "node scripts/process-images.mjs sync",
+    "images:upload": "node scripts/process-images.mjs upload",
     "scan-drive": "node scripts/scan-drive-to-sheet.mjs",
     "transcode-audio": "node scripts/transcode-quicktime-audio.mjs",
     "normalize-audio": "node scripts/normalize-inbox-audio.mjs",
