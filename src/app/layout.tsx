@@ -16,14 +16,14 @@ const cormorantGaramond = Cormorant_Garamond({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://www.kunjkirtan.com"),
-  title: "Kunj Kirtan",
+  metadataBase: new URL("https://www.kunjkirtans.com"),
+  title: "Kunj Kirtans",
   description: "Sacred sounds, lovingly curated.",
   openGraph: {
-    title: "Kunj Kirtan",
+    title: "Kunj Kirtans",
     description: "Sacred sounds, lovingly curated.",
-    url: "https://www.kunjkirtan.com",
-    siteName: "Kunj Kirtan",
+    url: "https://www.kunjkirtans.com",
+    siteName: "Kunj Kirtans",
     images: [
       {
         url: "/KunjKirtan-SrilaGurudeva-Header.jpeg",
@@ -36,7 +36,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Kunj Kirtan",
+    title: "Kunj Kirtans",
     description: "Sacred sounds, lovingly curated.",
     images: ["/KunjKirtan-SrilaGurudeva-Header.jpeg"],
   },

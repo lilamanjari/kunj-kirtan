@@ -22,7 +22,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
         <header className="sticky top-0 z-20 mb-5 flex items-center justify-between rounded-[var(--theme-radius-surface)] border border-[#f0ddd3] bg-[rgba(255,250,246,0.88)] px-4 py-3 shadow-[0_18px_44px_rgba(170,118,91,0.15)] backdrop-blur-md">
           <div>
             <p className="text-xs uppercase tracking-[0.24em] text-[#b18472]">
-              Kunj Kirtan CMS
+              Kunj Kirtans CMS
             </p>
             <h1 className="text-lg font-semibold text-[#5f4338]">
               Metadata Editor

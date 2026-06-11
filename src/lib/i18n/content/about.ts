@@ -37,7 +37,7 @@ const enContent: AboutContent = {
   headerSubtitle: "What this archive is, why it exists, and how to help.",
   whatThisIsTitle: "What This Is",
   whatThisIsParagraphs: [
-    "Kunj Kirtan is a lovingly curated archive of kirtan recordings in the line of Srila BV Narayana Gosvami Maharaja.",
+    "Kunj Kirtans is a lovingly curated archive of kirtan recordings in the line of Srila BV Narayana Gosvami Maharaja.",
     "Most of the recordings are made in Sri Radhe Kunj, Vrindavan. The archive contains bhajans, maha mantras, and selected hari katha.",
     "The aim is to make these recordings easy to discover, share, and listen to, without ads or subscriptions.",
   ],
@@ -45,7 +45,7 @@ const enContent: AboutContent = {
   whyItExistsParagraphs: [
     "Many recordings circulate informally and risk getting buried in folders, chat threads, and old devices. This archive tries to keep them alive in a form that is searchable, playable, and gradually better described over time.",
     "The project also makes room to tag rare gems, festival moods, lead singers, and other small bits of metadata that help in discovering tracks.",
-    "The original vision was to share the sweet mood of Sri Radhe Kunj kirtan with devotees all over the world, but the devotees quickly started contributing cherished Gaudiya Math kirtans from the time of our beloved Srila Gurudeva. It is a great honor to host these precious kirtans as well here on Kunj Kirtan.",
+    "The original vision was to share the sweet mood of Sri Radhe Kunj kirtan with devotees all over the world, but the devotees quickly started contributing cherished Gaudiya Math kirtans from the time of our beloved Srila Gurudeva. It is a great honor to host these precious kirtans as well here on Kunj Kirtans.",
   ],
   howToContributeTitle: "How To Contribute",
   howToContributeIntro:
@@ -82,10 +82,10 @@ const enContent: AboutContent = {
   financialSupportFootnoteOne:
     "Payments open in Stripe Checkout, where Apple Pay and Google Pay may appear automatically when supported on the donor's device and browser.",
   financialSupportFootnoteTwo:
-    "The payment page says Pay SoulSpace Journeys because SoulSpace Journeys is the formal entity operating the Stripe account. Donations are used 100% for the operating costs of Kunj Kirtan.",
+    "The payment page says Pay SoulSpace Journeys because SoulSpace Journeys is the formal entity operating the Stripe account. Donations are used 100% for the operating costs of Kunj Kirtans.",
   guidingPrincipleTitle: "Guiding Principle",
   guidingPrincipleParagraphs: [
-    "Kunj Kirtan exists to make these recordings discoverable, searchable, and easy to listen to, so that a devotee anywhere in the world can quickly find the kirtan they are longing for.",
+    "Kunj Kirtans exists to make these recordings discoverable, searchable, and easy to listen to, so that a devotee anywhere in the world can quickly find the kirtan they are longing for.",
     "The hope is that the archive feels like an oasis in the desert: nourishing, and full of remembrance, where a person can arrive, search with ease, and immediately enter the mood of kirtan.",
   ],
 };
@@ -95,7 +95,7 @@ const ruContent: AboutContent = {
   headerSubtitle: "Что это за архив, зачем он существует и как можно помочь.",
   whatThisIsTitle: "Что это",
   whatThisIsParagraphs: [
-    "Kunj Kirtan — это бережно собранный архив записей киртана в линии Шрилы Б.В. Нараяны Госвами Махараджа.",
+    "Kunj Kirtans — это бережно собранный архив записей киртана в линии Шрилы Б.В. Нараяны Госвами Махараджа.",
     "Большая часть записей сделана в Sri Radhe Kunj во Вриндаване. Архив включает бхаджаны, маха-мантры и избранную хари-катху.",
     "Цель проекта — сделать эти записи удобными для поиска, прослушивания и распространения, без рекламы и подписок.",
   ],
@@ -103,7 +103,7 @@ const ruContent: AboutContent = {
   whyItExistsParagraphs: [
     "Многие записи распространяются неформально и легко теряются среди папок, чатов и старых устройств. Этот архив старается сохранить их в форме, где их можно искать, слушать и постепенно лучше описывать.",
     "Проект также позволяет отмечать редкие жемчужины, фестивальные настроения, ведущих исполнителей и другие небольшие детали, которые помогают находить нужные записи.",
-    "Изначальный замысел состоял в том, чтобы поделиться сладостным настроением киртана Sri Radhe Kunj с преданными по всему миру, но очень быстро преданные начали присылать дорогие сердцу киртаны Гаудия Матха времён нашего любимого Шрилы Гурудевы. Для нас большая честь хранить и эти драгоценные киртаны на Kunj Kirtan.",
+    "Изначальный замысел состоял в том, чтобы поделиться сладостным настроением киртана Sri Radhe Kunj с преданными по всему миру, но очень быстро преданные начали присылать дорогие сердцу киртаны Гаудия Матха времён нашего любимого Шрилы Гурудевы. Для нас большая честь хранить и эти драгоценные киртаны на Kunj Kirtans.",
   ],
   howToContributeTitle: "Как помочь",
   howToContributeIntro:
@@ -140,10 +140,10 @@ const ruContent: AboutContent = {
   financialSupportFootnoteOne:
     "Оплата открывается в Stripe Checkout, где при поддержке устройства и браузера могут автоматически появиться Apple Pay и Google Pay.",
   financialSupportFootnoteTwo:
-    "На странице оплаты указано Pay SoulSpace Journeys, потому что SoulSpace Journeys является официальной организацией, управляющей аккаунтом Stripe. Все пожертвования на 100% идут на операционные расходы Kunj Kirtan.",
+    "На странице оплаты указано Pay SoulSpace Journeys, потому что SoulSpace Journeys является официальной организацией, управляющей аккаунтом Stripe. Все пожертвования на 100% идут на операционные расходы Kunj Kirtans.",
   guidingPrincipleTitle: "Главный принцип",
   guidingPrincipleParagraphs: [
-    "Kunj Kirtan существует для того, чтобы эти записи было легко находить, искать и слушать, чтобы преданный в любой точке мира мог быстро найти тот киртан, к которому стремится сердце.",
+    "Kunj Kirtans существует для того, чтобы эти записи было легко находить, искать и слушать, чтобы преданный в любой точке мира мог быстро найти тот киртан, к которому стремится сердце.",
     "Надежда в том, чтобы архив ощущался как оазис в пустыне: питающий, наполненный памятованием, куда человек может прийти, легко найти нужное и сразу войти в настроение киртана.",
   ],
 };

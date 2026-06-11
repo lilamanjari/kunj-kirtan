@@ -200,8 +200,8 @@ export default function HomeClient({ data }: { data: HomeData }) {
       <main className="relative z-10 mx-auto max-w-md space-y-6">
         <div className="relative">
           <Image
-            src="/KunjKirtanHeader2.png"
-            alt="Kunj Kirtan header artwork"
+            src="/KunjKirtansMainHeader.png"
+            alt="Kunj Kirtans header artwork"
             width={1200}
             height={520}
             priority

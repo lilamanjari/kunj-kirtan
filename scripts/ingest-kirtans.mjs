@@ -44,7 +44,7 @@ const MEDIA_BASE_URL =
 const REVALIDATE_BASE_URL =
   process.env.REVALIDATE_BASE_URL ||
   process.env.NEXT_PUBLIC_SITE_URL ||
-  "https://www.kunjkirtan.com";
+  "https://www.kunjkirtans.com";
 const REVALIDATE_SECRET = process.env.REVALIDATE_SECRET || "";
 
 const SUPABASE_URL = process.env.SUPABASE_URL;

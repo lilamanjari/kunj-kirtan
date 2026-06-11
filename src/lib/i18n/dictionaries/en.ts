@@ -11,7 +11,7 @@ export const enDictionary: AppDictionary = {
     selected: "Selected",
     discover: "Discover",
     recentlyAdded: "Recently Added",
-    aboutKunjKirtan: "About Kunj Kirtan",
+    aboutKunjKirtan: "About Kunj Kirtans",
     offlineCheckConnection: "Offline — check your connection",
     noFavoritesYet: "No favorites yet. Tap the heart on any kirtan to save it here.",
     sharedWithYou: "Shared with you",
@@ -66,7 +66,7 @@ export const enDictionary: AppDictionary = {
     addedToQueue: 'Added "{title}" to queue',
     removedFromQueue: 'Removed "{title}" from queue',
     checkOutKirtan: "Check out",
-    onKunjKirtan: "on Kunj Kirtan",
+    onKunjKirtan: "on Kunj Kirtans",
     copyLinkPrompt: "Copy this link",
   },
   actions: {

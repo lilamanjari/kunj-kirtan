@@ -11,7 +11,7 @@ export const ruDictionary: AppDictionary = {
     selected: "Выбрано",
     discover: "Обзор",
     recentlyAdded: "Недавно добавленные",
-    aboutKunjKirtan: "О Kunj Kirtan",
+    aboutKunjKirtan: "О Kunj Kirtans",
     offlineCheckConnection: "Нет сети — проверьте соединение",
     noFavoritesYet:
       "Пока нет избранного. Нажмите на сердечко у любого киртана, чтобы сохранить его здесь.",
@@ -67,7 +67,7 @@ export const ruDictionary: AppDictionary = {
     addedToQueue: 'Добавлено в очередь: "{title}"',
     removedFromQueue: 'Удалено из очереди: "{title}"',
     checkOutKirtan: "Послушайте",
-    onKunjKirtan: "в Kunj Kirtan",
+    onKunjKirtan: "в Kunj Kirtans",
     copyLinkPrompt: "Скопируйте эту ссылку",
   },
   actions: {

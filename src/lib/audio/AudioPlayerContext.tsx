@@ -320,14 +320,14 @@ function useAudioPlayerInternal() {
         : "";
       const mediaTitle =
         formatKirtanTitle(playback.current.type, playback.current.title) ||
-        "Kunj Kirtan";
+        "Kunj Kirtans";
       const mediaArtist = sequenceLabel
-        ? `${sequenceLabel} by ${playback.current.lead_singer ?? "Kunj Kirtan"}`
-        : (playback.current.lead_singer ?? "Kunj Kirtan");
+        ? `${sequenceLabel} by ${playback.current.lead_singer ?? "Kunj Kirtans"}`
+        : (playback.current.lead_singer ?? "Kunj Kirtans");
       navigator.mediaSession.metadata = new MediaMetadata({
         title: mediaTitle,
         artist: mediaArtist,
-        album: "Kunj Kirtan",
+        album: "Kunj Kirtans",
         artwork: [
           {
             src: `${origin}/og-kunj-kirtan.jpg`,

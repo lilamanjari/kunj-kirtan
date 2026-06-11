@@ -24,12 +24,12 @@ export function useKirtanShare() {
       const shareText = `${dictionary.player.checkOutKirtan} ${title || "this kirtan"}${singer} ${dictionary.player.onKunjKirtan}:\n${url}`;
 
       const shareData = {
-        title: title || "Kunj Kirtan",
+        title: title || "Kunj Kirtans",
         text: shareText,
         url: url,
       };
       const fallbackShareData = {
-        title: title || "Kunj Kirtan",
+        title: title || "Kunj Kirtans",
         url: url,
       };
       const tryClipboardFallback = async () => {

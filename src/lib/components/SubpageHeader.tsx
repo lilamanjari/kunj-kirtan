@@ -55,7 +55,7 @@ export default function SubpageHeader({
         className={`relative ${
           backgroundImageFit === "contain"
             ? ""
-            : heightClassName ?? "h-[6.7rem] sm:h-[8.8rem]"
+            : (heightClassName ?? "h-[6.7rem] sm:h-[8.8rem]")
         }`}
       >
         {backgroundImageSrc ? (
@@ -77,7 +77,7 @@ export default function SubpageHeader({
           )
         ) : (
           <Image
-            src="/KunjKirtan-Sub-Header.png"
+            src="/KunjKirtansSubheader.png"
             alt=""
             fill
             priority
@@ -87,7 +87,9 @@ export default function SubpageHeader({
           />
         )}
         {bottomWashClassName ? (
-          <div className={`absolute inset-x-0 bottom-0 ${bottomWashClassName}`} />
+          <div
+            className={`absolute inset-x-0 bottom-0 ${bottomWashClassName}`}
+          />
         ) : null}
         <div
           className={`absolute inset-0 ${
