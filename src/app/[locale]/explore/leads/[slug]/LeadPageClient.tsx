@@ -533,6 +533,19 @@ export default function LeadPageClient({
                       <KirtanListItem
                         key={k.id}
                         kirtan={k}
+                        leadingVisual={
+                          isOtherLeadView ? (
+                            <LeadSingerAvatar
+                              name={k.lead_singer}
+                              imageUrl={k.lead_singer_image_url}
+                              alt={k.lead_singer_image_alt}
+                              size="list"
+                              className="h-full w-full bg-[radial-gradient(circle_at_top,_rgba(255,251,247,0.96),rgba(244,230,221,0.86))]"
+                              imageClassName="h-full w-full object-cover"
+                              textClassName="absolute inset-0 flex items-center justify-center text-[0.9rem] font-semibold uppercase tracking-[0.02em] text-[#8e6254]"
+                            />
+                          ) : undefined
+                        }
                         titleOverride={
                           isOtherLeadView && activeType === "MM"
                             ? (k.lead_singer ?? getLeadPageListTitle(k))
