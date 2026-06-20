@@ -39,8 +39,8 @@ export default function AboutPageContent() {
     <div className="relative min-h-screen overflow-hidden bg-[linear-gradient(180deg,_#f5d7d0_0%,_#f6e4de_18%,_#f7ece7_42%,_#f8f2ef_100%)] text-stone-900">
       <main className="relative z-10 mx-auto max-w-md space-y-8 px-5 py-6">
         <SubpageHeader
-          title={content.headerTitle}
-          subtitle={content.headerSubtitle}
+          title={undefined}
+          subtitle={undefined}
           backLabel={dictionary.common.home}
           backHref="/"
         />
@@ -50,7 +50,10 @@ export default function AboutPageContent() {
             {content.whatThisIsTitle}
           </h2>
           {content.whatThisIsParagraphs.map((paragraph) => (
-            <p key={paragraph} className="mt-3 text-[15px] leading-7 text-stone-700">
+            <p
+              key={paragraph}
+              className="mt-3 text-[15px] leading-7 text-stone-700"
+            >
               {paragraph}
             </p>
           ))}
@@ -61,7 +64,10 @@ export default function AboutPageContent() {
             {content.whyItExistsTitle}
           </h2>
           {content.whyItExistsParagraphs.map((paragraph) => (
-            <p key={paragraph} className="mt-3 text-[15px] leading-7 text-white/88">
+            <p
+              key={paragraph}
+              className="mt-3 text-[15px] leading-7 text-white/88"
+            >
               {paragraph}
             </p>
           ))}
@@ -123,7 +129,9 @@ export default function AboutPageContent() {
                 {content.kirtanContributionBody}
               </p>
               <div className="mt-3 rounded-2xl border border-white/18 bg-white/10 px-4 py-4 backdrop-blur-sm">
-                <p className="text-sm font-medium text-white">{content.uploadIntro}</p>
+                <p className="text-sm font-medium text-white">
+                  {content.uploadIntro}
+                </p>
                 <ul className="mt-3 space-y-2 text-sm leading-6 text-white/82">
                   {content.uploadChecklist.map((item) => (
                     <li key={item}>{item}</li>
@@ -159,34 +167,6 @@ export default function AboutPageContent() {
                 {content.audioRemasteringFootnote}
               </p>
             </div>
-
-            <div className="rounded-2xl border border-[#efe0d4] bg-[linear-gradient(135deg,rgba(255,247,240,0.98)_0%,rgba(252,241,234,0.94)_100%)] px-4 py-4 shadow-[0_10px_24px_rgba(154,88,68,0.08)]">
-              <h3 className="text-sm font-semibold text-stone-800">
-                {content.financialSupportTitle}
-              </h3>
-              <p className="mt-2 text-sm leading-6 text-stone-600">
-                {content.financialSupportBody}
-              </p>
-              <div className="mt-4 flex flex-wrap gap-2">
-                {DONATION_LINKS.map((link) => (
-                  <a
-                    key={link.label}
-                    href={link.href}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex rounded-full border border-[#ead8d2] bg-white px-4 py-2 text-sm font-medium text-[#8f4350] shadow-sm transition hover:bg-[#fff7f3]"
-                  >
-                    {content.donatePrefix} {link.label}
-                  </a>
-                ))}
-              </div>
-              <p className="mt-3 text-xs leading-5 text-stone-500">
-                {content.financialSupportFootnoteOne}
-              </p>
-              <p className="mt-2 text-xs leading-5 text-stone-500">
-                {content.financialSupportFootnoteTwo}
-              </p>
-            </div>
           </div>
         </section>
 
@@ -195,7 +175,10 @@ export default function AboutPageContent() {
             {content.guidingPrincipleTitle}
           </h2>
           {content.guidingPrincipleParagraphs.map((paragraph) => (
-            <p key={paragraph} className="mt-3 text-[15px] leading-7 text-stone-700">
+            <p
+              key={paragraph}
+              className="mt-3 text-[15px] leading-7 text-stone-700"
+            >
               {paragraph}
             </p>
           ))}
