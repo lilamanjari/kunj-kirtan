@@ -67,7 +67,7 @@ export default function HomeRailKirtanCard({
           alt=""
           loading="lazy"
           decoding="async"
-          className="absolute -bottom-1 -right-4 h-[7.5rem] w-[7.5rem] object-cover opacity-[0.29] select-none [mask-image:radial-gradient(circle_at_bottom_right,black_30%,rgba(0,0,0,0.88)_55%,transparent_72%)]"
+          className="absolute -bottom-1 -right-4 h-[7.5rem] w-[7.5rem] object-cover opacity-[0.39] select-none [mask-image:radial-gradient(circle_at_bottom_right,black_30%,rgba(0,0,0,0.88)_55%,transparent_72%)]"
         />
       </div>
 
