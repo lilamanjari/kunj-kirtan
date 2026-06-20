@@ -38,14 +38,13 @@ const enContent: AboutContent = {
   whatThisIsTitle: "What This Is",
   whatThisIsParagraphs: [
     "Kunj Kirtans is a lovingly curated archive of kirtan recordings in the line of Srila BV Narayana Gosvami Maharaja.",
-    "Most of the recordings are made in Sri Radhe Kunj, Vrindavan. The archive contains bhajans, maha mantras, and selected hari katha.",
+    "The archive contains bhajans, maha mantras, and selected hari katha.",
     "The aim is to make these recordings easy to discover, share, and listen to, without ads or subscriptions.",
   ],
   whyItExistsTitle: "Why It Exists",
   whyItExistsParagraphs: [
     "Many recordings circulate informally and risk getting buried in folders, chat threads, and old devices. This archive tries to keep them alive in a form that is searchable, playable, and gradually better described over time.",
     "The project also makes room to tag rare gems, festival moods, lead singers, and other small bits of metadata that help in discovering tracks.",
-    "The original vision was to share the sweet mood of Sri Radhe Kunj kirtan with devotees all over the world, but the devotees quickly started contributing cherished Gaudiya Math kirtans from the time of our beloved Srila Gurudeva. It is a great honor to host these precious kirtans as well here on Kunj Kirtans.",
   ],
   howToContributeTitle: "How To Contribute",
   howToContributeIntro:
