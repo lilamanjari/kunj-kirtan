@@ -2,6 +2,16 @@ import { NextResponse } from "next/server";
 import { revalidatePath, revalidateTag } from "next/cache";
 
 const SECRET_HEADER = "x-revalidate-secret";
+const CACHE_TAGS = [
+  "home",
+  "rare-gems",
+  "explore-bhajans",
+  "explore-maha-mantras",
+  "explore-leads",
+  "explore-leads-slugs",
+  "explore-occasions",
+  "explore-occasion-slugs",
+] as const;
 
 const TARGETS = {
   home: () => {
@@ -42,9 +52,14 @@ const TARGETS = {
 } as const;
 
 type Target = keyof typeof TARGETS;
+type CacheTag = (typeof CACHE_TAGS)[number];
 
 function isTarget(value: string): value is Target {
   return value in TARGETS;
+}
+
+function isCacheTag(value: string): value is CacheTag {
+  return CACHE_TAGS.includes(value as CacheTag);
 }
 
 function isAuthorized(req: Request) {
@@ -80,14 +95,26 @@ export async function POST(
   }
 
   const { target } = await context.params;
+  if (isTarget(target)) {
+    TARGETS[target]();
+
+    return NextResponse.json({
+      revalidated: true,
+      target,
+    });
+  }
+
+  if (isCacheTag(target)) {
+    revalidateTag(target, "max");
+
+    return NextResponse.json({
+      revalidated: true,
+      target,
+      mode: "tag",
+    });
+  }
+
   if (!isTarget(target)) {
     return NextResponse.json({ error: "Unknown revalidation target" }, { status: 400 });
   }
-
-  TARGETS[target]();
-
-  return NextResponse.json({
-    revalidated: true,
-    target,
-  });
 }

@@ -321,7 +321,7 @@ export default function LeadPageClient({
           bottomWashClassName="h-[34%] bg-[linear-gradient(180deg,rgba(246,228,222,0)_0%,rgba(246,228,222,0.32)_28%,rgba(246,228,222,0.76)_64%,rgba(246,228,222,1)_100%)]"
         />
 
-        <section className="-mt-18 px-1 sm:-mt-24">
+        <section className="-mt-28 px-1 sm:-mt-34">
           <div className="relative z-10 flex items-start gap-4">
             <div className="-mt-6 h-36 w-28 shrink-0 overflow-hidden rounded-[1.8rem] border border-[rgba(221,189,169,0.92)] bg-[radial-gradient(circle_at_top,_rgba(255,251,247,0.98),rgba(244,230,221,0.90))] p-1 shadow-[0_18px_34px_rgba(120,53,15,0.12)] sm:-mt-3">
               <div className="relative h-full w-full overflow-hidden rounded-[1.3rem] bg-white/80">

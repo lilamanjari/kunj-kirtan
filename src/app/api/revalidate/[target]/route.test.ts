@@ -35,6 +35,24 @@ describe("POST /api/revalidate/[target]", () => {
     expect(json.error).toBe("Unauthorized");
   });
 
+  it("revalidates a direct cache tag", async () => {
+    vi.stubEnv("REVALIDATE_SECRET", "secret");
+
+    const res = await POST(request("secret"), {
+      params: Promise.resolve({ target: "explore-leads-slugs" }),
+    });
+    const json = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(json).toEqual({
+      revalidated: true,
+      target: "explore-leads-slugs",
+      mode: "tag",
+    });
+    expect(revalidateTag).toHaveBeenCalledWith("explore-leads-slugs", "max");
+    expect(revalidatePath).not.toHaveBeenCalled();
+  });
+
   it("revalidates grouped explore paths", async () => {
     vi.stubEnv("REVALIDATE_SECRET", "secret");
 
@@ -69,5 +87,17 @@ describe("POST /api/revalidate/[target]", () => {
     expect(revalidatePath).toHaveBeenCalledWith("/", "page");
     expect(revalidatePath).toHaveBeenCalledWith("/api/home", "page");
     expect(revalidatePath).toHaveBeenCalledWith("/api/explore/maha-mantras", "page");
+  });
+
+  it("rejects unknown targets", async () => {
+    vi.stubEnv("REVALIDATE_SECRET", "secret");
+
+    const res = await POST(request("secret"), {
+      params: Promise.resolve({ target: "not-a-real-tag" }),
+    });
+    const json = await res.json();
+
+    expect(res.status).toBe(400);
+    expect(json.error).toBe("Unknown revalidation target");
   });
 });
