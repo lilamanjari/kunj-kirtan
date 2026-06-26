@@ -1,14 +1,57 @@
+import type { Metadata } from "next";
 import LeadPageClient from "./LeadPageClient";
 import SubpageHeader from "@/lib/components/SubpageHeader";
 import { getLeadPageData } from "@/lib/server/leadPage";
 import { notFound } from "next/navigation";
+import { isLocale } from "@/lib/i18n/config";
+import { buildPageMetadata } from "@/lib/seo";
+import JsonLd from "@/lib/components/JsonLd";
+import {
+  buildBreadcrumbJsonLd,
+  buildProfilePageJsonLd,
+} from "@/lib/structuredData";
+import { getSeoCopy } from "@/lib/seoCopy";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string; slug: string }>;
+}): Promise<Metadata> {
+  const { locale, slug } = await params;
+
+  if (!isLocale(locale)) {
+    return {};
+  }
+
+  const seoCopy = getSeoCopy(locale);
+
+  const { data, status } = await getLeadPageData(slug);
+
+  if (status === 404 || !data) {
+    return buildPageMetadata({
+      locale,
+      route: `/explore/leads/${slug}`,
+      title: seoCopy.leadFallbackTitle,
+      description: seoCopy.leadFallbackDescription,
+      noIndex: true,
+    });
+  }
+
+  return buildPageMetadata({
+    locale,
+    route: `/explore/leads/${slug}`,
+    title: data.lead.display_name,
+    description: seoCopy.leadPageDescription(data.lead.display_name),
+    image: data.lead.image_url ?? undefined,
+  });
+}
 
 export default async function LocalizedLeadPage({
   params,
 }: {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ locale: string; slug: string }>;
 }) {
-  const { slug } = await params;
+  const { locale, slug } = await params;
   const { data, status, error } = await getLeadPageData(slug);
 
   if (status === 404) {
@@ -35,5 +78,31 @@ export default async function LocalizedLeadPage({
     throw new Error("Failed to fetch lead page data");
   }
 
-  return <LeadPageClient key={slug} slug={slug} initialData={data} />;
+  const seoCopy = isLocale(locale) ? getSeoCopy(locale) : null;
+
+  return (
+    <>
+      {isLocale(locale) && seoCopy ? (
+        <>
+          <JsonLd
+            data={buildProfilePageJsonLd({
+              locale,
+              route: `/explore/leads/${slug}`,
+              name: data.lead.display_name,
+              description: seoCopy.leadPageDescription(data.lead.display_name),
+              image: data.lead.image_url ?? undefined,
+            })}
+          />
+          <JsonLd
+            data={buildBreadcrumbJsonLd(locale, [
+              { name: seoCopy.homeBreadcrumb, route: "/" },
+              { name: seoCopy.leadsTitle, route: "/explore/leads" },
+              { name: data.lead.display_name, route: `/explore/leads/${slug}` },
+            ])}
+          />
+        </>
+      ) : null}
+      <LeadPageClient key={slug} slug={slug} initialData={data} />
+    </>
+  );
 }

@@ -162,7 +162,12 @@ async function collectAdminKirtanSearchMatches(tokens: string[]) {
   const matches = new Map<string, { score: number; matchedTokens: Set<string> }>();
 
   for (const token of tokens) {
-    const textPromises = [
+    const [
+      { data: baseTitleRows, error: baseTitleError },
+      { data: detailTitleRows, error: detailTitleError },
+      { data: leadRows, error: leadError },
+      { data: sangaRows, error: sangaError },
+    ] = await Promise.all([
       supabaseAdmin.from("kirtans").select("id").ilike("title", `%${token}%`).limit(200),
       supabaseAdmin
         .from("kirtan_titles")
@@ -175,14 +180,7 @@ async function collectAdminKirtanSearchMatches(tokens: string[]) {
         .ilike("display_name", `%${token}%`)
         .limit(200),
       supabaseAdmin.from("sangas").select("id").ilike("name", `%${token}%`).limit(200),
-    ];
-
-    const [
-      { data: baseTitleRows, error: baseTitleError },
-      { data: detailTitleRows, error: detailTitleError },
-      { data: leadRows, error: leadError },
-      { data: sangaRows, error: sangaError },
-    ] = await Promise.all(textPromises);
+    ]);
 
     if (baseTitleError) {
       throw new Error(baseTitleError.message);
@@ -374,12 +372,18 @@ export async function listAdminKirtans({
       );
   }
 
+  function buildCountQuery() {
+    return supabaseAdmin
+      .from("kirtans")
+      .select("id", { count: "exact", head: true });
+  }
+
   let query = buildBaseQuery()
     .order("created_at", { ascending: false })
     .order("recorded_date", { ascending: false, nullsFirst: false })
     .limit(200);
 
-  let filteredCountQuery = buildBaseQuery(true);
+  let filteredCountQuery = buildCountQuery();
 
   if (type && type !== "all") {
     query = query.eq("type", type);
@@ -409,10 +413,7 @@ export async function listAdminKirtans({
     }
 
     query = buildBaseQuery().in("id", matchingKirtanIds).limit(1000);
-    filteredCountQuery = supabaseAdmin
-      .from("kirtans")
-      .select("id", { count: "exact", head: true })
-      .in("id", matchingKirtanIds);
+    filteredCountQuery = buildCountQuery().in("id", matchingKirtanIds);
 
     if (type && type !== "all") {
       query = query.eq("type", type);

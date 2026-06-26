@@ -3,6 +3,11 @@ import { Suspense } from "react";
 import { Cormorant_Garamond, Inter } from "next/font/google";
 import "./globals.css";
 import { Analytics } from "@vercel/analytics/react";
+import JsonLd from "@/lib/components/JsonLd";
+import {
+  buildOrganizationJsonLd,
+  buildWebSiteJsonLd,
+} from "@/lib/structuredData";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -57,6 +62,7 @@ export default async function RootLayout({
       <body
         className={`${inter.variable} ${cormorantGaramond.variable} antialiased`}
       >
+        <JsonLd data={[buildWebSiteJsonLd(), buildOrganizationJsonLd()]} />
         <Suspense fallback={null}>{children}</Suspense>
         <Analytics />
       </body>
