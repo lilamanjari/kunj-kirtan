@@ -43,6 +43,14 @@ function formatDuration(durationSeconds: number | null | undefined) {
   return `${minutes}:${String(seconds).padStart(2, "0")}`;
 }
 
+function getSequenceLabel(kirtan: Pick<AdminKirtanListItem, "type" | "sequence_num"> | Pick<AdminKirtanDetail, "type" | "sequence_num">) {
+  if (kirtan.type !== "MM" || !kirtan.sequence_num) {
+    return null;
+  }
+
+  return `Maha Mantra #${kirtan.sequence_num}`;
+}
+
 export function KirtansCmsPage() {
   const [search, setSearch] = useState("");
   const [type, setType] = useState<TypeFilter>("all");
@@ -351,7 +359,7 @@ export function KirtansCmsPage() {
             <div>
               <h2 className="text-lg font-semibold">Kirtans</h2>
               <p className="mt-1 text-sm text-[#8c6a63]">
-                Search by title, browse newest first, and open one kirtan at a time.
+                Search by title, singer, sanga, or sequence number, then open one kirtan at a time.
               </p>
             </div>
             <div className="rounded-full border border-[#e5d5ca] bg-white/75 px-3 py-1 text-sm font-medium text-[#8b6b62]">
@@ -359,10 +367,10 @@ export function KirtansCmsPage() {
             </div>
           </div>
           <div className="mt-4 space-y-3">
-            <input
+              <input
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search title or lead singer"
+              placeholder="Search title, singer, sanga, or sequence"
               className={fieldClassName()}
             />
             <div className="grid grid-cols-2 gap-3">
@@ -417,6 +425,11 @@ export function KirtansCmsPage() {
                   <div>
                     <p className="text-sm font-semibold text-[#5f4338]">{kirtan.title}</p>
                     <p className="mt-1 text-xs text-[#8f6c65]">{formatMetaLine(kirtan)}</p>
+                    {getSequenceLabel(kirtan) ? (
+                      <p className="mt-1 text-xs font-medium text-[#9a786f]">
+                        {getSequenceLabel(kirtan)}
+                      </p>
+                    ) : null}
                     {formatDuration(kirtan.duration_seconds) ? (
                       <p className="mt-1 text-xs text-[#a07a6e]">
                         {formatDuration(kirtan.duration_seconds)}
@@ -504,6 +517,16 @@ export function KirtansCmsPage() {
                           Type
                         </dt>
                         <dd className="mt-1 font-medium">{selected.type}</dd>
+                      </div>
+                      <div>
+                        <dt className="text-xs uppercase tracking-[0.14em] text-[#a47d6d]">
+                          Maha Mantra sequence
+                        </dt>
+                        <dd className="mt-1 font-medium">
+                          {selected.type === "MM" && selected.sequence_num
+                            ? `#${selected.sequence_num}`
+                            : "None"}
+                        </dd>
                       </div>
                       <div>
                         <dt className="text-xs uppercase tracking-[0.14em] text-[#a47d6d]">

@@ -10,6 +10,7 @@ export type AdminKirtanListItem = {
   recorded_date_precision: RecordedDatePrecision | null;
   lead_singer: string | null;
   duration_seconds: number | null;
+  sequence_num: number | null;
 };
 
 export type AdminTagSummary = {
@@ -46,6 +47,7 @@ export type AdminKirtanDetail = {
   lead_singer: string | null;
   lead_singer_id: string | null;
   sanga: string | null;
+  sequence_num: number | null;
   titles: AdminKirtanTitle[];
   tags: AdminKirtanTag[];
 };
