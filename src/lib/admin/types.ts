@@ -9,6 +9,8 @@ export type AdminKirtanListItem = {
   recorded_date: string | null;
   recorded_date_precision: RecordedDatePrecision | null;
   lead_singer: string | null;
+  lead_singer_image_url: string | null;
+  lead_singer_image_alt: string | null;
   duration_seconds: number | null;
   sequence_num: number | null;
 };
@@ -46,6 +48,8 @@ export type AdminKirtanDetail = {
   recorded_date_precision: RecordedDatePrecision | null;
   lead_singer: string | null;
   lead_singer_id: string | null;
+  lead_singer_image_url: string | null;
+  lead_singer_image_alt: string | null;
   sanga: string | null;
   sequence_num: number | null;
   titles: AdminKirtanTitle[];

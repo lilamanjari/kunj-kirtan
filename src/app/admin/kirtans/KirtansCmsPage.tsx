@@ -6,6 +6,7 @@ import type {
   AdminKirtanListItem,
   AdminTagSummary,
 } from "@/lib/admin/types";
+import LeadSingerAvatar from "@/lib/components/LeadSingerAvatar";
 
 type StatusFilter = "all" | "published" | "hidden";
 type TypeFilter = "all" | "MM" | "BHJ" | "HK";
@@ -25,6 +26,10 @@ function badgeClassName(active: boolean) {
   return active
     ? "rounded-full bg-[color:var(--theme-player-green-soft)] px-2.5 py-1 text-xs font-semibold text-[color:var(--theme-player-green)]"
     : "rounded-full bg-[#f5e5de] px-2.5 py-1 text-xs font-semibold text-[#af6f6a]";
+}
+
+function getPublishedLabel(published: boolean) {
+  return published ? "Published" : "Unpublished";
 }
 
 function formatMetaLine(kirtan: AdminKirtanListItem | AdminKirtanDetail) {
@@ -422,7 +427,18 @@ export function KirtansCmsPage() {
                 ].join(" ")}
               >
                 <div className="flex items-start justify-between gap-3">
-                  <div>
+                  <div className="flex min-w-0 items-start gap-3">
+                    <div className="mt-0.5 flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[#ead7cd] bg-[rgba(255,252,249,0.96)] shadow-[inset_0_0_0_1px_rgba(210,183,160,0.18)]">
+                      <LeadSingerAvatar
+                        name={kirtan.lead_singer}
+                        imageUrl={kirtan.lead_singer_image_url}
+                        alt={kirtan.lead_singer_image_alt}
+                        className="h-full w-full"
+                        imageClassName="h-full w-full object-cover"
+                        textClassName="absolute inset-0 flex items-center justify-center text-sm font-semibold uppercase tracking-[0.02em] text-[#8e6254]"
+                      />
+                    </div>
+                    <div className="min-w-0">
                     <p className="text-sm font-semibold text-[#5f4338]">{kirtan.title}</p>
                     <p className="mt-1 text-xs text-[#8f6c65]">{formatMetaLine(kirtan)}</p>
                     {getSequenceLabel(kirtan) ? (
@@ -435,9 +451,10 @@ export function KirtansCmsPage() {
                         {formatDuration(kirtan.duration_seconds)}
                       </p>
                     ) : null}
+                    </div>
                   </div>
                   <span className={badgeClassName(kirtan.published)}>
-                    {kirtan.published ? "Published" : "Hidden"}
+                    {getPublishedLabel(kirtan.published)}
                   </span>
                 </div>
               </button>
@@ -452,42 +469,55 @@ export function KirtansCmsPage() {
       <section className={sectionCardClassName("min-h-0 overflow-hidden")}>
         {selected ? (
           <div className="flex h-full min-h-0 flex-col">
-            <div className="border-b border-[#f0ddd3] bg-[rgba(255,250,246,0.96)] px-5 py-4 backdrop-blur-md">
-              <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-                <div>
-                  <p className="text-xs uppercase tracking-[0.24em] text-[#b18472]">
-                    Selected kirtan
-                  </p>
-                  <h2 className="mt-1 text-2xl font-semibold text-[#5e433a]">
-                    {selected.display_title}
-                  </h2>
-                  <p className="mt-2 text-sm text-[#8d6b64]">{formatMetaLine(selected)}</p>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className={badgeClassName(selected.published)}>
-                    {selected.published ? "Published" : "Hidden"}
-                  </span>
-                  <span className="text-xs text-[#9d786d]">
-                    {publishingState === "saving"
-                      ? "Saving…"
-                      : publishingState === "saved"
-                        ? "Saved"
-                        : publishingState === "error"
-                          ? "Error"
-                          : ""}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => togglePublished(!selected.published)}
-                    className={[
-                      "rounded-[var(--theme-radius-button)] px-4 py-2 text-sm font-medium text-white shadow-[0_12px_26px_rgba(121,161,79,0.28)]",
-                      selected.published
-                        ? "bg-gradient-to-r from-[#c97b73] to-[#b86161] shadow-[0_12px_26px_rgba(184,97,97,0.24)]"
-                        : "bg-gradient-to-r from-[color:var(--theme-player-green)] to-[color:var(--theme-player-green-mid)] shadow-[0_12px_26px_rgba(121,161,79,0.28)]",
-                    ].join(" ")}
-                  >
-                    {selected.published ? "Unpublish" : "Publish"}
-                  </button>
+            <div className="border-b border-[#f0ddd3] bg-[rgba(255,250,246,0.96)] backdrop-blur-md">
+              <div className="flex flex-col">
+                <div className="flex flex-col lg:flex-row lg:items-stretch">
+                  {selected.lead_singer_image_url ? (
+                    <div className="h-full w-full max-w-[164px] shrink-0 overflow-hidden border-r border-[#ead7cd]">
+                      <LeadSingerAvatar
+                        name={selected.lead_singer}
+                        imageUrl={selected.lead_singer_image_url}
+                        alt={selected.lead_singer_image_alt}
+                        className="h-full w-full"
+                        imageClassName="h-full min-h-[124px] w-full object-cover"
+                      />
+                    </div>
+                  ) : null}
+                  <div className="flex min-w-0 flex-1 flex-col px-5 py-4">
+                    <p className="text-xs uppercase tracking-[0.24em] text-[#b18472]">
+                      Selected kirtan
+                    </p>
+                    <h2 className="mt-1 text-2xl font-semibold text-[#5e433a]">
+                      {selected.display_title}
+                    </h2>
+                    <p className="mt-2 text-sm text-[#8d6b64]">{formatMetaLine(selected)}</p>
+                    <div className="mt-auto pt-4 flex items-center gap-3">
+                      <span className={badgeClassName(selected.published)}>
+                        {getPublishedLabel(selected.published)}
+                      </span>
+                      <span className="text-xs text-[#9d786d]">
+                        {publishingState === "saving"
+                          ? "Saving…"
+                          : publishingState === "saved"
+                            ? "Saved"
+                            : publishingState === "error"
+                              ? "Error"
+                              : ""}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => togglePublished(!selected.published)}
+                        className={[
+                          "rounded-[var(--theme-radius-button)] px-4 py-2 text-sm font-medium text-white shadow-[0_12px_26px_rgba(121,161,79,0.28)]",
+                          selected.published
+                            ? "bg-gradient-to-r from-[#c97b73] to-[#b86161] shadow-[0_12px_26px_rgba(184,97,97,0.24)]"
+                            : "bg-gradient-to-r from-[color:var(--theme-player-green)] to-[color:var(--theme-player-green-mid)] shadow-[0_12px_26px_rgba(121,161,79,0.28)]",
+                        ].join(" ")}
+                      >
+                        {selected.published ? "Unpublish" : "Publish"}
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>

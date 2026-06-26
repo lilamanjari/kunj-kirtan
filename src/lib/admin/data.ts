@@ -1,5 +1,6 @@
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { getDisplayKirtanTitle } from "@/lib/server/bhajanDisplayTitle";
+import { fetchPrimaryLeadSingerImages } from "@/lib/server/leadSingerImages";
 import type {
   AdminKirtanDetail,
   AdminKirtanListItem,
@@ -85,6 +86,7 @@ type AdminListSearchRow = {
   recorded_date: string | null;
   sequence_num: number | null;
   recorded_date_precision: RecordedDatePrecision | null;
+  lead_singer_id: string | null;
   lead_singers:
     | { display_name?: string | null }
     | Array<{ display_name?: string | null }>
@@ -363,6 +365,7 @@ export async function listAdminKirtans({
       recorded_date,
       sequence_num,
       recorded_date_precision,
+      lead_singer_id,
       lead_singers(display_name),
       sangas(name),
       audio_files!left(duration_seconds, is_current)
@@ -453,24 +456,54 @@ export async function listAdminKirtans({
       ).slice(0, 200)
     : ((data ?? []) as AdminListSearchRow[]);
 
-  const kirtans = rankedRows.map((row) => ({
-    id: String(row.id),
-    title: String(row.title ?? ""),
-    type: row.type as KirtanType,
-    published: Boolean(row.published),
-    created_at: (row.created_at as string | null) ?? null,
-    recorded_date: (row.recorded_date as string | null) ?? null,
-    sequence_num: (row.sequence_num as number | null) ?? null,
-    recorded_date_precision:
-      (row.recorded_date_precision as RecordedDatePrecision | null) ?? null,
-    lead_singer: mapJoinedName(
-      row.lead_singers as { display_name?: string | null } | Array<{ display_name?: string | null }> | null,
-    ),
-    duration_seconds:
-      ((Array.isArray(row.audio_files) ? row.audio_files : [row.audio_files]).find(
-        (audio) => audio?.is_current,
-      )?.duration_seconds as number | null | undefined) ?? null,
-  })) satisfies AdminKirtanListItem[];
+  const { imagesByLeadSingerId, error: leadSingerImageError } =
+    await fetchPrimaryLeadSingerImages(
+      rankedRows
+        .map((row) => row.lead_singer_id)
+        .filter((value): value is string => Boolean(value)),
+    );
+
+  if (leadSingerImageError) {
+    throw new Error(leadSingerImageError);
+  }
+
+  const kirtans = rankedRows.map((row) => {
+    const leadSingerId = row.lead_singer_id;
+    const leadSingerImage = leadSingerId
+      ? imagesByLeadSingerId.get(leadSingerId)
+      : null;
+
+    return {
+      id: String(row.id),
+      title: String(row.title ?? ""),
+      type: row.type as KirtanType,
+      published: Boolean(row.published),
+      created_at: (row.created_at as string | null) ?? null,
+      recorded_date: (row.recorded_date as string | null) ?? null,
+      sequence_num: (row.sequence_num as number | null) ?? null,
+      recorded_date_precision:
+        (row.recorded_date_precision as RecordedDatePrecision | null) ?? null,
+      lead_singer: mapJoinedName(
+        row.lead_singers as
+          | { display_name?: string | null }
+          | Array<{ display_name?: string | null }>
+          | null,
+      ),
+      lead_singer_image_url: leadSingerImage?.url ?? null,
+      lead_singer_image_alt:
+        leadSingerImage?.alt_text ??
+        mapJoinedName(
+          row.lead_singers as
+            | { display_name?: string | null }
+            | Array<{ display_name?: string | null }>
+            | null,
+        ),
+      duration_seconds:
+        ((Array.isArray(row.audio_files) ? row.audio_files : [row.audio_files]).find(
+          (audio) => audio?.is_current,
+        )?.duration_seconds as number | null | undefined) ?? null,
+    };
+  }) satisfies AdminKirtanListItem[];
 
   return {
     kirtans,
@@ -539,6 +572,19 @@ export async function getAdminKirtanDetail(id: string) {
     (titles ?? []) as Array<{ kind: string | null; title: string | null }>,
   );
 
+  const { imagesByLeadSingerId, error: leadSingerImageError } =
+    kirtan.lead_singer_id
+      ? await fetchPrimaryLeadSingerImages([kirtan.lead_singer_id])
+      : { imagesByLeadSingerId: new Map(), error: null };
+
+  if (leadSingerImageError) {
+    throw new Error(leadSingerImageError);
+  }
+
+  const leadSingerImage = kirtan.lead_singer_id
+    ? imagesByLeadSingerId.get(kirtan.lead_singer_id)
+    : null;
+
   const displayTitle = getDisplayKirtanTitle({
     type: kirtan.type as KirtanType,
     title: kirtan.title ?? "",
@@ -563,6 +609,15 @@ export async function getAdminKirtanDetail(id: string) {
       kirtan.lead_singers as { display_name?: string | null } | Array<{ display_name?: string | null }> | null,
     ),
     lead_singer_id: kirtan.lead_singer_id ?? null,
+    lead_singer_image_url: leadSingerImage?.url ?? null,
+    lead_singer_image_alt:
+      leadSingerImage?.alt_text ??
+      mapJoinedName(
+        kirtan.lead_singers as
+          | { display_name?: string | null }
+          | Array<{ display_name?: string | null }>
+          | null,
+      ),
     sanga: mapJoinedName(
       kirtan.sangas as { name?: string | null } | Array<{ name?: string | null }> | null,
     ),
