@@ -3,8 +3,8 @@
 import { useCallback } from "react";
 import type { KirtanSummary } from "@/types/kirtan";
 import { formatKirtanTitle } from "@/lib/kirtanTitle";
+import { buildLocalizedKirtanDetailPath } from "@/lib/kirtanDetailHref";
 import { useDictionary, useLocale } from "@/lib/i18n/LocaleProvider";
-import { localizeHref } from "@/lib/i18n/localizeHref";
 
 export function useKirtanShare() {
   const dictionary = useDictionary();
@@ -12,7 +12,7 @@ export function useKirtanShare() {
 
   return useCallback(
     async (kirtan: KirtanSummary) => {
-      const url = `${window.location.origin}${localizeHref(`/kirtans/${kirtan.id}`, locale)}`;
+      const url = `${window.location.origin}${buildLocalizedKirtanDetailPath(locale, kirtan)}`;
 
       let copied = false;
 

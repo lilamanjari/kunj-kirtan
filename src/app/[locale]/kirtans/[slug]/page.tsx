@@ -2,6 +2,10 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import KirtanDetailPageClient from "./KirtanDetailPageClient";
 import { isLocale } from "@/lib/i18n/config";
+import {
+  buildKirtanDetailRoute,
+  extractKirtanIdFromSlugParam,
+} from "@/lib/kirtanDetailHref";
 import { buildPageMetadata } from "@/lib/seo";
 import { getSeoCopy } from "@/lib/seoCopy";
 import { getPublicKirtanPageData } from "@/lib/server/kirtanPage";
@@ -17,8 +21,20 @@ export async function generateMetadata({
     return {};
   }
 
+  const kirtanId = extractKirtanIdFromSlugParam(slug);
   const seoCopy = getSeoCopy(locale);
-  const { data, status } = await getPublicKirtanPageData(slug);
+
+  if (!kirtanId) {
+    return buildPageMetadata({
+      locale,
+      route: `/kirtans/${slug}`,
+      title: seoCopy.homeTitle,
+      description: seoCopy.homeDescription,
+      noIndex: true,
+    });
+  }
+
+  const { data, status } = await getPublicKirtanPageData(kirtanId);
 
   if (status === 404 || !data) {
     return buildPageMetadata({
@@ -37,7 +53,7 @@ export async function generateMetadata({
 
   return buildPageMetadata({
     locale,
-    route: `/kirtans/${slug}`,
+    route: buildKirtanDetailRoute(data.kirtan),
     title,
     description,
     image: data.kirtan.lead_singer_image_url ?? undefined,
@@ -50,7 +66,13 @@ export default async function LocalizedKirtanDetailPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const { data, status, error } = await getPublicKirtanPageData(slug);
+  const kirtanId = extractKirtanIdFromSlugParam(slug);
+
+  if (!kirtanId) {
+    notFound();
+  }
+
+  const { data, status, error } = await getPublicKirtanPageData(kirtanId);
 
   if (status === 404) {
     notFound();
@@ -62,4 +84,3 @@ export default async function LocalizedKirtanDetailPage({
 
   return <KirtanDetailPageClient data={data} />;
 }
-

@@ -4,6 +4,7 @@ import { supportedLocales } from "@/lib/i18n/config";
 export function revalidateCmsAndPublicContent() {
   revalidateTag("home", "max");
   revalidateTag("rare-gems", "max");
+  revalidateTag("kirtan-page", "max");
   revalidateTag("explore-bhajans", "max");
   revalidateTag("explore-maha-mantras", "max");
   revalidateTag("explore-leads", "max");
@@ -18,6 +19,7 @@ export function revalidateCmsAndPublicContent() {
   revalidatePath("/api/admin/tags", "page");
   revalidatePath("/api/home", "page");
   revalidatePath("/", "page");
+  revalidatePath("/sitemap.xml", "page");
 
   for (const locale of supportedLocales) {
     revalidatePath(`/${locale}`, "page");

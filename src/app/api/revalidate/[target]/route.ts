@@ -5,6 +5,7 @@ const SECRET_HEADER = "x-revalidate-secret";
 const CACHE_TAGS = [
   "home",
   "rare-gems",
+  "kirtan-page",
   "explore-bhajans",
   "explore-maha-mantras",
   "explore-leads",
@@ -16,13 +17,17 @@ const CACHE_TAGS = [
 const TARGETS = {
   home: () => {
     revalidateTag("home", "max");
+    revalidateTag("kirtan-page", "max");
     revalidatePath("/", "page");
     revalidatePath("/api/home", "page");
+    revalidatePath("/sitemap.xml", "page");
   },
   "rare-gems": () => {
     revalidateTag("rare-gems", "max");
+    revalidateTag("kirtan-page", "max");
   },
   explore: () => {
+    revalidateTag("kirtan-page", "max");
     revalidateTag("explore-bhajans", "max");
     revalidateTag("explore-maha-mantras", "max");
     revalidateTag("explore-leads", "max");
@@ -43,6 +48,8 @@ const TARGETS = {
     for (const path of paths) {
       revalidatePath(path, "page");
     }
+
+    revalidatePath("/sitemap.xml", "page");
   },
   all: () => {
     TARGETS.home();

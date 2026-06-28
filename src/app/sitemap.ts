@@ -1,8 +1,12 @@
 import type { MetadataRoute } from "next";
+import { supabase } from "@/lib/supabase";
+import { getDisplayKirtanTitle } from "@/lib/server/bhajanDisplayTitle";
 import { getOccasionsPageData } from "@/lib/server/occasionsPage";
 import { fetchLeadDirectory } from "@/lib/server/leadDirectory";
+import { buildKirtanDetailRoute } from "@/lib/kirtanDetailHref";
 import { supportedLocales } from "@/lib/i18n/config";
 import { buildAbsoluteUrl, buildLocalizedPath } from "@/lib/seo";
+import type { PlayableKirtanRow } from "@/types/kirtan";
 
 const PUBLIC_ROUTES = [
   "/",
@@ -49,6 +53,42 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
   }
 
+  const { data: kirtanRows, error: kirtansError } = await supabase
+    .from("playable_kirtans_with_titles")
+    .select(
+      [
+        "id",
+        "audio_url",
+        "type",
+        "title",
+        "display_title",
+        "official_title",
+        "first_line_title",
+        "lead_singer",
+        "lead_singer_id",
+        "recorded_date",
+        "recorded_date_precision",
+        "sanga",
+        "duration_seconds",
+        "sequence_num",
+      ].join(","),
+    )
+    .returns<PlayableKirtanRow[]>();
+
+  if (!kirtansError) {
+    for (const kirtan of kirtanRows ?? []) {
+      entries.push(
+        ...localizedEntries(
+          buildKirtanDetailRoute({
+            id: kirtan.id,
+            title: getDisplayKirtanTitle(kirtan),
+            lead_singer: kirtan.lead_singer,
+          }),
+          lastModified,
+        ),
+      );
+    }
+  }
+
   return entries;
 }
-
