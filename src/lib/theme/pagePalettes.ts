@@ -40,7 +40,7 @@ export const homePalette: PagePalette = {
     featuredLabelColor: "text-[color:var(--theme-page-home-section-label)]",
     contextLineColor: "text-[color:var(--theme-page-home-soft-text)]",
     metadataLabelColor: "text-[color:var(--theme-page-home-muted)]",
-    leadsingerLabelColor: "text-[color:var(--theme-page-home-muted)]",
+    leadsingerLabelColor: "text-[#7d6158]",
   },
 };
 

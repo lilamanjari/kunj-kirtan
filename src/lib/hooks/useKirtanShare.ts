@@ -1,21 +1,18 @@
 "use client";
 
 import { useCallback } from "react";
-import { usePathname, useSearchParams } from "next/navigation";
 import type { KirtanSummary } from "@/types/kirtan";
 import { formatKirtanTitle } from "@/lib/kirtanTitle";
-import { useDictionary } from "@/lib/i18n/LocaleProvider";
+import { useDictionary, useLocale } from "@/lib/i18n/LocaleProvider";
+import { localizeHref } from "@/lib/i18n/localizeHref";
 
 export function useKirtanShare() {
   const dictionary = useDictionary();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
+  const locale = useLocale();
 
   return useCallback(
     async (kirtan: KirtanSummary) => {
-      const params = new URLSearchParams(searchParams?.toString() ?? "");
-      params.set("kirtan", kirtan.id);
-      const url = `${window.location.origin}${pathname}?${params.toString()}`;
+      const url = `${window.location.origin}${localizeHref(`/kirtans/${kirtan.id}`, locale)}`;
 
       let copied = false;
 
@@ -102,8 +99,7 @@ export function useKirtanShare() {
       dictionary.player.checkOutKirtan,
       dictionary.player.onKunjKirtan,
       dictionary.player.copyLinkPrompt,
-      pathname,
-      searchParams,
+      locale,
     ],
   );
 }

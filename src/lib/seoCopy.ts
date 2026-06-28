@@ -30,7 +30,7 @@ const seoCopyByLocale: Record<Locale, SeoCopy> = {
   en: {
     homeTitle: "Sacred sounds, lovingly curated",
     homeDescription:
-      "Browse bhajans, Maha Mantras, lead singers, and devotional occasions in the Kunj Kirtans archive.",
+      "Browse bhajans, Maha Mantras, lead singers, and devotional festivals in the Kunj Kirtans archive.",
     aboutTitle: "About",
     aboutDescription:
       "Learn about Kunj Kirtans, the devotional music archive, and the spirit behind its curation.",
@@ -39,17 +39,18 @@ const seoCopyByLocale: Record<Locale, SeoCopy> = {
       "Explore bhajans from the Kunj Kirtans archive, with curated recordings, lead singers, and devotional themes.",
     mahaMantrasTitle: "Maha Mantras",
     mahaMantrasDescription:
-      "Listen to curated Maha Mantra recordings with sequence numbers, lead singers, and devotional context.",
+      "Browse and listen to curated Maha Mantra recordings with amazing lead singers and devotional context.",
     leadsTitle: "Lead Singers",
     leadsDescription:
       "Browse lead singers in the Kunj Kirtans archive and discover their bhajans, Maha Mantras, and hari-katha.",
     occasionsTitle: "Occasions",
     occasionsDescription:
-      "Find devotional music curated around festivals, observances, and sacred occasions in the Kunj Kirtans archive.",
+      "Find devotional music curated around festivals, observances, and sacred tithis in the Kunj Kirtans archive.",
     favoritesTitle: "Favorites",
     favoritesDescription: "Your saved Kunj Kirtans recordings.",
     rareGemLabTitle: "Rare Gem Lab",
-    rareGemLabDescription: "Experimental rare gem curation tools for Kunj Kirtans.",
+    rareGemLabDescription:
+      "Experimental rare gem curation tools for Kunj Kirtans.",
     leadFallbackTitle: "Lead singer",
     leadFallbackDescription:
       "Explore devotional recordings from the Kunj Kirtans archive.",
@@ -103,4 +104,3 @@ const seoCopyByLocale: Record<Locale, SeoCopy> = {
 export function getSeoCopy(locale: Locale) {
   return seoCopyByLocale[locale];
 }
-

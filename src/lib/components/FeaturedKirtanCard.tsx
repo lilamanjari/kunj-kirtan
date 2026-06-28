@@ -183,7 +183,8 @@ export default function FeaturedKirtanCard({
 
             <div className="mt-1">
               <p
-                className={`text-[1rem] leading-snug sm:text-[1.15rem] ${palette?.leadsingerLabelColor ?? "text-stone-300"}`}
+                className={`text-[1rem] font-medium leading-snug sm:text-[1.15rem] ${palette?.leadsingerLabelColor ?? "text-stone-300"}`}
+                style={{ textShadow: "0 1px 12px rgba(255, 248, 244, 0.78)" }}
               >
                 {subtitleText}
               </p>
