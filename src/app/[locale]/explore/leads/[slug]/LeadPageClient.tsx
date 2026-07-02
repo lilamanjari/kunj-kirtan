@@ -47,6 +47,12 @@ function getRecordedYear(kirtan: KirtanSummary) {
   return kirtan.recorded_date?.slice(0, 4) || "Undated";
 }
 
+type KirtanGroup = {
+  key: string;
+  label: string | null;
+  items: KirtanSummary[];
+};
+
 export default function LeadPageClient({
   slug,
   initialData,
@@ -201,7 +207,17 @@ export default function LeadPageClient({
   }
 
   const groupedKirtans = useMemo(() => {
-    const groups: Array<{ year: string; items: KirtanSummary[] }> = [];
+    if (activeType === "BHJ") {
+      return [
+        {
+          key: "alphabetical",
+          label: null,
+          items: renderedKirtans,
+        },
+      ] satisfies KirtanGroup[];
+    }
+
+    const groups: KirtanGroup[] = [];
     const byYear = new Map<string, KirtanSummary[]>();
 
     for (const kirtan of renderedKirtans) {
@@ -212,11 +228,11 @@ export default function LeadPageClient({
     }
 
     for (const [year, items] of byYear) {
-      groups.push({ year, items });
+      groups.push({ key: year, label: year, items });
     }
 
     return groups;
-  }, [renderedKirtans]);
+  }, [activeType, renderedKirtans]);
   const leadSingerHeaderImageSrc = useMemo(() => {
     const transformedUrl = buildTransformedImageUrl(
       buildBucketImageUrl("page-art/leadsingerpageheader.png"),
@@ -487,47 +503,49 @@ export default function LeadPageClient({
           ) : (
             <div className="mt-13 space-y-5">
               {groupedKirtans.map((group) => (
-                <section key={group.year} className="space-y-2">
-                  <div className="flex items-center gap-3 px-1">
-                    <h3
-                      className={`${displayHeadingClassName} text-[1.5rem] leading-none text-[color:var(--theme-page-home-section-label)]`}
-                    >
-                      {group.year}
-                    </h3>
-                    <div className="h-px flex-1 bg-gradient-to-r from-[rgba(214,167,137,0.55)] to-transparent" />
-                    <div className="flex items-center justify-end gap-3">
-                      {visible.length > 1 ? (
-                        <div className="flex items-center gap-2">
-                          <button
-                            type="button"
-                            onClick={() => playCollection(visible)}
-                            aria-label={dictionary.actions.playAll}
-                            title={dictionary.actions.playAll}
-                            className="flex h-8 w-8 items-center justify-center rounded-full border border-[#e5d7cf] bg-white text-[#9b7466] shadow-sm hover:bg-[#fff8f4]"
-                          >
-                            <SFIcon
-                              icon={sfPlaySquareStackFill}
-                              className="h-4 w-4"
-                            />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              playCollection(visible, { shuffle: true })
-                            }
-                            aria-label={dictionary.actions.shuffle}
-                            title={dictionary.actions.shuffle}
-                            className="flex h-8 w-8 items-center justify-center rounded-full border border-[#d7e7d8] bg-white text-[#6f9873] shadow-sm hover:bg-[#f5fbf5]"
-                          >
-                            <SFIcon
-                              icon={sfShuffleCircle}
-                              className="h-4 w-4"
-                            />
-                          </button>
-                        </div>
-                      ) : null}
+                <section key={group.key} className="space-y-2">
+                  {group.label ? (
+                    <div className="flex items-center gap-3 px-1">
+                      <h3
+                        className={`${displayHeadingClassName} text-[1.5rem] leading-none text-[color:var(--theme-page-home-section-label)]`}
+                      >
+                        {group.label}
+                      </h3>
+                      <div className="h-px flex-1 bg-gradient-to-r from-[rgba(214,167,137,0.55)] to-transparent" />
+                      <div className="flex items-center justify-end gap-3">
+                        {visible.length > 1 ? (
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => playCollection(visible)}
+                              aria-label={dictionary.actions.playAll}
+                              title={dictionary.actions.playAll}
+                              className="flex h-8 w-8 items-center justify-center rounded-full border border-[#e5d7cf] bg-white text-[#9b7466] shadow-sm hover:bg-[#fff8f4]"
+                            >
+                              <SFIcon
+                                icon={sfPlaySquareStackFill}
+                                className="h-4 w-4"
+                              />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                playCollection(visible, { shuffle: true })
+                              }
+                              aria-label={dictionary.actions.shuffle}
+                              title={dictionary.actions.shuffle}
+                              className="flex h-8 w-8 items-center justify-center rounded-full border border-[#d7e7d8] bg-white text-[#6f9873] shadow-sm hover:bg-[#f5fbf5]"
+                            >
+                              <SFIcon
+                                icon={sfShuffleCircle}
+                                className="h-4 w-4"
+                              />
+                            </button>
+                          </div>
+                        ) : null}
+                      </div>
                     </div>
-                  </div>
+                  ) : null}
                   <ul className="space-y-0">
                     {group.items.map((k) => (
                       <KirtanListItem
