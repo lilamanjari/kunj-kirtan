@@ -14,7 +14,6 @@ export const enDictionary: AppDictionary = {
     aboutKunjKirtan: "About Kunj Kirtans",
     offlineCheckConnection: "Offline — check your connection",
     noFavoritesYet: "No favorites yet. Tap the heart on any kirtan to save it here.",
-    sharedWithYou: "Shared with you",
   },
   explore: {
     bhajans: "Bhajan",
@@ -53,7 +52,6 @@ export const enDictionary: AppDictionary = {
     recommendedSubtitle: "Rare gems refreshed weekly.",
     popular: "Popular",
     popularSubtitle: "Our most played tracks.",
-    sharedKirtanContext: "Someone shared this kirtan with you.",
   },
   player: {
     playQueue: "Play queue",

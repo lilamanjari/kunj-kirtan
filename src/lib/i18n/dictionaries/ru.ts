@@ -15,7 +15,6 @@ export const ruDictionary: AppDictionary = {
     offlineCheckConnection: "Нет сети — проверьте соединение",
     noFavoritesYet:
       "Пока нет избранного. Нажмите на сердечко у любого киртана, чтобы сохранить его здесь.",
-    sharedWithYou: "Поделились с вами",
   },
   explore: {
     bhajans: "Бхаджаны",
@@ -54,7 +53,6 @@ export const ruDictionary: AppDictionary = {
     recommendedSubtitle: "Редкие жемчужины, обновляемые еженедельно.",
     popular: "Популярное",
     popularSubtitle: "Наши самые часто прослушиваемые треки.",
-    sharedKirtanContext: "Этим киртаном с вами поделились.",
   },
   player: {
     playQueue: "Очередь воспроизведения",

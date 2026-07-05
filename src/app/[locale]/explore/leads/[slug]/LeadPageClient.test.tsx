@@ -19,7 +19,6 @@ vi.mock("@/lib/audio/AudioPlayerContext", () => ({
     isQueued: () => false,
     toggleFavorite: vi.fn(),
     isFavorited: () => false,
-    select: vi.fn(),
   }),
 }));
 
@@ -29,10 +28,6 @@ vi.mock("@/lib/components/KirtanListItem", () => ({
 
 vi.mock("@/lib/components/FeaturedKirtanCard", () => ({
   default: () => <div>Featured</div>,
-}));
-
-vi.mock("@/lib/components/SharedKirtanFeature", () => ({
-  default: () => null,
 }));
 
 vi.mock("@/lib/components/SubpageHeader", () => ({
@@ -57,20 +52,6 @@ vi.mock("@/lib/i18n/LocaleProvider", () => ({
       shuffle: "Shuffle",
     },
   }),
-}));
-
-vi.mock("@/lib/components/KirtanDeepLinkHandler", () => ({
-  default: ({
-    kirtans,
-    onPin,
-  }: {
-    kirtans: KirtanSummary[];
-    onPin: (kirtan: KirtanSummary) => void;
-  }) => (
-    <button type="button" onClick={() => onPin(kirtans[1])}>
-      Pin second
-    </button>
-  ),
 }));
 
 const firstKirtan: KirtanSummary = {
@@ -115,10 +96,9 @@ describe("LeadPageClient play controls", () => {
     playCollectionMock.mockReset();
   });
 
-  it("plays the underlying visible list order even when a kirtan is pinned visually", () => {
+  it("plays the visible list order", () => {
     render(<LeadPageClient slug="lead-singer" initialData={initialData} />);
 
-    fireEvent.click(screen.getByText("Pin second"));
     fireEvent.click(screen.getByRole("button", { name: "Play all" }));
 
     expect(playCollectionMock).toHaveBeenCalledWith([firstKirtan, secondKirtan]);

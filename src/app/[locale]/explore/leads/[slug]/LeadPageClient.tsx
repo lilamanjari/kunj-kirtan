@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { SFIcon } from "@bradleyhodges/sfsymbols-react";
 import {
   sfBook,
@@ -13,8 +13,6 @@ import KirtanListItem from "@/lib/components/KirtanListItem";
 import LeadSingerAvatar from "@/lib/components/LeadSingerAvatar";
 import type { KirtanSummary, KirtanType } from "@/types/kirtan";
 import type { LeadListState, LeadResponse } from "@/types/leads";
-import KirtanDeepLinkHandler from "@/lib/components/KirtanDeepLinkHandler";
-import SharedKirtanFeature from "@/lib/components/SharedKirtanFeature";
 import { fetchWithStatus } from "@/lib/net/fetchWithStatus";
 import LeadFeaturedKirtanCard from "@/lib/components/LeadFeaturedKirtanCard";
 import SubpageHeader from "@/lib/components/SubpageHeader";
@@ -72,7 +70,6 @@ export default function LeadPageClient({
     isQueued,
     toggleFavorite,
     isFavorited,
-    select,
   } = useAudioPlayer();
   const filters: { key: KirtanType; label: string }[] = [
     { key: "MM", label: dictionary.explore.mahaMantra },
@@ -96,7 +93,6 @@ export default function LeadPageClient({
   const [activeType, setActiveType] = useState<KirtanType | null>(
     initialData.active_type ?? null,
   );
-  const [pinnedKirtan, setPinnedKirtan] = useState<KirtanSummary | null>(null);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
@@ -186,25 +182,7 @@ export default function LeadPageClient({
   );
   const isListLoading = Boolean(activeType && !listsByType[activeType]);
   const featuredKirtan = initialData.featured ?? null;
-  const renderedKirtans = useMemo(
-    () =>
-      pinnedKirtan
-        ? [pinnedKirtan, ...visible.filter((k) => k.id !== pinnedKirtan.id)]
-        : visible,
-    [pinnedKirtan, visible],
-  );
-  const [sharedKirtan, setSharedKirtan] = useState<KirtanSummary | null>(null);
-  const [sharedCardDismissed, setSharedCardDismissed] = useState(false);
-  const hasVisibleSharedCard = !!sharedKirtan && !sharedCardDismissed;
-  const shouldHideFeatured =
-    hasVisibleSharedCard && sharedKirtan.id === featuredKirtan?.id;
   const isOtherLeadView = initialData.lead.id === OTHER_LEAD_ID;
-
-  function handleSharedKirtan(kirtan: KirtanSummary) {
-    setPinnedKirtan(kirtan);
-    setSharedKirtan(kirtan);
-    setSharedCardDismissed(false);
-  }
 
   const groupedKirtans = useMemo(() => {
     if (activeType === "BHJ") {
@@ -212,7 +190,7 @@ export default function LeadPageClient({
         {
           key: "alphabetical",
           label: null,
-          items: renderedKirtans,
+          items: visible,
         },
       ] satisfies KirtanGroup[];
     }
@@ -220,7 +198,7 @@ export default function LeadPageClient({
     const groups: KirtanGroup[] = [];
     const byYear = new Map<string, KirtanSummary[]>();
 
-    for (const kirtan of renderedKirtans) {
+    for (const kirtan of visible) {
       const year = getRecordedYear(kirtan);
       const items = byYear.get(year) ?? [];
       items.push(kirtan);
@@ -232,7 +210,7 @@ export default function LeadPageClient({
     }
 
     return groups;
-  }, [activeType, renderedKirtans]);
+  }, [activeType, visible]);
   const leadSingerHeaderImageSrc = useMemo(() => {
     const transformedUrl = buildTransformedImageUrl(
       buildBucketImageUrl("page-art/leadsingerpageheader.png"),
@@ -319,14 +297,6 @@ export default function LeadPageClient({
   return (
     <div className="relative min-h-screen overflow-hidden bg-[linear-gradient(180deg,_#f5d7d0_0%,_#f6e4de_18%,_#f7ece7_42%,_#f8f2ef_100%)] text-stone-900">
       <main className="relative z-10 mx-auto max-w-md px-5 py-6 space-y-8">
-        <Suspense fallback={null}>
-          <KirtanDeepLinkHandler
-            kirtans={visible}
-            onSelect={select}
-            isActive={isActive}
-            onPin={handleSharedKirtan}
-          />
-        </Suspense>
         <SubpageHeader
           title={undefined}
           backLabel={dictionary.explore.leadsBackLabel}
@@ -410,26 +380,8 @@ export default function LeadPageClient({
           </div>
         </section>
 
-        <div className="-mt-4">
-          <SharedKirtanFeature
-            kirtan={sharedKirtan}
-            isActive={sharedKirtan ? isActive(sharedKirtan) : false}
-            isPlaying={sharedKirtan ? isPlaying(sharedKirtan) : false}
-            isLoading={sharedKirtan ? isAudioLoading(sharedKirtan) : false}
-            onToggle={() => {
-              if (sharedKirtan) toggle(sharedKirtan);
-            }}
-            onEnqueue={enqueue}
-            onDequeue={dequeueById}
-            isQueued={sharedKirtan ? isQueued(sharedKirtan.id) : false}
-            onToggleFavorite={toggleFavorite}
-            isFavorited={sharedKirtan ? isFavorited(sharedKirtan.id) : false}
-            onDismissedChange={setSharedCardDismissed}
-          />
-        </div>
-
-        {featuredKirtan && !shouldHideFeatured ? (
-          <div className={hasVisibleSharedCard ? "mt-4" : "-mt-6"}>
+        {featuredKirtan ? (
+          <div className="-mt-6">
             <LeadFeaturedKirtanCard
               kirtan={featuredKirtan}
               titleOverride={
@@ -465,7 +417,6 @@ export default function LeadPageClient({
                 <button
                   key={filter.key}
                   onClick={() => {
-                    setPinnedKirtan(null);
                     setActiveType(filter.key);
                   }}
                   className={`
@@ -496,7 +447,7 @@ export default function LeadPageClient({
                 ))}
               </div>
             </div>
-          ) : renderedKirtans.length === 0 ? (
+          ) : visible.length === 0 ? (
             <p className="mt-3 text-sm text-[#95786a]">
               {dictionary.explore.noKirtansFound}
             </p>

@@ -1,16 +1,11 @@
 "use client";
-
-import { Suspense, useState } from "react";
 import { useAudioPlayer } from "@/lib/audio/AudioPlayerContext";
 import type { HomeData } from "@/types/home";
-import type { KirtanSummary } from "@/types/kirtan";
 import FeaturedKirtanCard from "@/lib/components/FeaturedKirtanCard";
 import HomeFavoritesStrip from "@/lib/components/HomeFavoritesStrip";
 import HomePopularStrip from "@/lib/components/HomePopularStrip";
 import HomeRecommendedStrip from "@/lib/components/HomeRecommendedStrip";
 import KirtanListItem from "@/lib/components/KirtanListItem";
-import KirtanDeepLinkHandler from "@/lib/components/KirtanDeepLinkHandler";
-import SharedKirtanFeature from "@/lib/components/SharedKirtanFeature";
 import { greenSurfaceTheme, homePalette } from "@/lib/theme/pagePalettes";
 import { radiusClassNames } from "@/lib/theme/radii";
 import Image from "next/image";
@@ -126,26 +121,15 @@ export default function HomeClient({ data }: { data: HomeData }) {
     isFavorited,
     favorites,
     favoritesLoaded,
-    select,
   } = useAudioPlayer();
   const primaryAction = data.primary_action;
   const recentlyAdded = data.recently_added ?? [];
-  const [pinnedKirtan, setPinnedKirtan] = useState<KirtanSummary | null>(null);
-  const [sharedKirtan, setSharedKirtan] = useState<KirtanSummary | null>(null);
-  const [sharedCardDismissed, setSharedCardDismissed] = useState(false);
   const entryPointLinks: Record<string, string> = {
     MM: "/explore/maha-mantras",
     BHJ: "/explore/bhajans",
     LEADS: "/explore/leads",
     OCCASIONS: "/explore/occasions",
   };
-  const renderedRecentlyAdded = pinnedKirtan
-    ? [pinnedKirtan, ...recentlyAdded.filter((k) => k.id !== pinnedKirtan.id)]
-    : recentlyAdded;
-  const shouldHidePrimaryFeatured =
-    !!sharedKirtan &&
-    !sharedCardDismissed &&
-    sharedKirtan.id === primaryAction?.kirtan.id;
   const entryPointTitles: Record<string, string> = {
     MM: dictionary.explore.mahaMantra,
     BHJ: dictionary.explore.bhajans,
@@ -189,12 +173,6 @@ export default function HomeClient({ data }: { data: HomeData }) {
   const currentOccasionEndDate = data.current_occasion?.endsAt
     ? formatDateLong(data.current_occasion.endsAt, "day", locale)
     : null;
-  function handleSharedKirtan(kirtan: KirtanSummary) {
-    setPinnedKirtan(kirtan);
-    setSharedKirtan(kirtan);
-    setSharedCardDismissed(false);
-  }
-
   return (
     <div className="relative min-h-screen overflow-hidden bg-[color:var(--theme-page-home-bg)] text-stone-900">
       <main className="relative z-10 mx-auto max-w-md space-y-6">
@@ -210,30 +188,7 @@ export default function HomeClient({ data }: { data: HomeData }) {
           <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-b from-transparent to-[color:var(--theme-page-home-bg)]" />
         </div>
         <div className="-mt-10 space-y-8 px-5">
-          <Suspense fallback={null}>
-            <KirtanDeepLinkHandler
-              kirtans={recentlyAdded}
-              onSelect={select}
-              isActive={isActive}
-              onPin={handleSharedKirtan}
-            />
-          </Suspense>
-          <SharedKirtanFeature
-            kirtan={sharedKirtan}
-            isActive={sharedKirtan ? isActive(sharedKirtan) : false}
-            isPlaying={sharedKirtan ? isPlaying(sharedKirtan) : false}
-            isLoading={sharedKirtan ? isLoading(sharedKirtan) : false}
-            onToggle={() => {
-              if (sharedKirtan) toggle(sharedKirtan);
-            }}
-            onEnqueue={enqueue}
-            onDequeue={dequeueById}
-            isQueued={sharedKirtan ? isQueued(sharedKirtan.id) : false}
-            onToggleFavorite={toggleFavorite}
-            isFavorited={sharedKirtan ? isFavorited(sharedKirtan.id) : false}
-            onDismissedChange={setSharedCardDismissed}
-          />
-          {primaryAction && !shouldHidePrimaryFeatured && (
+          {primaryAction && (
             <FeaturedKirtanCard
               kirtan={primaryAction.kirtan}
               isActive={isActive(primaryAction.kirtan)}
@@ -429,7 +384,7 @@ export default function HomeClient({ data }: { data: HomeData }) {
             </h2>
 
             <ul className="mt-3 space-y-0">
-              {renderedRecentlyAdded.map((k) => {
+              {recentlyAdded.map((k) => {
                 return (
                   <KirtanListItem
                     key={k.id}

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, expect, it, vi } from "vitest";
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import type { ImgHTMLAttributes, ReactNode } from "react";
 import HomeClient from "./HomeClient";
 import type { HomeData } from "@/types/home";
@@ -18,17 +18,6 @@ const audioPlayerMock = {
   isFavorited: vi.fn(() => false),
   favorites: [],
   favoritesLoaded: true,
-  select: vi.fn(),
-};
-
-const sharedKirtan: KirtanSummary = {
-  id: "shared-kirtan",
-  audio_url: "https://example.com/shared.mp3",
-  type: "BHJ",
-  title: "Shared Kirtan",
-  lead_singer: "Shared Singer",
-  recorded_date: "2026-01-02",
-  sanga: "Kunj",
 };
 
 const featuredKirtan: KirtanSummary = {
@@ -61,7 +50,6 @@ vi.mock("@/lib/i18n/LocaleProvider", () => ({
       discover: "Discover",
       recentlyAdded: "Recently Added",
       aboutKunjKirtan: "About Kunj Kirtan",
-      sharedWithYou: "Shared with you",
     },
     explore: {
       mahaMantra: "Maha Mantra",
@@ -72,7 +60,6 @@ vi.mock("@/lib/i18n/LocaleProvider", () => ({
     home: {
       currentVrata: "Current Vrata",
       currentVrataSubtitle: "Current Vrata Subtitle",
-      sharedKirtanContext: "Someone shared this kirtan with you.",
     },
     actions: {
       dismiss: "Dismiss",
@@ -116,27 +103,18 @@ vi.mock("@/lib/components/FeaturedKirtanCard", () => ({
   default: ({
     kirtan,
     label,
-    onDismiss,
   }: {
     kirtan: KirtanSummary;
     label?: string;
-    onDismiss?: () => void;
   }) => (
     <div>
       <div>{label ?? "Featured"}</div>
       <div>{kirtan.title}</div>
-      {onDismiss ? <button onClick={onDismiss}>Dismiss</button> : null}
     </div>
   ),
 }));
 
-vi.mock("@/lib/components/KirtanDeepLinkHandler", () => ({
-  default: ({ onPin }: { onPin: (kirtan: KirtanSummary) => void }) => (
-    <button onClick={() => onPin(sharedKirtan)}>Trigger shared kirtan</button>
-  ),
-}));
-
-describe("HomeClient shared kirtan UX", () => {
+describe("HomeClient", () => {
   const data: HomeData = {
     primary_action: {
       type: "featured",
@@ -149,29 +127,10 @@ describe("HomeClient shared kirtan UX", () => {
     recently_added: [featuredKirtan],
   };
 
-  it("renders a dismissible shared card separate from the featured card", () => {
-    vi.useFakeTimers();
-
+  it("renders the primary featured kirtan", () => {
     render(<HomeClient data={data} />);
 
     expect(screen.getByText("Featured")).toBeTruthy();
     expect(screen.getAllByText("Featured Kirtan").length).toBeGreaterThan(0);
-
-    fireEvent.click(screen.getByText("Trigger shared kirtan"));
-
-    expect(screen.getByText("Shared with you")).toBeTruthy();
-    expect(screen.getAllByText("Shared Kirtan").length).toBeGreaterThan(0);
-    expect(screen.getByText("Featured")).toBeTruthy();
-
-    fireEvent.click(screen.getByText("Dismiss"));
-
-    act(() => {
-      vi.advanceTimersByTime(300);
-    });
-
-    expect(screen.queryByText("Shared with you")).toBeNull();
-    expect(screen.getByText("Featured")).toBeTruthy();
-
-    vi.useRealTimers();
   });
 });

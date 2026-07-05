@@ -50,7 +50,6 @@
 
 import {
   Fragment,
-  Suspense,
   useCallback,
   useEffect,
   useMemo,
@@ -70,8 +69,6 @@ import type {
   BhajansResponse,
 } from "@/types/bhajans";
 import KirtanListItem from "@/lib/components/KirtanListItem";
-import KirtanDeepLinkHandler from "@/lib/components/KirtanDeepLinkHandler";
-import SharedKirtanFeature from "@/lib/components/SharedKirtanFeature";
 import CollectionCardGrid from "@/lib/components/CollectionCardGrid";
 import { fetchWithStatus } from "@/lib/net/fetchWithStatus";
 import FeaturedKirtanCard from "@/lib/components/FeaturedKirtanCard";
@@ -258,11 +255,7 @@ export default function BhajansPageClient({
     isQueued,
     toggleFavorite,
     isFavorited,
-    select,
   } = useAudioPlayer();
-  const [pinnedKirtan, setPinnedKirtan] = useState<KirtanSummary | null>(null);
-  const [sharedKirtan, setSharedKirtan] = useState<KirtanSummary | null>(null);
-  const [sharedCardDismissed, setSharedCardDismissed] = useState(false);
 
   function pauseAutoLoadUntilLetter(letter: string | null) {
     autoLoadBlockedRef.current = Boolean(letter);
@@ -586,34 +579,12 @@ export default function BhajansPageClient({
     return Array.from(bhajanMap.values()).sort(compareBhajans);
   }, [bhajanMap]);
 
-  const renderedBhajans = useMemo(() => {
-    return pinnedKirtan
-      ? [
-          pinnedKirtan,
-          ...sortedBhajans.filter(
-            // Pinning should suppress only the exact browse row already shown
-            // at the top, not every alias row for the same audio track.
-            (k) => getBrowseEntryId(k) !== getBrowseEntryId(pinnedKirtan),
-          ),
-        ]
-      : sortedBhajans;
-  }, [pinnedKirtan, sortedBhajans]);
-  const hasVisibleSharedCard = !!sharedKirtan && !sharedCardDismissed;
-  const shouldHideFeatured =
-    hasVisibleSharedCard && sharedKirtan.id === featured?.id;
-
-  function handleSharedKirtan(kirtan: KirtanSummary) {
-    setPinnedKirtan(kirtan);
-    setSharedKirtan(kirtan);
-    setSharedCardDismissed(false);
-  }
-
   const shouldShowCollectionActions =
-    renderedBhajans.length > 1 || isLoadingList;
+    sortedBhajans.length > 1 || isLoadingList;
   const baseBhajanTotal =
-    initialData.total_count ?? totalCount ?? renderedBhajans.length;
+    initialData.total_count ?? totalCount ?? sortedBhajans.length;
   const visibleBhajanTotal =
-    totalCount ?? initialData.total_count ?? renderedBhajans.length;
+    totalCount ?? initialData.total_count ?? sortedBhajans.length;
   const shouldShowFilteredBhajanHeading =
     collectionFilter !== "ALL" && !isLoadingList;
   const bhajanHeadingText =
@@ -629,7 +600,7 @@ export default function BhajansPageClient({
     const rows: GroupedBhajanRow[] = [];
     let currentLetter: string | null = null;
 
-    for (const bhajan of renderedBhajans) {
+    for (const bhajan of sortedBhajans) {
       const letter = getBrowseLetter(bhajan.title);
       if (letter !== currentLetter) {
         currentLetter = letter;
@@ -639,7 +610,7 @@ export default function BhajansPageClient({
     }
 
     return rows;
-  }, [renderedBhajans]);
+  }, [sortedBhajans]);
 
   useEffect(() => {
     syncVisibleLetter();
@@ -768,40 +739,13 @@ export default function BhajansPageClient({
   return (
     <div className="relative min-h-screen overflow-hidden bg-[linear-gradient(180deg,_#f5d7d0_0%,_#f6e4de_18%,_#f7ece7_42%,_#f8f2ef_100%)] text-stone-900">
       <main className="relative z-10 mx-auto max-w-md px-5 py-6 space-y-6">
-        <Suspense fallback={null}>
-          <KirtanDeepLinkHandler
-            kirtans={sortedBhajans}
-            onSelect={select}
-            isActive={isActive}
-            onPin={handleSharedKirtan}
-          />
-        </Suspense>
         <SubpageHeader
           title={undefined}
           backLabel={dictionary.common.home}
           backHref="/"
         />
-
-        <div className="-mt-6">
-          <SharedKirtanFeature
-            kirtan={sharedKirtan}
-            isActive={sharedKirtan ? isActive(sharedKirtan) : false}
-            isPlaying={sharedKirtan ? isPlaying(sharedKirtan) : false}
-            isLoading={sharedKirtan ? isLoading(sharedKirtan) : false}
-            onToggle={() => {
-              if (sharedKirtan) toggle(sharedKirtan);
-            }}
-            onEnqueue={enqueue}
-            onDequeue={dequeueById}
-            isQueued={sharedKirtan ? isQueued(sharedKirtan.id) : false}
-            onToggleFavorite={toggleFavorite}
-            isFavorited={sharedKirtan ? isFavorited(sharedKirtan.id) : false}
-            onDismissedChange={setSharedCardDismissed}
-          />
-        </div>
-
-        {featured && !shouldHideFeatured ? (
-          <div className={hasVisibleSharedCard ? "mt-4" : "-mt-6"}>
+        {featured ? (
+          <div className="-mt-6">
             <FeaturedKirtanCard
               kirtan={featured}
               isActive={isActive(featured)}
@@ -861,10 +805,10 @@ export default function BhajansPageClient({
               <div className="flex shrink-0 gap-2">
                 <button
                   type="button"
-                  onClick={() => playCollection(renderedBhajans)}
+                  onClick={() => playCollection(sortedBhajans)}
                   aria-label={dictionary.actions.playAll}
                   title={dictionary.actions.playAll}
-                  disabled={renderedBhajans.length <= 1}
+                  disabled={sortedBhajans.length <= 1}
                   className="flex h-8 w-8 items-center justify-center rounded-full border border-[#ead5db] bg-white text-[#8f6774] shadow-sm transition hover:bg-[#fff6f8] disabled:pointer-events-none disabled:opacity-40"
                 >
                   <SFIcon icon={sfPlaySquareStackFill} className="h-4 w-4" />
@@ -872,11 +816,11 @@ export default function BhajansPageClient({
                 <button
                   type="button"
                   onClick={() =>
-                    playCollection(renderedBhajans, { shuffle: true })
+                    playCollection(sortedBhajans, { shuffle: true })
                   }
                   aria-label={dictionary.actions.shuffle}
                   title={dictionary.actions.shuffle}
-                  disabled={renderedBhajans.length <= 1}
+                  disabled={sortedBhajans.length <= 1}
                   className="flex h-8 w-8 items-center justify-center rounded-full border border-[#ead5db] bg-white text-[#8f6774] shadow-sm transition hover:bg-[#fff6f8] disabled:pointer-events-none disabled:opacity-40"
                 >
                   <SFIcon icon={sfShuffleCircle} className="h-4 w-4" />
@@ -922,7 +866,7 @@ export default function BhajansPageClient({
                     ))}
                   </div>
                 </li>
-              ) : renderedBhajans.length === 0 && hasFetchedOnce ? (
+              ) : sortedBhajans.length === 0 && hasFetchedOnce ? (
                 <li className="rounded-xl border border-dashed border-[#ead5db] bg-white/88 px-4 py-6 text-center text-sm text-[#98727e]">
                   {dictionary.explore.noBhajansMatch}
                 </li>

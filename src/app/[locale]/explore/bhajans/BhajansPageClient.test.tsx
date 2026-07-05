@@ -47,15 +47,7 @@ vi.mock("@/lib/components/KirtanListItem", () => ({
   ),
 }));
 
-vi.mock("@/lib/components/KirtanDeepLinkHandler", () => ({
-  default: () => null,
-}));
-
 vi.mock("@/lib/components/FeaturedKirtanCard", () => ({
-  default: () => null,
-}));
-
-vi.mock("@/lib/components/SharedKirtanFeature", () => ({
   default: () => null,
 }));
 

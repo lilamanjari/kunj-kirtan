@@ -161,21 +161,6 @@ body {
   animation: toast-in 220ms ease-out;
 }
 
-@keyframes shared-card-in {
-  0% {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.animate-shared-card-in {
-  animation: shared-card-in 280ms ease-out;
-}
-
 input[type="range"] {
   -webkit-appearance: none;
   appearance: none;

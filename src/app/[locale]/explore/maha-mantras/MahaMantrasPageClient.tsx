@@ -3,7 +3,7 @@
 // Client-side Maha Mantra page UI.
 // This file owns layout, interactivity, local filter state, and hydrated rendering.
 
-import { Suspense, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { SFIcon } from "@bradleyhodges/sfsymbols-react";
 import {
   sfMagnifyingglass,
@@ -13,8 +13,6 @@ import {
 import { useAudioPlayer } from "@/lib/audio/AudioPlayerContext";
 import type { KirtanSummary } from "@/types/kirtan";
 import KirtanListItem from "@/lib/components/KirtanListItem";
-import KirtanDeepLinkHandler from "@/lib/components/KirtanDeepLinkHandler";
-import SharedKirtanFeature from "@/lib/components/SharedKirtanFeature";
 import CollectionCardGrid from "@/lib/components/CollectionCardGrid";
 import LeadSingerAvatar from "@/lib/components/LeadSingerAvatar";
 import { fetchWithStatus } from "@/lib/net/fetchWithStatus";
@@ -78,12 +76,7 @@ export default function MahaMantrasPageClient({
     isQueued,
     toggleFavorite,
     isFavorited,
-    select,
   } = useAudioPlayer();
-  const [pinnedKirtan, setPinnedKirtan] = useState<KirtanSummary | null>(null);
-  const [sharedKirtan, setSharedKirtan] = useState<KirtanSummary | null>(null);
-  const [sharedCardDismissed, setSharedCardDismissed] = useState(false);
-
   function resetPagination() {
     setNextCursor(null);
     setHasMore(true);
@@ -204,19 +197,6 @@ export default function MahaMantrasPageClient({
       `${collectionCounts.with_harmonium} kirtans`,
     ),
   ];
-  const renderedMantras = pinnedKirtan
-    ? [pinnedKirtan, ...mantras.filter((k) => k.id !== pinnedKirtan.id)]
-    : mantras;
-  const hasVisibleSharedCard = !!sharedKirtan && !sharedCardDismissed;
-  const shouldHideFeatured =
-    hasVisibleSharedCard && sharedKirtan.id === featured?.id;
-
-  function handleSharedKirtan(kirtan: KirtanSummary) {
-    setPinnedKirtan(kirtan);
-    setSharedKirtan(kirtan);
-    setSharedCardDismissed(false);
-  }
-
   useEffect(() => {
     if (!hasMore || isLoadingMore) return;
     const node = loadMoreRef.current;
@@ -271,40 +251,13 @@ export default function MahaMantrasPageClient({
   return (
     <div className="relative min-h-screen overflow-hidden bg-[linear-gradient(180deg,_#f5d7d0_0%,_#f6e4de_18%,_#f7ece7_42%,_#f8f2ef_100%)]">
       <main className="relative z-10 mx-auto max-w-md space-y-6 px-5 py-6">
-        <Suspense fallback={null}>
-          <KirtanDeepLinkHandler
-            kirtans={renderedMantras}
-            onSelect={select}
-            isActive={isActive}
-            onPin={handleSharedKirtan}
-          />
-        </Suspense>
         <SubpageHeader
           title={undefined}
           backLabel={dictionary.common.home}
           backHref="/"
         />
-
-        <div className="mt-0">
-          <SharedKirtanFeature
-            kirtan={sharedKirtan}
-            isActive={sharedKirtan ? isActive(sharedKirtan) : false}
-            isPlaying={sharedKirtan ? isPlaying(sharedKirtan) : false}
-            isLoading={sharedKirtan ? isLoading(sharedKirtan) : false}
-            onToggle={() => {
-              if (sharedKirtan) toggle(sharedKirtan);
-            }}
-            onEnqueue={enqueue}
-            onDequeue={dequeueById}
-            isQueued={sharedKirtan ? isQueued(sharedKirtan.id) : false}
-            onToggleFavorite={toggleFavorite}
-            isFavorited={sharedKirtan ? isFavorited(sharedKirtan.id) : false}
-            onDismissedChange={setSharedCardDismissed}
-          />
-        </div>
-
-        {featured && !shouldHideFeatured ? (
-          <div className={hasVisibleSharedCard ? "mt-4" : "mt-0"}>
+        {featured ? (
+          <div className="mt-0">
             <FeaturedKirtanCard
               kirtan={featured}
               isActive={isActive(featured)}
@@ -398,7 +351,7 @@ export default function MahaMantrasPageClient({
               <div className="flex shrink-0 gap-2">
                 <button
                   type="button"
-                  onClick={() => playCollection(renderedMantras)}
+                  onClick={() => playCollection(mantras)}
                   aria-label={dictionary.actions.playAll}
                   title={dictionary.actions.playAll}
                   className="flex h-11 w-11 items-center justify-center rounded-2xl border border-[#ead8cf] bg-white text-[#8b6657] shadow-sm hover:bg-[#fff8f4]"
@@ -411,7 +364,7 @@ export default function MahaMantrasPageClient({
                 <button
                   type="button"
                   onClick={() =>
-                    playCollection(renderedMantras, { shuffle: true })
+                    playCollection(mantras, { shuffle: true })
                   }
                   aria-label={dictionary.actions.shuffle}
                   title={dictionary.actions.shuffle}
@@ -445,12 +398,12 @@ export default function MahaMantrasPageClient({
                 ))}
               </div>
             </li>
-          ) : renderedMantras.length === 0 && hasFetchedOnce ? (
+          ) : mantras.length === 0 && hasFetchedOnce ? (
             <li className="rounded-xl border border-dashed border-[#ead8cf] bg-white/88 px-4 py-6 text-center text-sm text-[#9b7a6c]">
               {dictionary.explore.noMahaMantrasMatch}
             </li>
           ) : (
-            renderedMantras.map((m) => (
+            mantras.map((m) => (
               <KirtanListItem
                 key={m.id}
                 kirtan={m}

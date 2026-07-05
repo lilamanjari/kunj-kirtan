@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import FeaturedKirtanCard from "@/lib/components/FeaturedKirtanCard";
 import HomeCuratedKirtanStrip from "@/lib/components/HomeCuratedKirtanStrip";
 import LocalizedLink from "@/lib/components/LocalizedLink";
@@ -28,6 +29,9 @@ export default function KirtanDetailPageClient({
   const locale = useLocale();
   const dictionary = useDictionary();
   const {
+    current: playerCurrent,
+    state: playerState,
+    select,
     play,
     isActive,
     isPlaying,
@@ -40,6 +44,18 @@ export default function KirtanDetailPageClient({
   } = useAudioPlayer();
 
   const current = data.kirtan;
+
+  useEffect(() => {
+    if (playerCurrent?.id === current.id) {
+      return;
+    }
+
+    if (playerState === "playing" && playerCurrent) {
+      return;
+    }
+
+    select(current);
+  }, [current, playerCurrent, playerState, select]);
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-[linear-gradient(180deg,_#f5d7d0_0%,_#f6e4de_18%,_#f7ece7_42%,_#f8f2ef_100%)] text-stone-900">
