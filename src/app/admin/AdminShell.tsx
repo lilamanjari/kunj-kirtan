@@ -45,7 +45,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
             </Link>
           </nav>
         </header>
-        <main className="min-h-0 flex-1 overflow-hidden">{children}</main>
+        <main className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto">{children}</main>
       </div>
     </div>
   );

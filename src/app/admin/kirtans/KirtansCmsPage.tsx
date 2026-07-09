@@ -7,6 +7,7 @@ import type {
   AdminTagSummary,
 } from "@/lib/admin/types";
 import LeadSingerAvatar from "@/lib/components/LeadSingerAvatar";
+import { AdminKirtanAudioPlayer } from "@/app/admin/kirtans/AdminKirtanAudioPlayer";
 
 type StatusFilter = "all" | "published" | "hidden";
 type TypeFilter = "all" | "MM" | "BHJ" | "HK";
@@ -357,8 +358,8 @@ export function KirtansCmsPage() {
   }
 
   return (
-    <div className="grid h-[calc(100vh-8.5rem)] min-h-0 grid-cols-1 gap-4 overflow-hidden lg:grid-cols-[minmax(320px,420px)_1fr]">
-      <section className={sectionCardClassName("flex min-h-0 flex-col overflow-hidden")}>
+    <div className="grid min-w-0 grid-cols-1 items-start gap-4 lg:grid-cols-[minmax(320px,420px)_minmax(0,1fr)]">
+      <section className={sectionCardClassName("flex min-h-0 flex-col overflow-hidden lg:sticky lg:top-6 lg:max-h-[calc(100vh-3rem)]")}>
         <div className="border-b border-[#f0ddd3] px-4 py-4">
           <div className="flex items-start justify-between gap-3">
             <div>
@@ -466,9 +467,9 @@ export function KirtansCmsPage() {
         </div>
       </section>
 
-      <section className={sectionCardClassName("min-h-0 overflow-hidden")}>
+      <section className={sectionCardClassName("min-w-0 overflow-hidden")}>
         {selected ? (
-          <div className="flex h-full min-h-0 flex-col">
+          <div className="flex min-h-0 flex-col">
             <div className="border-b border-[#f0ddd3] bg-[rgba(255,250,246,0.96)] backdrop-blur-md">
               <div className="flex flex-col">
                 <div className="flex flex-col lg:flex-row lg:items-stretch">
@@ -491,7 +492,12 @@ export function KirtansCmsPage() {
                       {selected.display_title}
                     </h2>
                     <p className="mt-2 text-sm text-[#8d6b64]">{formatMetaLine(selected)}</p>
-                    <div className="mt-auto pt-4 flex items-center gap-3">
+                    {formatDuration(selected.duration_seconds) ? (
+                      <p className="mt-2 text-xs font-medium text-[#9d786d]">
+                        {formatDuration(selected.duration_seconds)}
+                      </p>
+                    ) : null}
+                    <div className="pt-4 flex items-center gap-3">
                       <span className={badgeClassName(selected.published)}>
                         {getPublishedLabel(selected.published)}
                       </span>
@@ -519,10 +525,22 @@ export function KirtansCmsPage() {
                     </div>
                   </div>
                 </div>
+                <AdminKirtanAudioPlayer
+                  key={selected.id}
+                  title={selected.display_title}
+                  audioUrl={selected.audio_url}
+                  waveformUrl={
+                    selected.audio_url
+                      ? `/api/admin/kirtans/${selected.id}/audio-file`
+                      : null
+                  }
+                  fileName={selected.audio_file_name}
+                  durationSeconds={selected.duration_seconds}
+                />
               </div>
             </div>
 
-            <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
+            <div className="px-5 py-4">
               {detailError ? (
                 <div className="mb-4 rounded-[var(--theme-radius-card)] border border-[#efc7c0] bg-[#fff4f3] px-3 py-2 text-sm text-[#a45e5a]">
                   {detailError}

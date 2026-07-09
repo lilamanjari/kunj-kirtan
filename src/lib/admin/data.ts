@@ -552,6 +552,19 @@ export async function getAdminKirtanDetail(id: string) {
     throw new Error(titlesError.message);
   }
 
+  const { data: audioFile, error: audioError } = await supabaseAdmin
+    .from("audio_files")
+    .select("file_url, file_name, duration_seconds")
+    .eq("kirtan_id", id)
+    .eq("is_current", true)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (audioError) {
+    throw new Error(audioError.message);
+  }
+
   const { data: links, error: tagsError } = await supabaseAdmin
     .from("kirtan_tags")
     .select(`
@@ -622,6 +635,9 @@ export async function getAdminKirtanDetail(id: string) {
     sanga: mapJoinedName(
       kirtan.sangas as { name?: string | null } | Array<{ name?: string | null }> | null,
     ),
+    audio_url: audioFile?.file_url ?? null,
+    audio_file_name: audioFile?.file_name ?? null,
+    duration_seconds: audioFile?.duration_seconds ?? null,
     titles: mappedTitles,
     tags: (links ?? [])
       .map((row) => {

@@ -51,6 +51,9 @@ export type AdminKirtanDetail = {
   lead_singer_image_url: string | null;
   lead_singer_image_alt: string | null;
   sanga: string | null;
+  audio_url: string | null;
+  audio_file_name: string | null;
+  duration_seconds: number | null;
   sequence_num: number | null;
   titles: AdminKirtanTitle[];
   tags: AdminKirtanTag[];
