@@ -1,6 +1,14 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import type { ChangeEvent } from "react";
+import type { AdminKirtanDetail } from "@/lib/admin/types";
+import {
+  ADMIN_AUDIO_ACCEPT,
+  MAX_ADMIN_AUDIO_UPLOAD_BYTES,
+  formatBytes,
+  isAllowedAdminAudioFile,
+} from "@/lib/admin/audioUpload";
 
 function formatTime(seconds: number) {
   if (!Number.isFinite(seconds) || seconds < 0) {
@@ -14,11 +22,13 @@ function formatTime(seconds: number) {
 }
 
 type AdminKirtanAudioPlayerProps = {
+  kirtanId: string;
   title: string;
   audioUrl: string | null;
   waveformUrl: string | null;
   fileName: string | null;
   durationSeconds: number | null;
+  onAudioReplaced: (kirtan: AdminKirtanDetail) => void;
 };
 
 const WAVEFORM_BAR_COUNT = 1800;
@@ -131,14 +141,17 @@ function compressPeaks(peaks: number[], targetCount: number) {
 }
 
 export function AdminKirtanAudioPlayer({
+  kirtanId,
   title,
   audioUrl,
   waveformUrl,
   fileName,
   durationSeconds,
+  onAudioReplaced,
 }: AdminKirtanAudioPlayerProps) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const suppressScrollSyncRef = useRef(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -149,6 +162,8 @@ export function AdminKirtanAudioPlayer({
   const [waveformError, setWaveformError] = useState<string | null>(null);
   const [viewportWidth, setViewportWidth] = useState(0);
   const [scrollOffset, setScrollOffset] = useState(0);
+  const [replaceState, setReplaceState] = useState<"idle" | "uploading">("idle");
+  const [replaceMessage, setReplaceMessage] = useState<string | null>(null);
   const [zoomLevel, setZoomLevel] = useState<ZoomLevel>(
     durationSeconds && durationSeconds > 900 ? "detail" : "focus",
   );
@@ -213,6 +228,10 @@ export function AdminKirtanAudioPlayer({
     }
 
     audio.pause();
+    setIsPlaying(false);
+    setCurrentTime(0);
+    setDuration(durationSeconds ?? 0);
+    setError(null);
 
     if (!audioUrl) {
       audio.removeAttribute("src");
@@ -433,9 +452,142 @@ export function AdminKirtanAudioPlayer({
     handleSeek(duration * ratio);
   }
 
+  function openReplacePicker() {
+    if (replaceState === "uploading") {
+      return;
+    }
+
+    setError(null);
+    setReplaceMessage(null);
+    fileInputRef.current?.click();
+  }
+
+  function readAudioDuration(file: File) {
+    return new Promise<number>((resolve, reject) => {
+      const nextAudio = document.createElement("audio");
+      const objectUrl = URL.createObjectURL(file);
+
+      const cleanup = () => {
+        URL.revokeObjectURL(objectUrl);
+        nextAudio.removeAttribute("src");
+        nextAudio.load();
+      };
+
+      nextAudio.preload = "metadata";
+      nextAudio.onloadedmetadata = () => {
+        const nextDuration = Math.max(1, Math.round(nextAudio.duration));
+        cleanup();
+
+        if (!Number.isFinite(nextDuration) || nextDuration <= 0) {
+          reject(new Error("The selected audio duration could not be read."));
+          return;
+        }
+
+        resolve(nextDuration);
+      };
+      nextAudio.onerror = () => {
+        cleanup();
+        reject(new Error("The selected audio file could not be read."));
+      };
+      nextAudio.src = objectUrl;
+    });
+  }
+
+  async function submitReplacementAudio(
+    file: File,
+    nextDuration: number,
+    confirmLargeDifference: boolean,
+  ) {
+    const formData = new FormData();
+    formData.append("audio", file);
+    formData.append("durationSeconds", String(nextDuration));
+    formData.append(
+      "confirmLargeDifference",
+      confirmLargeDifference ? "true" : "false",
+    );
+
+    const response = await fetch(`/api/admin/kirtans/${kirtanId}/audio`, {
+      method: "POST",
+      body: formData,
+    });
+    const json = await response.json();
+
+    if (response.status === 409 && json.requiresConfirmation) {
+      const confirmed = window.confirm(
+        json.message ??
+          "The new file size looks very different from the existing audio file. Continue anyway?",
+      );
+
+      if (!confirmed) {
+        return;
+      }
+
+      await submitReplacementAudio(file, nextDuration, true);
+      return;
+    }
+
+    if (!response.ok) {
+      throw new Error(json.error ?? "Failed to replace audio");
+    }
+
+    onAudioReplaced(json.kirtan as AdminKirtanDetail);
+    setReplaceMessage(
+      typeof json.cleanupWarning === "string" && json.cleanupWarning.trim().length > 0
+        ? json.cleanupWarning
+        : "Audio replaced.",
+    );
+  }
+
+  async function handleFileSelection(event: ChangeEvent<HTMLInputElement>) {
+    const selectedFile = event.target.files?.[0];
+    event.target.value = "";
+
+    if (!selectedFile) {
+      return;
+    }
+
+    if (!isAllowedAdminAudioFile(selectedFile)) {
+      setError("Please choose a supported audio file.");
+      setReplaceMessage(null);
+      return;
+    }
+
+    if (selectedFile.size > MAX_ADMIN_AUDIO_UPLOAD_BYTES) {
+      setError(
+        `Audio files must be ${formatBytes(MAX_ADMIN_AUDIO_UPLOAD_BYTES)} or smaller.`,
+      );
+      setReplaceMessage(null);
+      return;
+    }
+
+    setReplaceState("uploading");
+    setError(null);
+    setReplaceMessage(null);
+
+    try {
+      const nextDuration = await readAudioDuration(selectedFile);
+      await submitReplacementAudio(selectedFile, nextDuration, false);
+    } catch (replaceError) {
+      setError(
+        replaceError instanceof Error
+          ? replaceError.message
+          : "Failed to replace audio.",
+      );
+    } finally {
+      setReplaceState("idle");
+    }
+  }
+
   return (
-    <div className="border-t border-[#ecd8ce] bg-[linear-gradient(180deg,rgba(255,251,248,0.98)_0%,rgba(255,247,243,0.98)_100%)] px-5 py-4">
-      <div className="flex flex-col gap-4">
+    <div className="border-t border-[#ecd8ce] bg-[linear-gradient(180deg,rgba(255,251,248,0.98)_0%,rgba(255,247,243,0.98)_100%)] px-5 py-3">
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept={ADMIN_AUDIO_ACCEPT}
+        onChange={handleFileSelection}
+        className="hidden"
+      />
+      <div className="flex flex-col gap-3">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div className="min-w-0">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#b18472]">
@@ -461,13 +613,21 @@ export function AdminKirtanAudioPlayer({
                 {level === "fit" ? "Fit" : level === "focus" ? "Focus" : "Detail"}
               </button>
             ))}
+            <button
+              type="button"
+              onClick={openReplacePicker}
+              disabled={!audioUrl || replaceState === "uploading"}
+              className="rounded-[0.7rem] border border-[#e6cfc4] bg-white/90 px-3 py-1.5 text-xs font-semibold text-[#87675d] transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {replaceState === "uploading" ? "Replacing..." : "Replace Audio"}
+            </button>
             <p className="min-w-[7rem] text-right text-xs font-medium tabular-nums text-[#9a776c]">
               {formatTime(currentTime)} / {formatTime(duration)}
             </p>
           </div>
         </div>
 
-        <div className="rounded-[var(--theme-radius-card)] border border-[#ead6cd] bg-white/80 px-3 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]">
+        <div className="rounded-[var(--theme-radius-card)] border border-[#ead6cd] bg-white/80 px-3 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]">
           {audioUrl ? (
             <div className="relative">
               <div
@@ -507,7 +667,7 @@ export function AdminKirtanAudioPlayer({
                   }}
                   disabled={duration <= 0}
                   aria-label="Seek in waveform"
-                  className="relative block h-48 min-w-full disabled:cursor-not-allowed"
+                  className="relative block h-24 min-w-full disabled:cursor-not-allowed"
                   style={{
                     width:
                       zoomLevel === "detail" || zoomLevel === "focus"
@@ -525,7 +685,7 @@ export function AdminKirtanAudioPlayer({
                   ) : null}
                   <div className="absolute inset-x-0 top-1/2 h-px -translate-y-1/2 bg-[rgba(180,146,130,0.13)]" />
                   <div
-                    className="relative flex h-full items-center gap-px py-4"
+                    className="relative flex h-full items-center gap-px py-2"
                     style={{
                       paddingLeft:
                         zoomLevel === "detail" || zoomLevel === "focus"
@@ -548,8 +708,8 @@ export function AdminKirtanAudioPlayer({
                           style={{
                             height: `${
                               zoomLevel === "fit"
-                                ? Math.max(18, Math.round(peak * 120))
-                                : Math.max(24, Math.round(peak * 136))
+                                ? Math.max(10, Math.round(peak * 56))
+                                : Math.max(12, Math.round(peak * 64))
                             }px`,
                             backgroundColor:
                               zoomLevel === "fit" && peaks.length > 1 && index / (peaks.length - 1) <= progressRatio
@@ -565,7 +725,7 @@ export function AdminKirtanAudioPlayer({
                 </button>
               </div>
               <div
-                className="pointer-events-none absolute inset-y-3 w-[2px] rounded-full bg-[#b86161] shadow-[0_0_0_1px_rgba(255,255,255,0.78)]"
+                className="pointer-events-none absolute inset-y-2 w-[2px] rounded-full bg-[#b86161] shadow-[0_0_0_1px_rgba(255,255,255,0.78)]"
                 style={{
                   left:
                     zoomLevel === "fit"
@@ -577,12 +737,12 @@ export function AdminKirtanAudioPlayer({
               />
             </div>
           ) : (
-            <div className="flex h-48 items-center justify-center rounded-[calc(var(--theme-radius-card)-6px)] bg-[linear-gradient(180deg,rgba(249,239,233,0.86)_0%,rgba(255,252,249,0.98)_100%)] px-4 text-sm text-[#8d6b64]">
+            <div className="flex h-24 items-center justify-center rounded-[calc(var(--theme-radius-card)-6px)] bg-[linear-gradient(180deg,rgba(249,239,233,0.86)_0%,rgba(255,252,249,0.98)_100%)] px-4 text-sm text-[#8d6b64]">
               No current audio file is attached to this kirtan yet.
             </div>
           )}
 
-          <div className="mt-2 flex items-center justify-between text-[11px] font-medium tabular-nums text-[#9a776c]">
+          <div className="mt-1.5 flex items-center justify-between text-[11px] font-medium tabular-nums text-[#9a776c]">
             <span>{formatTime(zoomLevel === "fit" ? 0 : visibleStartTime)}</span>
             <span>{formatTime(zoomLevel === "fit" ? duration : visibleEndTime)}</span>
           </div>
@@ -601,9 +761,27 @@ export function AdminKirtanAudioPlayer({
             type="button"
             onClick={() => void togglePlayback()}
             disabled={!audioUrl}
-            className="rounded-full bg-gradient-to-r from-[color:var(--theme-player-green)] to-[color:var(--theme-player-green-mid)] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_12px_26px_rgba(121,161,79,0.24)] disabled:cursor-not-allowed disabled:opacity-50"
+            aria-label={isPlaying ? "Pause audio preview" : "Play audio preview"}
+            className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-r from-[color:var(--theme-player-green)] to-[color:var(--theme-player-green-mid)] text-white shadow-[0_12px_26px_rgba(121,161,79,0.24)] disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {isPlaying ? "Pause" : "Play"}
+            {isPlaying ? (
+              <svg
+                aria-hidden="true"
+                viewBox="0 0 24 24"
+                className="h-6 w-6 fill-current"
+              >
+                <rect x="6" y="5" width="4" height="14" rx="1" />
+                <rect x="14" y="5" width="4" height="14" rx="1" />
+              </svg>
+            ) : (
+              <svg
+                aria-hidden="true"
+                viewBox="0 0 24 24"
+                className="h-6 w-6 fill-current"
+              >
+                <path d="M8 5.5v13a1 1 0 0 0 1.53.848l10-6.5a1 1 0 0 0 0-1.696l-10-6.5A1 1 0 0 0 8 5.5Z" />
+              </svg>
+            )}
           </button>
           <button
             type="button"
@@ -617,6 +795,8 @@ export function AdminKirtanAudioPlayer({
 
         {error ? (
           <p className="text-sm text-[#a45e5a]">{error}</p>
+        ) : replaceMessage ? (
+          <p className="text-sm text-[#8d6b64]">{replaceMessage}</p>
         ) : waveformError ? (
           <p className="text-sm text-[#8d6b64]">{waveformError}</p>
         ) : null}

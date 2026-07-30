@@ -11,6 +11,10 @@ function fieldClassName() {
   return "w-full rounded-[var(--theme-radius-card)] border border-[#e8d4cb] bg-white/90 px-3 py-2 text-sm text-[#5d433c] outline-none transition focus:border-[color:var(--theme-player-green)] focus:ring-2 focus:ring-[color:var(--theme-player-green-soft)]";
 }
 
+function detailFieldLabelClassName() {
+  return "mb-1 block text-sm font-medium text-[#a47d6d]";
+}
+
 export function TagsCmsPage() {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("all");
@@ -308,7 +312,7 @@ export function TagsCmsPage() {
                 </h3>
                 <div className="mt-4 space-y-3">
                   <div>
-                    <label className="mb-1 block text-xs uppercase tracking-[0.14em] text-[#a47d6d]">
+                    <label className={detailFieldLabelClassName()}>
                       Name
                     </label>
                     <input
@@ -318,7 +322,7 @@ export function TagsCmsPage() {
                     />
                   </div>
                   <div>
-                    <label className="mb-1 block text-xs uppercase tracking-[0.14em] text-[#a47d6d]">
+                    <label className={detailFieldLabelClassName()}>
                       Slug
                     </label>
                     <div className="rounded-[var(--theme-radius-card)] border border-[#efe2da] bg-[#faf3ee] px-3 py-2 text-sm text-[#87645c]">
@@ -326,7 +330,7 @@ export function TagsCmsPage() {
                     </div>
                   </div>
                   <div>
-                    <label className="mb-1 block text-xs uppercase tracking-[0.14em] text-[#a47d6d]">
+                    <label className={detailFieldLabelClassName()}>
                       Category
                     </label>
                     <select
@@ -345,7 +349,7 @@ export function TagsCmsPage() {
                   </div>
                   <div className="grid gap-3 sm:grid-cols-2">
                     <label className="rounded-[var(--theme-radius-card)] border border-[#eedbd0] bg-[#fffdfa] px-3 py-3 text-sm text-[#6b514a]">
-                      <span className="mb-2 block text-xs uppercase tracking-[0.14em] text-[#a47d6d]">
+                      <span className={detailFieldLabelClassName()}>
                         Published
                       </span>
                       <input
@@ -361,7 +365,7 @@ export function TagsCmsPage() {
                       />
                     </label>
                     <label className="rounded-[var(--theme-radius-card)] border border-[#eedbd0] bg-[#fffdfa] px-3 py-3 text-sm text-[#6b514a]">
-                      <span className="mb-2 block text-xs uppercase tracking-[0.14em] text-[#a47d6d]">
+                      <span className={detailFieldLabelClassName()}>
                         Browse visible
                       </span>
                       <input

@@ -1,6 +1,12 @@
 "use client";
 
-import { useDeferredValue, useEffect, useMemo, useState, useTransition } from "react";
+import {
+  useDeferredValue,
+  useEffect,
+  useMemo,
+  useState,
+  useTransition,
+} from "react";
 import type {
   AdminKirtanDetail,
   AdminKirtanListItem,
@@ -16,17 +22,21 @@ type SaveState = "idle" | "saving" | "saved" | "error";
 type KirtanTitleDrafts = Partial<Record<"first_line" | "official", string>>;
 
 function sectionCardClassName(extra = "") {
-  return `rounded-[var(--theme-radius-surface)] border border-[#edd8ce] bg-[rgba(255,250,246,0.92)] shadow-[0_20px_44px_rgba(170,118,91,0.12)] ${extra}`.trim();
+  return `rounded-[var(--theme-radius-surface)] border border-[color:var(--theme-page-home-discovery-gold)] bg-[rgba(255,250,246,0.92)] shadow-[0_20px_44px_rgba(170,118,91,0.12)] ${extra}`.trim();
 }
 
 function fieldClassName() {
-  return "w-full rounded-[var(--theme-radius-card)] border border-[#e8d4cb] bg-white/90 px-3 py-2 text-sm text-[#5d433c] outline-none transition focus:border-[color:var(--theme-player-green)] focus:ring-2 focus:ring-[color:var(--theme-player-green-soft)]";
+  return "w-full rounded-[var(--theme-radius-surface)] border border-[color:var(--theme-page-home-discovery-gold)] bg-white/90 px-3 py-2 text-sm text-[#5d433c] outline-none transition focus:border-[color:var(--theme-player-green)] focus:ring-2 focus:ring-[color:var(--theme-player-green-soft)]";
 }
 
 function badgeClassName(active: boolean) {
   return active
-    ? "rounded-full bg-[color:var(--theme-player-green-soft)] px-2.5 py-1 text-xs font-semibold text-[color:var(--theme-player-green)]"
-    : "rounded-full bg-[#f5e5de] px-2.5 py-1 text-xs font-semibold text-[#af6f6a]";
+    ? "rounded-[0.45rem] bg-[color:var(--theme-player-green-soft)] px-2.5 py-1 text-xs font-semibold text-[color:var(--theme-player-green)]"
+    : "rounded-[0.45rem] bg-[#f5e5de] px-2.5 py-1 text-xs font-semibold text-[#af6f6a]";
+}
+
+function detailFieldLabelClassName() {
+  return "text-sm font-medium text-[#a47d6d]";
 }
 
 function getPublishedLabel(published: boolean) {
@@ -34,7 +44,23 @@ function getPublishedLabel(published: boolean) {
 }
 
 function formatMetaLine(kirtan: AdminKirtanListItem | AdminKirtanDetail) {
-  const parts = [kirtan.type, kirtan.lead_singer, kirtan.recorded_date].filter(Boolean);
+  const parts = [kirtan.type, kirtan.lead_singer, kirtan.recorded_date].filter(
+    Boolean,
+  );
+  return parts.join(" • ");
+}
+
+function formatListMetaLine(kirtan: AdminKirtanListItem | AdminKirtanDetail) {
+  const parts = [kirtan.lead_singer].filter(Boolean);
+  return parts.join(" • ");
+}
+
+function formatFooterMetaLine(kirtan: AdminKirtanListItem | AdminKirtanDetail) {
+  const parts = [
+    kirtan.type,
+    formatDuration(kirtan.duration_seconds),
+    kirtan.recorded_date,
+  ].filter(Boolean);
   return parts.join(" • ");
 }
 
@@ -49,12 +75,14 @@ function formatDuration(durationSeconds: number | null | undefined) {
   return `${minutes}:${String(seconds).padStart(2, "0")}`;
 }
 
-function getSequenceLabel(kirtan: Pick<AdminKirtanListItem, "type" | "sequence_num"> | Pick<AdminKirtanDetail, "type" | "sequence_num">) {
-  if (kirtan.type !== "MM" || !kirtan.sequence_num) {
-    return null;
+function getListCardTitle(
+  kirtan: Pick<AdminKirtanListItem, "title" | "type" | "sequence_num">,
+) {
+  if (kirtan.type === "MM" && kirtan.sequence_num) {
+    return `Maha Mantra #${kirtan.sequence_num}`;
   }
 
-  return `Maha Mantra #${kirtan.sequence_num}`;
+  return kirtan.title;
 }
 
 export function KirtansCmsPage() {
@@ -72,7 +100,9 @@ export function KirtansCmsPage() {
   const deferredTagSearch = useDeferredValue(tagSearch);
   const [availableTags, setAvailableTags] = useState<AdminTagSummary[]>([]);
   const [titleDrafts, setTitleDrafts] = useState<KirtanTitleDrafts>({});
-  const [titleSaveState, setTitleSaveState] = useState<Record<string, SaveState>>({});
+  const [titleSaveState, setTitleSaveState] = useState<
+    Record<string, SaveState>
+  >({});
   const [publishingState, setPublishingState] = useState<SaveState>("idle");
   const [tagState, setTagState] = useState<SaveState>("idle");
   const [listError, setListError] = useState<string | null>(null);
@@ -120,7 +150,11 @@ export function KirtansCmsPage() {
 
     loadKirtans().catch((loadError) => {
       if (!cancelled) {
-        setListError(loadError instanceof Error ? loadError.message : "Failed to load kirtans");
+        setListError(
+          loadError instanceof Error
+            ? loadError.message
+            : "Failed to load kirtans",
+        );
       }
     });
 
@@ -153,14 +187,20 @@ export function KirtansCmsPage() {
       const detail = json.kirtan as AdminKirtanDetail;
       setSelected(detail);
       setTitleDrafts({
-        first_line: detail.titles.find((row) => row.kind === "first_line")?.title ?? "",
-        official: detail.titles.find((row) => row.kind === "official")?.title ?? "",
+        first_line:
+          detail.titles.find((row) => row.kind === "first_line")?.title ?? "",
+        official:
+          detail.titles.find((row) => row.kind === "official")?.title ?? "",
       });
     }
 
     loadKirtan().catch((loadError) => {
       if (!cancelled) {
-        setDetailError(loadError instanceof Error ? loadError.message : "Failed to load kirtan");
+        setDetailError(
+          loadError instanceof Error
+            ? loadError.message
+            : "Failed to load kirtan",
+        );
       }
     });
 
@@ -174,7 +214,8 @@ export function KirtansCmsPage() {
 
     async function loadTags() {
       const params = new URLSearchParams();
-      if (deferredTagSearch.trim()) params.set("search", deferredTagSearch.trim());
+      if (deferredTagSearch.trim())
+        params.set("search", deferredTagSearch.trim());
       params.set("publishedOnly", "true");
 
       const response = await fetch(`/api/admin/tags?${params.toString()}`, {
@@ -194,7 +235,11 @@ export function KirtansCmsPage() {
 
     loadTags().catch((loadError) => {
       if (!cancelled) {
-        setDetailError(loadError instanceof Error ? loadError.message : "Failed to load tags");
+        setDetailError(
+          loadError instanceof Error
+            ? loadError.message
+            : "Failed to load tags",
+        );
       }
     });
 
@@ -208,11 +253,15 @@ export function KirtansCmsPage() {
     const assignedIds = new Set(selected.tags.map((tag) => tag.id));
     return availableTags
       .filter((tag) => !assignedIds.has(tag.id))
-      .sort((left, right) => left.name.localeCompare(right.name, undefined, { sensitivity: "base" }));
+      .sort((left, right) =>
+        left.name.localeCompare(right.name, undefined, { sensitivity: "base" }),
+      );
   }, [availableTags, selected]);
 
   async function refreshSelected(id: string) {
-    const response = await fetch(`/api/admin/kirtans/${id}`, { cache: "no-store" });
+    const response = await fetch(`/api/admin/kirtans/${id}`, {
+      cache: "no-store",
+    });
     const json = await response.json();
     if (!response.ok) {
       throw new Error(json.error ?? "Failed to refresh kirtan");
@@ -220,9 +269,32 @@ export function KirtansCmsPage() {
     const detail = json.kirtan as AdminKirtanDetail;
     setSelected(detail);
     setTitleDrafts({
-      first_line: detail.titles.find((row) => row.kind === "first_line")?.title ?? "",
-      official: detail.titles.find((row) => row.kind === "official")?.title ?? "",
+      first_line:
+        detail.titles.find((row) => row.kind === "first_line")?.title ?? "",
+      official:
+        detail.titles.find((row) => row.kind === "official")?.title ?? "",
     });
+  }
+
+  function handleAudioReplaced(detail: AdminKirtanDetail) {
+    setSelected(detail);
+    setTitleDrafts({
+      first_line:
+        detail.titles.find((row) => row.kind === "first_line")?.title ?? "",
+      official:
+        detail.titles.find((row) => row.kind === "official")?.title ?? "",
+    });
+    setDetailError(null);
+    setKirtans((current) =>
+      current.map((item) =>
+        item.id === detail.id
+          ? {
+              ...item,
+              duration_seconds: detail.duration_seconds,
+            }
+          : item,
+      ),
+    );
   }
 
   async function togglePublished(nextPublished: boolean) {
@@ -246,13 +318,19 @@ export function KirtansCmsPage() {
       setSelected(detail);
       setKirtans((current) =>
         current.map((item) =>
-          item.id === detail.id ? { ...item, published: detail.published } : item,
+          item.id === detail.id
+            ? { ...item, published: detail.published }
+            : item,
         ),
       );
       setPublishingState("saved");
     } catch (publishError) {
       setPublishingState("error");
-      setDetailError(publishError instanceof Error ? publishError.message : "Failed to update status");
+      setDetailError(
+        publishError instanceof Error
+          ? publishError.message
+          : "Failed to update status",
+      );
     }
   }
 
@@ -265,11 +343,14 @@ export function KirtansCmsPage() {
     setDetailError(null);
 
     try {
-      const response = await fetch(`/api/admin/kirtans/${selected.id}/titles/${kind}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: value }),
-      });
+      const response = await fetch(
+        `/api/admin/kirtans/${selected.id}/titles/${kind}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ title: value }),
+        },
+      );
       const json = await response.json();
       if (!response.ok) {
         throw new Error(json.error ?? "Failed to save title");
@@ -279,28 +360,46 @@ export function KirtansCmsPage() {
       setTitleSaveState((current) => ({ ...current, [stateKey]: "saved" }));
     } catch (saveError) {
       setTitleSaveState((current) => ({ ...current, [stateKey]: "error" }));
-      setDetailError(saveError instanceof Error ? saveError.message : "Failed to save title");
+      setDetailError(
+        saveError instanceof Error ? saveError.message : "Failed to save title",
+      );
     }
   }
 
   async function deleteTitle(kind: "first_line" | "official") {
     if (!selected) return;
-    setTitleSaveState((current) => ({ ...current, [`title:${kind}`]: "saving" }));
+    setTitleSaveState((current) => ({
+      ...current,
+      [`title:${kind}`]: "saving",
+    }));
 
     try {
-      const response = await fetch(`/api/admin/kirtans/${selected.id}/titles/${kind}`, {
-        method: "DELETE",
-      });
+      const response = await fetch(
+        `/api/admin/kirtans/${selected.id}/titles/${kind}`,
+        {
+          method: "DELETE",
+        },
+      );
       const json = await response.json();
       if (!response.ok) {
         throw new Error(json.error ?? "Failed to delete title");
       }
 
       await refreshSelected(selected.id);
-      setTitleSaveState((current) => ({ ...current, [`title:${kind}`]: "saved" }));
+      setTitleSaveState((current) => ({
+        ...current,
+        [`title:${kind}`]: "saved",
+      }));
     } catch (deleteError) {
-      setTitleSaveState((current) => ({ ...current, [`title:${kind}`]: "error" }));
-      setDetailError(deleteError instanceof Error ? deleteError.message : "Failed to delete title");
+      setTitleSaveState((current) => ({
+        ...current,
+        [`title:${kind}`]: "error",
+      }));
+      setDetailError(
+        deleteError instanceof Error
+          ? deleteError.message
+          : "Failed to delete title",
+      );
     }
   }
 
@@ -323,7 +422,9 @@ export function KirtansCmsPage() {
       setTagState("saved");
     } catch (tagError) {
       setTagState("error");
-      setDetailError(tagError instanceof Error ? tagError.message : "Failed to add tag");
+      setDetailError(
+        tagError instanceof Error ? tagError.message : "Failed to add tag",
+      );
     }
   }
 
@@ -332,9 +433,12 @@ export function KirtansCmsPage() {
     setTagState("saving");
 
     try {
-      const response = await fetch(`/api/admin/kirtans/${selected.id}/tags/${tagId}`, {
-        method: "DELETE",
-      });
+      const response = await fetch(
+        `/api/admin/kirtans/${selected.id}/tags/${tagId}`,
+        {
+          method: "DELETE",
+        },
+      );
       const json = await response.json();
       if (!response.ok) {
         throw new Error(json.error ?? "Failed to remove tag");
@@ -344,7 +448,9 @@ export function KirtansCmsPage() {
       setTagState("saved");
     } catch (tagError) {
       setTagState("error");
-      setDetailError(tagError instanceof Error ? tagError.message : "Failed to remove tag");
+      setDetailError(
+        tagError instanceof Error ? tagError.message : "Failed to remove tag",
+      );
     }
   }
 
@@ -353,27 +459,35 @@ export function KirtansCmsPage() {
     try {
       await navigator.clipboard.writeText(selected.id);
     } catch (copyError) {
-      setDetailError(copyError instanceof Error ? copyError.message : "Failed to copy ID");
+      setDetailError(
+        copyError instanceof Error ? copyError.message : "Failed to copy ID",
+      );
     }
   }
 
   return (
     <div className="grid min-w-0 grid-cols-1 items-start gap-4 lg:grid-cols-[minmax(320px,420px)_minmax(0,1fr)]">
-      <section className={sectionCardClassName("flex min-h-0 flex-col overflow-hidden lg:sticky lg:top-6 lg:max-h-[calc(100vh-3rem)]")}>
-        <div className="border-b border-[#f0ddd3] px-4 py-4">
+      <section
+        className={sectionCardClassName(
+          "flex min-h-0 flex-col overflow-hidden lg:sticky lg:top-0 lg:max-h-[calc(100vh-3rem)]",
+        )}
+      >
+        <div className="px-4 py-4">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <h2 className="text-lg font-semibold">Kirtans</h2>
-              <p className="mt-1 text-sm text-[#8c6a63]">
-                Search by title, singer, sanga, or sequence number, then open one kirtan at a time.
+              <h2 className="font-display text-[1.75rem] leading-none font-semibold text-[#5d4036]">
+                Kirtans
+              </h2>
+              <p className="font-display mt-2 text-[1.1rem] leading-[1.2] text-[#8c6a63]">
+                Search by title, singer, sanga, or sequence number.
               </p>
             </div>
-            <div className="rounded-full border border-[#e5d5ca] bg-white/75 px-3 py-1 text-sm font-medium text-[#8b6b62]">
+            <div className="rounded-[0.7rem] border border-[color:var(--theme-page-home-discovery-gold)] bg-white/75 px-3 py-1 text-sm font-medium text-[#8b6b62]">
               {statusLabel}
             </div>
           </div>
           <div className="mt-4 space-y-3">
-              <input
+            <input
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               placeholder="Search title, singer, sanga, or sequence"
@@ -392,7 +506,9 @@ export function KirtansCmsPage() {
               </select>
               <select
                 value={status}
-                onChange={(event) => setStatus(event.target.value as StatusFilter)}
+                onChange={(event) =>
+                  setStatus(event.target.value as StatusFilter)
+                }
                 className={fieldClassName()}
               >
                 <option value="all">All statuses</option>
@@ -421,10 +537,10 @@ export function KirtansCmsPage() {
                   })
                 }
                 className={[
-                  "mb-2 w-full rounded-[var(--theme-radius-card)] border p-3 text-left transition",
+                  "mb-2 w-full rounded-[var(--theme-radius-surface)] border p-3 text-left transition",
                   selectedItem
-                    ? "border-[color:var(--theme-player-green)] bg-[color:var(--theme-player-green-soft)]/60 shadow-[0_12px_28px_rgba(121,161,79,0.16)]"
-                    : "border-transparent bg-white/70 hover:border-[#ead3c8] hover:bg-white",
+                    ? "border-2 border-[color:var(--theme-green-surface-border)] bg-[color:var(--theme-player-green-soft)]/45 shadow-[0_12px_28px_rgba(121,161,79,0.14)]"
+                    : "border border-[color:var(--theme-page-home-discovery-gold)] bg-white/70 hover:border-[color:var(--theme-page-home-discovery-gold)] hover:bg-white",
                 ].join(" ")}
               >
                 <div className="flex items-start justify-between gap-3">
@@ -440,18 +556,20 @@ export function KirtansCmsPage() {
                       />
                     </div>
                     <div className="min-w-0">
-                    <p className="text-sm font-semibold text-[#5f4338]">{kirtan.title}</p>
-                    <p className="mt-1 text-xs text-[#8f6c65]">{formatMetaLine(kirtan)}</p>
-                    {getSequenceLabel(kirtan) ? (
-                      <p className="mt-1 text-xs font-medium text-[#9a786f]">
-                        {getSequenceLabel(kirtan)}
+                      <p
+                        className="truncate font-display text-[1.14rem] leading-[0.95] font-semibold text-[#5f4338]"
+                        title={getListCardTitle(kirtan)}
+                      >
+                        {getListCardTitle(kirtan)}
                       </p>
-                    ) : null}
-                    {formatDuration(kirtan.duration_seconds) ? (
-                      <p className="mt-1 text-xs text-[#a07a6e]">
-                        {formatDuration(kirtan.duration_seconds)}
+                      <p className="mt-1 text-[0.77rem] leading-[0.8] text-[#8f6c65]">
+                        {formatListMetaLine(kirtan)}
                       </p>
-                    ) : null}
+                      {formatFooterMetaLine(kirtan) ? (
+                        <p className="mt-3 text-[0.74rem] leading-[0.8] text-[#a07a6e]">
+                          {formatFooterMetaLine(kirtan)}
+                        </p>
+                      ) : null}
                     </div>
                   </div>
                   <span className={badgeClassName(kirtan.published)}>
@@ -462,7 +580,9 @@ export function KirtansCmsPage() {
             );
           })}
           {kirtans.length === 0 ? (
-            <div className="px-3 py-8 text-sm text-[#8f6c65]">No kirtans match this view.</div>
+            <div className="px-3 py-8 text-sm text-[#8f6c65]">
+              No kirtans match this view.
+            </div>
           ) : null}
         </div>
       </section>
@@ -470,11 +590,11 @@ export function KirtansCmsPage() {
       <section className={sectionCardClassName("min-w-0 overflow-hidden")}>
         {selected ? (
           <div className="flex min-h-0 flex-col">
-            <div className="border-b border-[#f0ddd3] bg-[rgba(255,250,246,0.96)] backdrop-blur-md">
+            <div className="bg-[rgba(255,250,246,0.96)] backdrop-blur-md">
               <div className="flex flex-col">
                 <div className="flex flex-col lg:flex-row lg:items-stretch">
                   {selected.lead_singer_image_url ? (
-                    <div className="h-full w-full max-w-[164px] shrink-0 overflow-hidden border-r border-[#ead7cd]">
+                    <div className="m-4 mb-4 h-full w-full max-w-[164px] shrink-0 overflow-hidden rounded-[var(--theme-radius-surface)] border border-[color:var(--theme-page-home-discovery-gold)]">
                       <LeadSingerAvatar
                         name={selected.lead_singer}
                         imageUrl={selected.lead_singer_image_url}
@@ -488,10 +608,12 @@ export function KirtansCmsPage() {
                     <p className="text-xs uppercase tracking-[0.24em] text-[#b18472]">
                       Selected kirtan
                     </p>
-                    <h2 className="mt-1 text-2xl font-semibold text-[#5e433a]">
+                    <h2 className="font-display mt-1 text-[2.45rem] leading-none font-bold text-[#5e433a]">
                       {selected.display_title}
                     </h2>
-                    <p className="mt-2 text-sm text-[#8d6b64]">{formatMetaLine(selected)}</p>
+                    <p className="mt-2 text-sm text-[#8d6b64]">
+                      {formatMetaLine(selected)}
+                    </p>
                     {formatDuration(selected.duration_seconds) ? (
                       <p className="mt-2 text-xs font-medium text-[#9d786d]">
                         {formatDuration(selected.duration_seconds)}
@@ -514,10 +636,10 @@ export function KirtansCmsPage() {
                         type="button"
                         onClick={() => togglePublished(!selected.published)}
                         className={[
-                          "rounded-[var(--theme-radius-button)] px-4 py-2 text-sm font-medium text-white shadow-[0_12px_26px_rgba(121,161,79,0.28)]",
+                          "rounded-[0.7rem] px-2.5 py-1 text-xs font-semibold",
                           selected.published
-                            ? "bg-gradient-to-r from-[#c97b73] to-[#b86161] shadow-[0_12px_26px_rgba(184,97,97,0.24)]"
-                            : "bg-gradient-to-r from-[color:var(--theme-player-green)] to-[color:var(--theme-player-green-mid)] shadow-[0_12px_26px_rgba(121,161,79,0.28)]",
+                            ? "bg-[#f5e5de] text-[#af6f6a]"
+                            : "bg-[color:var(--theme-player-green-soft)] text-[color:var(--theme-player-green)]",
                         ].join(" ")}
                       >
                         {selected.published ? "Unpublish" : "Publish"}
@@ -527,6 +649,7 @@ export function KirtansCmsPage() {
                 </div>
                 <AdminKirtanAudioPlayer
                   key={selected.id}
+                  kirtanId={selected.id}
                   title={selected.display_title}
                   audioUrl={selected.audio_url}
                   waveformUrl={
@@ -536,6 +659,7 @@ export function KirtansCmsPage() {
                   }
                   fileName={selected.audio_file_name}
                   durationSeconds={selected.duration_seconds}
+                  onAudioReplaced={handleAudioReplaced}
                 />
               </div>
             </div>
@@ -555,19 +679,17 @@ export function KirtansCmsPage() {
                     </h3>
                     <dl className="mt-4 grid gap-x-6 gap-y-4 text-sm text-[#6c514a] sm:grid-cols-2">
                       <div>
-                        <dt className="text-xs uppercase tracking-[0.14em] text-[#a47d6d]">
+                        <dt className={detailFieldLabelClassName()}>
                           Base title
                         </dt>
                         <dd className="mt-1 font-medium">{selected.title}</dd>
                       </div>
                       <div>
-                        <dt className="text-xs uppercase tracking-[0.14em] text-[#a47d6d]">
-                          Type
-                        </dt>
+                        <dt className={detailFieldLabelClassName()}>Type</dt>
                         <dd className="mt-1 font-medium">{selected.type}</dd>
                       </div>
                       <div>
-                        <dt className="text-xs uppercase tracking-[0.14em] text-[#a47d6d]">
+                        <dt className={detailFieldLabelClassName()}>
                           Maha Mantra sequence
                         </dt>
                         <dd className="mt-1 font-medium">
@@ -577,29 +699,33 @@ export function KirtansCmsPage() {
                         </dd>
                       </div>
                       <div>
-                        <dt className="text-xs uppercase tracking-[0.14em] text-[#a47d6d]">
+                        <dt className={detailFieldLabelClassName()}>
                           Lead singer
                         </dt>
-                        <dd className="mt-1 font-medium">{selected.lead_singer ?? "Unknown"}</dd>
+                        <dd className="mt-1 font-medium">
+                          {selected.lead_singer ?? "Unknown"}
+                        </dd>
                       </div>
                       <div>
-                        <dt className="text-xs uppercase tracking-[0.14em] text-[#a47d6d]">
-                          Sanga
-                        </dt>
-                        <dd className="mt-1 font-medium">{selected.sanga ?? "Unknown"}</dd>
+                        <dt className={detailFieldLabelClassName()}>Sanga</dt>
+                        <dd className="mt-1 font-medium">
+                          {selected.sanga ?? "Unknown"}
+                        </dd>
                       </div>
                       <div>
-                        <dt className="text-xs uppercase tracking-[0.14em] text-[#a47d6d]">
+                        <dt className={detailFieldLabelClassName()}>
                           Recorded
                         </dt>
-                        <dd className="mt-1 font-medium">{selected.recorded_date ?? "Unknown"}</dd>
+                        <dd className="mt-1 font-medium">
+                          {selected.recorded_date ?? "Unknown"}
+                        </dd>
                       </div>
                       <div>
-                        <dt className="text-xs uppercase tracking-[0.14em] text-[#a47d6d]">
-                          ID
-                        </dt>
+                        <dt className={detailFieldLabelClassName()}>ID</dt>
                         <dd className="mt-1 flex items-start gap-2">
-                          <span className="break-all font-mono text-xs">{selected.id}</span>
+                          <span className="break-all font-mono text-xs">
+                            {selected.id}
+                          </span>
                           <button
                             type="button"
                             onClick={() => void copyId()}
@@ -630,26 +756,34 @@ export function KirtansCmsPage() {
                     <div className="rounded-[var(--theme-radius-card)] border border-[#eedbd0] bg-white/75 p-4">
                       <div className="flex items-center justify-between gap-3">
                         <div>
-                        <h3 className="text-sm font-semibold uppercase tracking-[0.16em] text-[#a47d6d]">
+                          <h3 className="text-sm font-semibold uppercase tracking-[0.16em] text-[#a47d6d]">
                             Titles
                           </h3>
                           <p className="mt-1 text-sm text-[#8d6b64]">
-                            Edit first-line and official titles inline. Changes save on blur.
+                            Edit first-line and official titles inline. Changes
+                            save on blur.
                           </p>
                         </div>
                       </div>
                       <div className="mt-4 space-y-4">
                         {(["first_line", "official"] as const).map((kind) => (
-                          <div key={kind} className="rounded-[var(--theme-radius-card)] border border-[#f0dfd6] bg-[#fffdfa] p-3">
+                          <div
+                            key={kind}
+                            className="rounded-[var(--theme-radius-card)] border border-[#f0dfd6] bg-[#fffdfa] p-3"
+                          >
                             <div className="mb-2 flex items-center justify-between gap-3">
-                              <p className="text-sm font-medium text-[#6b514a]">{kind}</p>
+                              <p className="text-sm font-medium text-[#6b514a]">
+                                {kind}
+                              </p>
                               <div className="flex items-center gap-2">
                                 <span className="text-xs text-[#9d786d]">
                                   {titleSaveState[`title:${kind}`] === "saving"
                                     ? "Saving…"
-                                    : titleSaveState[`title:${kind}`] === "saved"
+                                    : titleSaveState[`title:${kind}`] ===
+                                        "saved"
                                       ? "Saved"
-                                      : titleSaveState[`title:${kind}`] === "error"
+                                      : titleSaveState[`title:${kind}`] ===
+                                          "error"
                                         ? "Error"
                                         : ""}
                                 </span>
@@ -693,7 +827,8 @@ export function KirtansCmsPage() {
                           Tags
                         </h3>
                         <p className="mt-1 text-sm text-[#8d6b64]">
-                          Remove directly from the chip, or add from the library below.
+                          Remove directly from the chip, or add from the library
+                          below.
                         </p>
                       </div>
                       <span className="text-xs text-[#9d786d]">
@@ -724,7 +859,9 @@ export function KirtansCmsPage() {
                         </span>
                       ))}
                       {selected.tags.length === 0 ? (
-                        <p className="text-sm text-[#8d6b64]">No tags assigned yet.</p>
+                        <p className="text-sm text-[#8d6b64]">
+                          No tags assigned yet.
+                        </p>
                       ) : null}
                     </div>
                   </div>
@@ -748,7 +885,9 @@ export function KirtansCmsPage() {
                           className="flex items-center justify-between rounded-[var(--theme-radius-card)] border border-[#f0dfd6] bg-[#fffdfa] px-3 py-2"
                         >
                           <div>
-                            <p className="text-sm font-medium text-[#674d46]">{tag.name}</p>
+                            <p className="text-sm font-medium text-[#674d46]">
+                              {tag.name}
+                            </p>
                             <p className="text-xs text-[#9a786f]">
                               {tag.category} • {tag.usage_count} linked
                             </p>
@@ -763,7 +902,9 @@ export function KirtansCmsPage() {
                         </div>
                       ))}
                       {unassignedTags.length === 0 ? (
-                        <p className="text-sm text-[#8d6b64]">No matching tags available.</p>
+                        <p className="text-sm text-[#8d6b64]">
+                          No matching tags available.
+                        </p>
                       ) : null}
                     </div>
                   </div>
@@ -773,7 +914,9 @@ export function KirtansCmsPage() {
           </div>
         ) : (
           <div className="flex h-full min-h-[70vh] items-center justify-center px-6 text-center text-[#8d6b64]">
-            {isPending ? "Loading kirtan…" : "Select a kirtan to start editing."}
+            {isPending
+              ? "Loading kirtan…"
+              : "Select a kirtan to start editing."}
           </div>
         )}
       </section>

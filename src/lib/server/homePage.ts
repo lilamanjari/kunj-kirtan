@@ -14,7 +14,7 @@ type PopularPlayableKirtanRow = PlayableKirtanRow & {
   play_count?: number | null;
 };
 
-const HOME_RECOMMENDED_LIMIT = 8;
+const HOME_RECOMMENDED_LIMIT = 6;
 
 function toKirtanSummary(
   kirtan: PlayableKirtanRow,
