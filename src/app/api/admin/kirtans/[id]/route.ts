@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAdminKirtanDetail } from "@/lib/admin/data";
 import { revalidateCmsAndPublicContent } from "@/lib/admin/revalidate";
+import { deleteAudioFromR2, getStorageKeyFromAudioUrl } from "@/lib/server/r2KirtanAudio";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import type { KirtanType } from "@/types/kirtan";
 
@@ -159,6 +160,94 @@ export async function PATCH(
     return NextResponse.json(
       {
         error: error instanceof Error ? error.message : "Failed to update kirtan",
+      },
+      { status: 500 },
+    );
+  }
+}
+
+export async function DELETE(
+  _: Request,
+  context: { params: Promise<{ id: string }> },
+) {
+  try {
+    const { id } = await context.params;
+
+    const { data: audioFiles, error: audioFilesError } = await supabaseAdmin
+      .from("audio_files")
+      .select("id, file_url")
+      .eq("kirtan_id", id);
+
+    if (audioFilesError) {
+      return NextResponse.json({ error: audioFilesError.message }, { status: 500 });
+    }
+
+    for (const audioFile of audioFiles ?? []) {
+      if (!audioFile.file_url) {
+        continue;
+      }
+
+      try {
+        await deleteAudioFromR2(getStorageKeyFromAudioUrl(audioFile.file_url));
+      } catch (deleteStorageError) {
+        return NextResponse.json(
+          {
+            error:
+              deleteStorageError instanceof Error
+                ? deleteStorageError.message
+                : "Failed to delete audio from Cloudflare",
+          },
+          { status: 500 },
+        );
+      }
+    }
+
+    const { error: deleteTagsError } = await supabaseAdmin
+      .from("kirtan_tags")
+      .delete()
+      .eq("kirtan_id", id);
+
+    if (deleteTagsError) {
+      return NextResponse.json({ error: deleteTagsError.message }, { status: 500 });
+    }
+
+    const { error: deleteTitlesError } = await supabaseAdmin
+      .from("kirtan_titles")
+      .delete()
+      .eq("kirtan_id", id);
+
+    if (deleteTitlesError) {
+      return NextResponse.json({ error: deleteTitlesError.message }, { status: 500 });
+    }
+
+    const { error: deleteAudioRowsError } = await supabaseAdmin
+      .from("audio_files")
+      .delete()
+      .eq("kirtan_id", id);
+
+    if (deleteAudioRowsError) {
+      return NextResponse.json(
+        { error: deleteAudioRowsError.message },
+        { status: 500 },
+      );
+    }
+
+    const { error: deleteKirtanError } = await supabaseAdmin
+      .from("kirtans")
+      .delete()
+      .eq("id", id);
+
+    if (deleteKirtanError) {
+      return NextResponse.json({ error: deleteKirtanError.message }, { status: 500 });
+    }
+
+    revalidateCmsAndPublicContent();
+
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    return NextResponse.json(
+      {
+        error: error instanceof Error ? error.message : "Failed to delete kirtan",
       },
       { status: 500 },
     );

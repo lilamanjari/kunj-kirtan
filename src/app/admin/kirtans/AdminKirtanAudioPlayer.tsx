@@ -1108,7 +1108,7 @@ export function AdminKirtanAudioPlayer({
               <div />
               <div className="flex flex-wrap items-center justify-center gap-2 text-xs text-[#87675d]">
                 <span className="inline-flex min-w-[6.5rem] justify-end text-right">
-                  {trimStart !== null ? `Inpoint: ${formatTime(trimStart)}` : ""}
+                  {trimStart !== null ? `In: ${formatTime(trimStart)}` : ""}
                 </span>
                 <button
                   type="button"
@@ -1127,7 +1127,7 @@ export function AdminKirtanAudioPlayer({
                   Set Out
                 </button>
                 <span className="inline-flex min-w-[6.75rem] justify-start text-left">
-                  {trimEnd !== null ? `Outpoint: ${formatTime(trimEnd)}` : ""}
+                  {trimEnd !== null ? `Out: ${formatTime(trimEnd)}` : ""}
                 </span>
               </div>
               <div className="flex flex-wrap items-center justify-end gap-2 text-xs text-[#87675d]">

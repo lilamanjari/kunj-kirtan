@@ -3,6 +3,7 @@ import {
   PutObjectCommand,
   S3Client,
 } from "@aws-sdk/client-s3";
+import type { KirtanType } from "@/types/kirtan";
 import { getAudioFileExtension } from "@/lib/admin/audioUpload";
 
 const MEDIA_BASE_URL =
@@ -69,6 +70,27 @@ export function buildReplacementAudioStorageKey(params: {
     .replace("T", "-");
 
   return `${currentFolder}/${params.kirtanId}-admin-${suffix}.${extension}`;
+}
+
+export function resolveKirtanStorageFolder(type: KirtanType) {
+  switch (type) {
+    case "MM":
+      return "mm";
+    case "HK":
+      return "hk";
+    case "BHJ":
+    default:
+      return "bhajans";
+  }
+}
+
+export function buildInitialAudioStorageKey(params: {
+  type: KirtanType;
+  kirtanId: string;
+  fileName: string;
+}) {
+  const extension = getAudioFileExtension(params.fileName) || "mp3";
+  return `${resolveKirtanStorageFolder(params.type)}/${params.kirtanId}.${extension}`;
 }
 
 export function getAudioPublicUrl(storageKey: string) {

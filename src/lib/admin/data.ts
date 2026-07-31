@@ -4,6 +4,8 @@ import { fetchPrimaryLeadSingerImages } from "@/lib/server/leadSingerImages";
 import type {
   AdminKirtanDetail,
   AdminKirtanListItem,
+  AdminLeadSingerOption,
+  AdminSangaOption,
   AdminTagDetail,
   AdminTagSummary,
 } from "@/lib/admin/types";
@@ -757,6 +759,51 @@ export async function getAdminTagDetail(id: string) {
       .map((row) => row.kirtan_id)
       .filter((value): value is string => Boolean(value)),
   } satisfies AdminTagDetail;
+}
+
+export async function listAdminKirtanFormOptions() {
+  const [{ data: leadSingers, error: leadSingerError }, { data: sangas, error: sangaError }] =
+    await Promise.all([
+      supabaseAdmin
+        .from("lead_singers")
+        .select("id, display_name")
+        .order("display_name", { ascending: true })
+        .limit(500),
+      supabaseAdmin
+        .from("sangas")
+        .select("id, name")
+        .order("name", { ascending: true })
+        .limit(500),
+    ]);
+
+  if (leadSingerError) {
+    throw new Error(leadSingerError.message);
+  }
+
+  if (sangaError) {
+    throw new Error(sangaError.message);
+  }
+
+  return {
+    leadSingers: (leadSingers ?? [])
+      .filter(
+        (row): row is { id: string; display_name: string } =>
+          Boolean(row.id) && Boolean(row.display_name),
+      )
+      .map((row) => ({
+        id: row.id,
+        display_name: row.display_name,
+      })) satisfies AdminLeadSingerOption[],
+    sangas: (sangas ?? [])
+      .filter(
+        (row): row is { id: string; name: string } =>
+          Boolean(row.id) && Boolean(row.name),
+      )
+      .map((row) => ({
+        id: row.id,
+        name: row.name,
+      })) satisfies AdminSangaOption[],
+  };
 }
 
 export async function getAdminTagCategories() {

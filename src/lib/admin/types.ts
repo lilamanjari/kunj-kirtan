@@ -62,3 +62,13 @@ export type AdminKirtanDetail = {
 export type AdminTagDetail = AdminTagSummary & {
   linked_kirtan_ids: string[];
 };
+
+export type AdminLeadSingerOption = {
+  id: string;
+  display_name: string;
+};
+
+export type AdminSangaOption = {
+  id: string;
+  name: string;
+};

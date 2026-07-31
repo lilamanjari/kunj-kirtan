@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  useCallback,
   useDeferredValue,
   useEffect,
   useMemo,
@@ -10,10 +11,18 @@ import {
 import type {
   AdminKirtanDetail,
   AdminKirtanListItem,
+  AdminLeadSingerOption,
+  AdminSangaOption,
   AdminTagSummary,
 } from "@/lib/admin/types";
 import LeadSingerAvatar from "@/lib/components/LeadSingerAvatar";
 import { AdminKirtanAudioPlayer } from "@/app/admin/kirtans/AdminKirtanAudioPlayer";
+import {
+  ADMIN_AUDIO_ACCEPT,
+  MAX_ADMIN_AUDIO_UPLOAD_BYTES,
+  formatBytes,
+  isAllowedAdminAudioFile,
+} from "@/lib/admin/audioUpload";
 
 type StatusFilter = "all" | "published" | "hidden";
 type TypeFilter = "all" | "MM" | "BHJ" | "HK";
@@ -105,35 +114,54 @@ export function KirtansCmsPage() {
   >({});
   const [publishingState, setPublishingState] = useState<SaveState>("idle");
   const [typeState, setTypeState] = useState<SaveState>("idle");
+  const [deleteState, setDeleteState] = useState<SaveState>("idle");
+  const [leadSingerOptions, setLeadSingerOptions] = useState<AdminLeadSingerOption[]>([]);
+  const [sangaOptions, setSangaOptions] = useState<AdminSangaOption[]>([]);
   const [tagState, setTagState] = useState<SaveState>("idle");
   const [listError, setListError] = useState<string | null>(null);
   const [detailError, setDetailError] = useState<string | null>(null);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [createType, setCreateType] = useState<Exclude<TypeFilter, "all">>("MM");
+  const [createLeadSingerId, setCreateLeadSingerId] = useState("");
+  const [createSangaId, setCreateSangaId] = useState("");
+  const [createPublished, setCreatePublished] = useState(false);
+  const [createRecordedDate, setCreateRecordedDate] = useState("");
+  const [createFirstLineTitle, setCreateFirstLineTitle] = useState("");
+  const [createOfficialTitle, setCreateOfficialTitle] = useState("");
+  const [createBaseTitle, setCreateBaseTitle] = useState("");
+  const [createAudioFile, setCreateAudioFile] = useState<File | null>(null);
+  const [createError, setCreateError] = useState<string | null>(null);
+  const [createState, setCreateState] = useState<SaveState>("idle");
   const [isPending, startTransition] = useTransition();
 
   const statusLabel = hasActiveFilters
     ? `${filteredCount}/${totalCount}`
     : `${totalCount}`;
 
-  useEffect(() => {
-    let cancelled = false;
-
-    async function loadKirtans() {
+  const loadKirtans = useCallback(
+    async (options?: {
+      search?: string;
+      type?: TypeFilter;
+      status?: StatusFilter;
+      nextSelectedId?: string | null;
+    }) => {
       setListError(null);
       const params = new URLSearchParams();
-      if (deferredSearch.trim()) params.set("search", deferredSearch.trim());
-      if (type !== "all") params.set("type", type);
-      if (status !== "all") params.set("status", status);
+      const searchValue = options?.search ?? deferredSearch;
+      const typeValue = options?.type ?? type;
+      const statusValue = options?.status ?? status;
+
+      if (searchValue.trim()) params.set("search", searchValue.trim());
+      if (typeValue !== "all") params.set("type", typeValue);
+      if (statusValue !== "all") params.set("status", statusValue);
 
       const response = await fetch(`/api/admin/kirtans?${params.toString()}`, {
         cache: "no-store",
       });
       const json = await response.json();
 
-      if (cancelled) return;
-
       if (!response.ok) {
-        setListError(json.error ?? "Failed to load kirtans");
-        return;
+        throw new Error(json.error ?? "Failed to load kirtans");
       }
 
       const nextKirtans = (json.kirtans ?? []) as AdminKirtanListItem[];
@@ -142,14 +170,24 @@ export function KirtansCmsPage() {
       setFilteredCount(Number(json.filteredCount ?? nextKirtans.length));
       setHasActiveFilters(Boolean(json.hasActiveFilters));
       setSelectedId((current) => {
-        if (current && nextKirtans.some((item) => item.id === current)) {
-          return current;
+        const target = options?.nextSelectedId ?? current;
+        if (target && nextKirtans.some((item) => item.id === target)) {
+          return target;
         }
         return nextKirtans[0]?.id ?? null;
       });
+    },
+    [deferredSearch, status, type],
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function runLoadKirtans() {
+      await loadKirtans();
     }
 
-    loadKirtans().catch((loadError) => {
+    runLoadKirtans().catch((loadError) => {
       if (!cancelled) {
         setListError(
           loadError instanceof Error
@@ -162,7 +200,7 @@ export function KirtansCmsPage() {
     return () => {
       cancelled = true;
     };
-  }, [deferredSearch, status, type]);
+  }, [loadKirtans]);
 
   useEffect(() => {
     if (!selectedId) {
@@ -249,6 +287,43 @@ export function KirtansCmsPage() {
     };
   }, [deferredTagSearch]);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadCreateOptions() {
+      const response = await fetch("/api/admin/kirtans/options", {
+        cache: "no-store",
+      });
+      const json = await response.json();
+
+      if (cancelled) return;
+
+      if (!response.ok) {
+        throw new Error(json.error ?? "Failed to load create options");
+      }
+
+      const nextLeadSingers = (json.leadSingers ?? []) as AdminLeadSingerOption[];
+      const nextSangas = (json.sangas ?? []) as AdminSangaOption[];
+      setLeadSingerOptions(nextLeadSingers);
+      setSangaOptions(nextSangas);
+      setCreateLeadSingerId((current) => current || nextLeadSingers[0]?.id || "");
+    }
+
+    loadCreateOptions().catch((loadError) => {
+      if (!cancelled) {
+        setDetailError(
+          loadError instanceof Error
+            ? loadError.message
+            : "Failed to load create options",
+        );
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const unassignedTags = useMemo(() => {
     if (!selected) return availableTags;
     const assignedIds = new Set(selected.tags.map((tag) => tag.id));
@@ -296,6 +371,50 @@ export function KirtansCmsPage() {
           : item,
       ),
     );
+  }
+
+  async function deleteKirtan() {
+    if (!selected) {
+      return;
+    }
+
+    const confirmed = window.confirm(
+      "This will permanently delete the kirtan, its titles, tags, audio records, and the current audio file from Cloudflare. This cannot be undone. Continue?",
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setDeleteState("saving");
+    setDetailError(null);
+
+    try {
+      const response = await fetch(`/api/admin/kirtans/${selected.id}`, {
+        method: "DELETE",
+      });
+      const json = await response.json();
+
+      if (!response.ok) {
+        throw new Error(json.error ?? "Failed to delete kirtan");
+      }
+
+      const deletedId = selected.id;
+      setSelected(null);
+      setSelectedId(null);
+      await loadKirtans({
+        nextSelectedId: null,
+      });
+      setKirtans((current) => current.filter((item) => item.id !== deletedId));
+      setDeleteState("saved");
+    } catch (deleteError) {
+      setDeleteState("error");
+      setDetailError(
+        deleteError instanceof Error
+          ? deleteError.message
+          : "Failed to delete kirtan",
+      );
+    }
   }
 
   async function changeType(nextType: TypeFilter) {
@@ -515,6 +634,135 @@ export function KirtansCmsPage() {
     }
   }
 
+  function resetCreateForm() {
+    setCreateType("MM");
+    setCreateLeadSingerId(leadSingerOptions[0]?.id ?? "");
+    setCreateSangaId("");
+    setCreatePublished(false);
+    setCreateRecordedDate("");
+    setCreateFirstLineTitle("");
+    setCreateOfficialTitle("");
+    setCreateBaseTitle("");
+    setCreateAudioFile(null);
+    setCreateError(null);
+    setCreateState("idle");
+  }
+
+  function readAudioDuration(file: File) {
+    return new Promise<number>((resolve, reject) => {
+      const nextAudio = document.createElement("audio");
+      const objectUrl = URL.createObjectURL(file);
+
+      const cleanup = () => {
+        URL.revokeObjectURL(objectUrl);
+        nextAudio.removeAttribute("src");
+        nextAudio.load();
+      };
+
+      nextAudio.preload = "metadata";
+      nextAudio.onloadedmetadata = () => {
+        const nextDuration = Math.max(1, Math.round(nextAudio.duration));
+        cleanup();
+
+        if (!Number.isFinite(nextDuration) || nextDuration <= 0) {
+          reject(new Error("The selected audio duration could not be read."));
+          return;
+        }
+
+        resolve(nextDuration);
+      };
+
+      nextAudio.onerror = () => {
+        cleanup();
+        reject(new Error("The selected audio file could not be read."));
+      };
+
+      nextAudio.src = objectUrl;
+    });
+  }
+
+  async function createKirtan() {
+    if (!createAudioFile) {
+      setCreateError("Audio file is required.");
+      return;
+    }
+
+    if (!isAllowedAdminAudioFile(createAudioFile)) {
+      setCreateError("Please choose a supported audio file.");
+      return;
+    }
+
+    if (createAudioFile.size > MAX_ADMIN_AUDIO_UPLOAD_BYTES) {
+      setCreateError(
+        `Audio files must be ${formatBytes(MAX_ADMIN_AUDIO_UPLOAD_BYTES)} or smaller.`,
+      );
+      return;
+    }
+
+    if (!createLeadSingerId) {
+      setCreateError("Lead singer is required.");
+      return;
+    }
+
+    if (createType === "BHJ" && !createFirstLineTitle.trim()) {
+      setCreateError("First line title is required for bhajans.");
+      return;
+    }
+
+    if (createType === "HK" && !createBaseTitle.trim()) {
+      setCreateError("Base title is required for Hari Katha.");
+      return;
+    }
+
+    setCreateState("saving");
+    setCreateError(null);
+
+    try {
+      const durationSeconds = await readAudioDuration(createAudioFile);
+      const formData = new FormData();
+      formData.append("type", createType);
+      formData.append("leadSingerId", createLeadSingerId);
+      formData.append("sangaId", createSangaId);
+      formData.append("published", createPublished ? "true" : "false");
+      formData.append("recordedDate", createRecordedDate);
+      formData.append("firstLineTitle", createFirstLineTitle);
+      formData.append("officialTitle", createOfficialTitle);
+      formData.append("baseTitle", createBaseTitle);
+      formData.append("durationSeconds", String(durationSeconds));
+      formData.append("audio", createAudioFile);
+
+      const response = await fetch("/api/admin/kirtans", {
+        method: "POST",
+        body: formData,
+      });
+      const json = await response.json();
+
+      if (!response.ok) {
+        throw new Error(json.error ?? "Failed to create kirtan");
+      }
+
+      setSearch("");
+      setType("all");
+      setStatus("all");
+      await loadKirtans({
+        search: "",
+        type: "all",
+        status: "all",
+        nextSelectedId: json.id as string,
+      });
+      setIsCreateModalOpen(false);
+      resetCreateForm();
+      setCreateState("saved");
+    } catch (createKirtanError) {
+      setCreateState("error");
+      setCreateError(
+        createKirtanError instanceof Error
+          ? createKirtanError.message
+          : "Failed to create kirtan",
+      );
+    }
+  }
+
   return (
     <div className="grid min-w-0 grid-cols-1 items-start gap-4 lg:grid-cols-[minmax(320px,420px)_minmax(0,1fr)]">
       <section
@@ -532,9 +780,16 @@ export function KirtansCmsPage() {
                 Search by title, singer, sanga, or sequence number.
               </p>
             </div>
-            <div className="rounded-[0.7rem] border border-[color:var(--theme-page-home-discovery-gold)] bg-white/75 px-3 py-1 text-sm font-medium text-[#8b6b62]">
-              {statusLabel}
-            </div>
+            <button
+              type="button"
+              onClick={() => {
+                resetCreateForm();
+                setIsCreateModalOpen(true);
+              }}
+              className="rounded-[0.7rem] bg-gradient-to-r from-[color:var(--theme-player-green)] to-[color:var(--theme-player-green-mid)] px-3 py-1.5 text-sm font-semibold text-white shadow-[0_12px_26px_rgba(121,161,79,0.22)]"
+            >
+              New
+            </button>
           </div>
           <div className="mt-4 space-y-3">
             <input
@@ -566,6 +821,7 @@ export function KirtansCmsPage() {
                 <option value="hidden">Hidden</option>
               </select>
             </div>
+            <p className="text-xs text-[#8f6c65]">Count: {statusLabel}</p>
             {listError ? (
               <div className="rounded-[var(--theme-radius-card)] border border-[#efc7c0] bg-[#fff4f3] px-3 py-2 text-sm text-[#a45e5a]">
                 {listError}
@@ -686,13 +942,20 @@ export function KirtansCmsPage() {
                         type="button"
                         onClick={() => togglePublished(!selected.published)}
                         className={[
-                          "rounded-[0.7rem] px-2.5 py-1 text-xs font-semibold",
+                          "cursor-pointer rounded-[0.7rem] border px-2.5 py-1 text-xs font-semibold transition-colors hover:bg-white disabled:cursor-not-allowed disabled:opacity-50",
                           selected.published
-                            ? "bg-[#f5e5de] text-[#af6f6a]"
-                            : "bg-[color:var(--theme-player-green-soft)] text-[color:var(--theme-player-green)]",
+                            ? "border-[#e7cfc7] bg-[#f5e5de] text-[#af6f6a] hover:border-[#deb8af] hover:bg-[#fbefea]"
+                            : "border-[#c7d9ba] bg-[color:var(--theme-player-green-soft)] text-[color:var(--theme-player-green)] hover:border-[#aac392] hover:bg-[#eef6e6]",
                         ].join(" ")}
                       >
                         {selected.published ? "Unpublish" : "Publish"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void deleteKirtan()}
+                        className="cursor-pointer rounded-[0.7rem] border border-[#e7cfc7] bg-[#f5e5de] px-2.5 py-1 text-xs font-semibold text-[#af6f6a] transition-colors hover:border-[#deb8af] hover:bg-[#fbefea] disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {deleteState === "saving" ? "Deleting…" : "Delete"}
                       </button>
                     </div>
                   </div>
@@ -993,6 +1256,187 @@ export function KirtansCmsPage() {
           </div>
         )}
       </section>
+
+      {isCreateModalOpen ? (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-[rgba(78,52,41,0.26)] px-4">
+          <div className="w-full max-w-2xl rounded-[var(--theme-radius-surface)] border border-[color:var(--theme-page-home-discovery-gold)] bg-[rgba(255,250,246,0.98)] p-5 shadow-[0_24px_64px_rgba(119,79,58,0.22)] backdrop-blur-md">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs uppercase tracking-[0.22em] text-[#b18472]">
+                  New Kirtan
+                </p>
+                <h3 className="mt-1 text-xl font-semibold text-[#5f4338]">
+                  Create a kirtan
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsCreateModalOpen(false);
+                  resetCreateForm();
+                }}
+                className="rounded-[var(--theme-radius-button)] border border-[#ead6cb] bg-white/80 px-3 py-1.5 text-sm text-[#8f6c65]"
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="mt-5 grid gap-4 md:grid-cols-2">
+              <div className="md:col-span-2">
+                <label className={detailFieldLabelClassName()}>Type</label>
+                <select
+                  value={createType}
+                  onChange={(event) =>
+                    setCreateType(event.target.value as Exclude<TypeFilter, "all">)
+                  }
+                  className={`${fieldClassName()} mt-1`}
+                >
+                  <option value="MM">Maha Mantra</option>
+                  <option value="BHJ">Bhajan</option>
+                  <option value="HK">Hari Katha</option>
+                </select>
+              </div>
+
+              {createType === "BHJ" ? (
+                <>
+                  <div className="md:col-span-2">
+                    <label className={detailFieldLabelClassName()}>
+                      First line title
+                    </label>
+                    <input
+                      value={createFirstLineTitle}
+                      onChange={(event) => setCreateFirstLineTitle(event.target.value)}
+                      className={`${fieldClassName()} mt-1`}
+                    />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className={detailFieldLabelClassName()}>
+                      Official title
+                    </label>
+                    <input
+                      value={createOfficialTitle}
+                      onChange={(event) => setCreateOfficialTitle(event.target.value)}
+                      className={`${fieldClassName()} mt-1`}
+                    />
+                  </div>
+                </>
+              ) : null}
+
+              {createType === "HK" ? (
+                <div className="md:col-span-2">
+                  <label className={detailFieldLabelClassName()}>Base title</label>
+                  <input
+                    value={createBaseTitle}
+                    onChange={(event) => setCreateBaseTitle(event.target.value)}
+                    className={`${fieldClassName()} mt-1`}
+                  />
+                </div>
+              ) : null}
+
+              <div>
+                <label className={detailFieldLabelClassName()}>Lead singer</label>
+                <select
+                  value={createLeadSingerId}
+                  onChange={(event) => setCreateLeadSingerId(event.target.value)}
+                  className={`${fieldClassName()} mt-1`}
+                >
+                  {leadSingerOptions.map((leadSinger) => (
+                    <option key={leadSinger.id} value={leadSinger.id}>
+                      {leadSinger.display_name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className={detailFieldLabelClassName()}>Sanga</label>
+                <select
+                  value={createSangaId}
+                  onChange={(event) => setCreateSangaId(event.target.value)}
+                  className={`${fieldClassName()} mt-1`}
+                >
+                  <option value="">No sanga</option>
+                  {sangaOptions.map((sanga) => (
+                    <option key={sanga.id} value={sanga.id}>
+                      {sanga.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className={detailFieldLabelClassName()}>Published</label>
+                <select
+                  value={createPublished ? "true" : "false"}
+                  onChange={(event) =>
+                    setCreatePublished(event.target.value === "true")
+                  }
+                  className={`${fieldClassName()} mt-1`}
+                >
+                  <option value="false">Unpublished</option>
+                  <option value="true">Published</option>
+                </select>
+              </div>
+
+              <div className="md:col-span-2">
+                <label className={detailFieldLabelClassName()}>
+                  Recorded date
+                </label>
+                <input
+                  value={createRecordedDate}
+                  onChange={(event) => setCreateRecordedDate(event.target.value)}
+                  placeholder="yyyy/mm/dd"
+                  className={`${fieldClassName()} mt-1`}
+                />
+              </div>
+
+              <div className="md:col-span-2">
+                <label className={detailFieldLabelClassName()}>Audio file</label>
+                <input
+                  type="file"
+                  accept={ADMIN_AUDIO_ACCEPT}
+                  onChange={(event) =>
+                    setCreateAudioFile(event.target.files?.[0] ?? null)
+                  }
+                  className={`${fieldClassName()} mt-1 file:mr-3 file:rounded-[0.6rem] file:border-0 file:bg-[color:var(--theme-player-green-soft)] file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-[color:var(--theme-player-green)]`}
+                />
+                {createAudioFile ? (
+                  <p className="mt-2 text-xs text-[#8f6c65]">
+                    {createAudioFile.name} • {formatBytes(createAudioFile.size)}
+                  </p>
+                ) : null}
+              </div>
+            </div>
+
+            {createError ? (
+              <div className="mt-4 rounded-[var(--theme-radius-card)] border border-[#efc7c0] bg-[#fff4f3] px-3 py-2 text-sm text-[#a45e5a]">
+                {createError}
+              </div>
+            ) : null}
+
+            <div className="mt-5 flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => void createKirtan()}
+                disabled={createState === "saving"}
+                className="rounded-[var(--theme-radius-button)] bg-gradient-to-r from-[color:var(--theme-player-green)] to-[color:var(--theme-player-green-mid)] px-4 py-2 text-sm font-medium text-white shadow-[0_12px_26px_rgba(121,161,79,0.28)] disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {createState === "saving" ? "Creating..." : "Create kirtan"}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsCreateModalOpen(false);
+                  resetCreateForm();
+                }}
+                className="rounded-[var(--theme-radius-button)] border border-[#ead6cb] bg-white/80 px-4 py-2 text-sm font-medium text-[#8f6c65]"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
