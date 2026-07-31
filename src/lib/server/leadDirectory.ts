@@ -35,6 +35,10 @@ type LeadAggregate = {
   total: number;
 };
 
+function isUnknownLeadName(name: string | null | undefined) {
+  return String(name ?? "").trim().toLowerCase() === "unknown singer";
+}
+
 export async function fetchLeadDirectory() {
   const { data: leads, error: leadsError } = await supabase
     .from("lead_singers")
@@ -102,7 +106,9 @@ export async function fetchLeadDirectory() {
     .filter((lead) => lead.total > 0);
 
   const regularLeads = aggregates
-    .filter((lead) => lead.total > OTHER_LEAD_THRESHOLD)
+    .filter(
+      (lead) => lead.total > OTHER_LEAD_THRESHOLD && !isUnknownLeadName(lead.display_name),
+    )
     .sort(compareLeadDirectoryItems)
     .map<LeadItem>((lead) => ({
       id: lead.id,
@@ -115,7 +121,8 @@ export async function fetchLeadDirectory() {
     }));
 
   const others = aggregates.filter(
-    (lead) => lead.total <= OTHER_LEAD_THRESHOLD,
+    (lead) =>
+      lead.total <= OTHER_LEAD_THRESHOLD || isUnknownLeadName(lead.display_name),
   );
   const otherLeadIds = others.map((lead) => lead.id);
   const otherCounts = others.reduce<LeadCounts>((acc, lead) => {
