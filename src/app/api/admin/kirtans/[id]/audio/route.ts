@@ -4,15 +4,13 @@ import {
   formatBytes,
   isAllowedAdminAudioFile,
 } from "@/lib/admin/audioUpload";
-import { getAdminKirtanDetail } from "@/lib/admin/data";
-import { revalidateCmsAndPublicContent } from "@/lib/admin/revalidate";
 import {
   buildReplacementAudioStorageKey,
   deleteAudioFromR2,
   getAudioPublicUrl,
-  getStorageKeyFromAudioUrl,
   uploadAudioToR2,
 } from "@/lib/server/r2KirtanAudio";
+import { publishCanonicalAudio } from "@/lib/server/adminAudioMutations";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 
 export const runtime = "nodejs";
@@ -140,7 +138,6 @@ export async function POST(
       }
     }
 
-    const currentStorageKey = getStorageKeyFromAudioUrl(audioFile.file_url);
     const manualDriveFileId = `manual-replace:${id}:${Date.now()}`;
     const nextStorageKey = buildReplacementAudioStorageKey({
       currentAudioUrl: audioFile.file_url,
@@ -158,60 +155,36 @@ export async function POST(
 
     const nextFileUrl = getAudioPublicUrl(nextStorageKey);
 
-    const { error: updateAudioError } = await supabaseAdmin
-      .from("audio_files")
-      .update({
-        file_name: uploaded.name,
-        file_url: nextFileUrl,
-        duration_seconds: durationSeconds,
-        drive_file_id: manualDriveFileId,
-      })
-      .eq("id", audioFile.id);
-
-    if (updateAudioError) {
+    let result: Awaited<ReturnType<typeof publishCanonicalAudio>>;
+    try {
+      result = await publishCanonicalAudio({
+        kirtanId: id,
+        audioFileId: audioFile.id,
+        currentAudioUrl: audioFile.file_url,
+        nextAudioUrl: nextFileUrl,
+        fileName: uploaded.name,
+        durationSeconds,
+        driveFileId: manualDriveFileId,
+      });
+    } catch (publishError) {
       try {
         await deleteAudioFromR2(nextStorageKey);
       } catch {}
       return NextResponse.json(
-        { error: updateAudioError.message },
+        {
+          error:
+            publishError instanceof Error
+              ? publishError.message
+              : "Failed to publish replacement audio",
+        },
         { status: 500 },
       );
     }
-
-    const { error: kirtanUpdateError } = await supabaseAdmin
-      .from("kirtans")
-      .update({
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", id);
-
-    if (kirtanUpdateError) {
-      try {
-        await deleteAudioFromR2(nextStorageKey);
-      } catch {}
-      return NextResponse.json(
-        { error: kirtanUpdateError.message },
-        { status: 500 },
-      );
-    }
-
-    let cleanupWarning: string | null = null;
-
-    if (currentStorageKey !== nextStorageKey) {
-      try {
-        await deleteAudioFromR2(currentStorageKey);
-      } catch {
-        cleanupWarning =
-          "The new audio is live, but the previous Cloudflare object could not be deleted automatically.";
-      }
-    }
-
-    revalidateCmsAndPublicContent();
 
     return NextResponse.json({
       ok: true,
-      kirtan: await getAdminKirtanDetail(id),
-      cleanupWarning,
+      kirtan: result.kirtan,
+      cleanupWarning: result.cleanupWarning,
     });
   } catch (error) {
     return NextResponse.json(

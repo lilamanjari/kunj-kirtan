@@ -60,7 +60,8 @@ function getTrackWidth({
   const detailMultiplier = clamp(duration / 90, 6, 24);
 
   return Math.round(
-    viewportWidth * (zoomLevel === "focus" ? focusMultiplier : detailMultiplier),
+    viewportWidth *
+      (zoomLevel === "focus" ? focusMultiplier : detailMultiplier),
   );
 }
 
@@ -152,6 +153,7 @@ export function AdminKirtanAudioPlayer({
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const nudgePreviewTimeoutRef = useRef<number | null>(null);
   const suppressScrollSyncRef = useRef(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -162,8 +164,14 @@ export function AdminKirtanAudioPlayer({
   const [waveformError, setWaveformError] = useState<string | null>(null);
   const [viewportWidth, setViewportWidth] = useState(0);
   const [scrollOffset, setScrollOffset] = useState(0);
-  const [replaceState, setReplaceState] = useState<"idle" | "uploading">("idle");
+  const [replaceState, setReplaceState] = useState<"idle" | "uploading">(
+    "idle",
+  );
+  const [trimState, setTrimState] = useState<"idle" | "trimming">("idle");
+  const [trimModeOpen, setTrimModeOpen] = useState(false);
   const [replaceMessage, setReplaceMessage] = useState<string | null>(null);
+  const [trimStart, setTrimStart] = useState<number | null>(null);
+  const [trimEnd, setTrimEnd] = useState<number | null>(null);
   const [zoomLevel, setZoomLevel] = useState<ZoomLevel>(
     durationSeconds && durationSeconds > 900 ? "detail" : "focus",
   );
@@ -232,6 +240,10 @@ export function AdminKirtanAudioPlayer({
     setCurrentTime(0);
     setDuration(durationSeconds ?? 0);
     setError(null);
+    setReplaceMessage(null);
+    setTrimModeOpen(false);
+    setTrimStart(null);
+    setTrimEnd(null);
 
     if (!audioUrl) {
       audio.removeAttribute("src");
@@ -291,9 +303,11 @@ export function AdminKirtanAudioPlayer({
         const arrayBuffer = await response.arrayBuffer();
         const AudioContextClass =
           window.AudioContext ||
-          (window as typeof window & {
-            webkitAudioContext?: typeof AudioContext;
-          }).webkitAudioContext;
+          (
+            window as typeof window & {
+              webkitAudioContext?: typeof AudioContext;
+            }
+          ).webkitAudioContext;
 
         if (!AudioContextClass) {
           throw new Error("This browser does not support waveform decoding.");
@@ -302,7 +316,9 @@ export function AdminKirtanAudioPlayer({
         const audioContext = new AudioContextClass();
 
         try {
-          const audioBuffer = await audioContext.decodeAudioData(arrayBuffer.slice(0));
+          const audioBuffer = await audioContext.decodeAudioData(
+            arrayBuffer.slice(0),
+          );
           const peaks = buildWaveformPeaks(
             audioBuffer.getChannelData(0),
             WAVEFORM_BAR_COUNT,
@@ -317,7 +333,9 @@ export function AdminKirtanAudioPlayer({
       } catch {
         if (!cancelled) {
           setWaveformPeaks([]);
-          setWaveformError("Waveform preview could not be generated for this file.");
+          setWaveformError(
+            "Waveform preview could not be generated for this file.",
+          );
         }
       } finally {
         if (!cancelled) {
@@ -342,11 +360,23 @@ export function AdminKirtanAudioPlayer({
     waveformPeaks.length > 0
       ? compressPeaks(
           waveformPeaks,
-          zoomLevel === "fit" ? 120 : zoomLevel === "focus" ? 320 : waveformPeaks.length,
+          zoomLevel === "fit"
+            ? 120
+            : zoomLevel === "focus"
+              ? 320
+              : waveformPeaks.length,
         )
-      : Array.from({
-          length: zoomLevel === "fit" ? 120 : zoomLevel === "focus" ? 320 : WAVEFORM_BAR_COUNT,
-        }, () => 0.18);
+      : Array.from(
+          {
+            length:
+              zoomLevel === "fit"
+                ? 120
+                : zoomLevel === "focus"
+                  ? 320
+                  : WAVEFORM_BAR_COUNT,
+          },
+          () => 0.18,
+        );
   const visibleStartRatio =
     trackWidth > 0
       ? clamp((scrollOffset - waveformGutterWidth) / trackWidth, 0, 1)
@@ -361,6 +391,20 @@ export function AdminKirtanAudioPlayer({
       : 1;
   const visibleStartTime = duration * visibleStartRatio;
   const visibleEndTime = duration * visibleEndRatio;
+  const trimStartRatio =
+    trimStart !== null && duration > 0
+      ? clamp(trimStart / duration, 0, 1)
+      : null;
+  const trimEndRatio =
+    trimEnd !== null && duration > 0 ? clamp(trimEnd / duration, 0, 1) : null;
+  const effectiveTrimStart = trimStart ?? 0;
+  const effectiveTrimEnd = trimEnd ?? duration;
+  const trimSelectionIsValid =
+    duration > 0 &&
+    Number.isFinite(effectiveTrimStart) &&
+    Number.isFinite(effectiveTrimEnd) &&
+    effectiveTrimEnd > effectiveTrimStart &&
+    (trimStart !== null || trimEnd !== null);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -399,7 +443,14 @@ export function AdminKirtanAudioPlayer({
     requestAnimationFrame(() => {
       suppressScrollSyncRef.current = false;
     });
-  }, [currentTime, duration, progressRatio, trackWidth, viewportWidth, zoomLevel]);
+  }, [
+    currentTime,
+    duration,
+    progressRatio,
+    trackWidth,
+    viewportWidth,
+    zoomLevel,
+  ]);
 
   async function togglePlayback() {
     const audio = audioRef.current;
@@ -434,6 +485,57 @@ export function AdminKirtanAudioPlayer({
     handleSeek(currentTime + deltaSeconds);
   }
 
+  async function previewPausedNudge() {
+    const audio = audioRef.current;
+    if (!audio || !audio.paused) {
+      return;
+    }
+
+    if (nudgePreviewTimeoutRef.current !== null) {
+      window.clearTimeout(nudgePreviewTimeoutRef.current);
+      nudgePreviewTimeoutRef.current = null;
+    }
+
+    try {
+      await audio.play();
+      nudgePreviewTimeoutRef.current = window.setTimeout(() => {
+        audio.pause();
+        nudgePreviewTimeoutRef.current = null;
+      }, 70);
+    } catch {}
+  }
+
+  function handlePlayerKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
+    if (!audioUrl) {
+      return;
+    }
+
+    if (event.key === "ArrowLeft") {
+      event.preventDefault();
+      seekBy(event.shiftKey ? -1 : -0.05);
+      void previewPausedNudge();
+      return;
+    }
+
+    if (event.key === "ArrowRight") {
+      event.preventDefault();
+      seekBy(event.shiftKey ? 1 : 0.05);
+      void previewPausedNudge();
+      return;
+    }
+
+    if (event.key.toLowerCase() === "i") {
+      event.preventDefault();
+      captureTrimStart();
+      return;
+    }
+
+    if (event.key.toLowerCase() === "o") {
+      event.preventDefault();
+      captureTrimEnd();
+    }
+  }
+
   function seekFromViewportClientX(clientX: number) {
     const container = containerRef.current;
     if (!container || duration <= 0 || trackWidth <= 0) {
@@ -453,13 +555,26 @@ export function AdminKirtanAudioPlayer({
   }
 
   function openReplacePicker() {
-    if (replaceState === "uploading") {
+    if (replaceState === "uploading" || trimState === "trimming") {
       return;
     }
 
     setError(null);
     setReplaceMessage(null);
     fileInputRef.current?.click();
+  }
+
+  function toggleTrimMode() {
+    setTrimModeOpen((current) => {
+      const next = !current;
+      if (!next) {
+        setTrimStart(null);
+        setTrimEnd(null);
+      }
+      return next;
+    });
+    setError(null);
+    setReplaceMessage(null);
   }
 
   function readAudioDuration(file: File) {
@@ -532,7 +647,8 @@ export function AdminKirtanAudioPlayer({
 
     onAudioReplaced(json.kirtan as AdminKirtanDetail);
     setReplaceMessage(
-      typeof json.cleanupWarning === "string" && json.cleanupWarning.trim().length > 0
+      typeof json.cleanupWarning === "string" &&
+        json.cleanupWarning.trim().length > 0
         ? json.cleanupWarning
         : "Audio replaced.",
     );
@@ -578,8 +694,88 @@ export function AdminKirtanAudioPlayer({
     }
   }
 
+  function captureTrimStart() {
+    if (!duration || duration <= 0) {
+      return;
+    }
+
+    setTrimStart(Math.min(duration, Math.max(0, currentTime)));
+    setReplaceMessage(null);
+    setError(null);
+  }
+
+  function captureTrimEnd() {
+    if (!duration || duration <= 0) {
+      return;
+    }
+
+    setTrimEnd(Math.min(duration, Math.max(0, currentTime)));
+    setReplaceMessage(null);
+    setError(null);
+  }
+
+  function resetTrimSelection() {
+    setTrimStart(null);
+    setTrimEnd(null);
+    setReplaceMessage(null);
+    setError(null);
+  }
+
+  async function applyTrim() {
+    if (!audioUrl || !trimSelectionIsValid) {
+      return;
+    }
+
+    setTrimState("trimming");
+    setError(null);
+    setReplaceMessage(null);
+
+    try {
+      const response = await fetch(
+        `/api/admin/kirtans/${kirtanId}/audio/trim`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            startSeconds: effectiveTrimStart,
+            endSeconds: effectiveTrimEnd,
+          }),
+        },
+      );
+      const json = await response.json();
+
+      if (!response.ok) {
+        throw new Error(json.error ?? "Failed to trim audio");
+      }
+
+      onAudioReplaced(json.kirtan as AdminKirtanDetail);
+      setReplaceMessage(
+        typeof json.cleanupWarning === "string" &&
+          json.cleanupWarning.trim().length > 0
+          ? json.cleanupWarning
+          : `Audio trimmed to ${formatTime(
+              Math.max(1, Math.round(effectiveTrimEnd - effectiveTrimStart)),
+            )}.`,
+      );
+      setTrimStart(null);
+      setTrimEnd(null);
+    } catch (trimError) {
+      setError(
+        trimError instanceof Error
+          ? trimError.message
+          : "Failed to trim audio.",
+      );
+    } finally {
+      setTrimState("idle");
+    }
+  }
+
   return (
-    <div className="border-t border-[#ecd8ce] bg-[linear-gradient(180deg,rgba(255,251,248,0.98)_0%,rgba(255,247,243,0.98)_100%)] px-5 py-3">
+    <div
+      className="border-t border-[#ecd8ce] bg-[linear-gradient(180deg,rgba(255,251,248,0.98)_0%,rgba(255,247,243,0.98)_100%)] px-5 py-3"
+      tabIndex={0}
+      onKeyDown={handlePlayerKeyDown}
+    >
       <input
         ref={fileInputRef}
         type="file"
@@ -588,7 +784,7 @@ export function AdminKirtanAudioPlayer({
         className="hidden"
       />
       <div className="flex flex-col gap-3">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
           <div className="min-w-0">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#b18472]">
               Audio preview
@@ -597,7 +793,7 @@ export function AdminKirtanAudioPlayer({
               {fileName ?? `${title}.audio`}
             </p>
           </div>
-          <div className="flex flex-wrap items-center gap-2 lg:justify-end">
+          <div className="flex shrink-0 flex-wrap items-center gap-2 lg:flex-nowrap lg:justify-end">
             {(["fit", "focus", "detail"] as const).map((level) => (
               <button
                 key={level}
@@ -610,18 +806,43 @@ export function AdminKirtanAudioPlayer({
                     : "border-[#e6cfc4] bg-white/85 text-[#8a6a60]",
                 ].join(" ")}
               >
-                {level === "fit" ? "Fit" : level === "focus" ? "Focus" : "Detail"}
+                {level === "fit"
+                  ? "Fit"
+                  : level === "focus"
+                    ? "Focus"
+                    : "Detail"}
               </button>
             ))}
             <button
               type="button"
               onClick={openReplacePicker}
-              disabled={!audioUrl || replaceState === "uploading"}
+              disabled={
+                !audioUrl ||
+                replaceState === "uploading" ||
+                trimState === "trimming"
+              }
               className="rounded-[0.7rem] border border-[#e6cfc4] bg-white/90 px-3 py-1.5 text-xs font-semibold text-[#87675d] transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
             >
               {replaceState === "uploading" ? "Replacing..." : "Replace Audio"}
             </button>
-            <p className="min-w-[7rem] text-right text-xs font-medium tabular-nums text-[#9a776c]">
+            <button
+              type="button"
+              onClick={toggleTrimMode}
+              disabled={
+                !audioUrl ||
+                replaceState === "uploading" ||
+                trimState === "trimming"
+              }
+              className={[
+                "rounded-[0.7rem] border px-3 py-1.5 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-50",
+                trimModeOpen
+                  ? "border-[color:var(--theme-player-green)] bg-[color:var(--theme-player-green-soft)] text-[color:var(--theme-player-green)]"
+                  : "border-[#e6cfc4] bg-white/90 text-[#87675d] hover:bg-white",
+              ].join(" ")}
+            >
+              {trimModeOpen ? "Close Trim" : "Trim"}
+            </button>
+            <p className="min-w-[7rem] shrink-0 text-right text-xs font-medium tabular-nums text-[#9a776c]">
               {formatTime(currentTime)} / {formatTime(duration)}
             </p>
           </div>
@@ -677,6 +898,28 @@ export function AdminKirtanAudioPlayer({
                           : "100%",
                   }}
                 >
+                  {trimStartRatio !== null ? (
+                    <div
+                      className="pointer-events-none absolute inset-y-0 left-0 bg-[rgba(84,61,53,0.1)]"
+                      style={{
+                        width:
+                          zoomLevel === "detail" || zoomLevel === "focus"
+                            ? `${waveformGutterWidth + trimStartRatio * trackWidth}px`
+                            : `${trimStartRatio * 100}%`,
+                      }}
+                    />
+                  ) : null}
+                  {trimEndRatio !== null ? (
+                    <div
+                      className="pointer-events-none absolute inset-y-0 right-0 bg-[rgba(84,61,53,0.1)]"
+                      style={{
+                        width:
+                          zoomLevel === "detail" || zoomLevel === "focus"
+                            ? `${waveformGutterWidth + (1 - trimEndRatio) * trackWidth}px`
+                            : `${(1 - trimEndRatio) * 100}%`,
+                      }}
+                    />
+                  ) : null}
                   {zoomLevel === "fit" ? (
                     <div
                       className="absolute inset-y-0 left-0 bg-[rgba(121,161,79,0.11)]"
@@ -712,16 +955,76 @@ export function AdminKirtanAudioPlayer({
                                 : Math.max(12, Math.round(peak * 64))
                             }px`,
                             backgroundColor:
-                              zoomLevel === "fit" && peaks.length > 1 && index / (peaks.length - 1) <= progressRatio
+                              zoomLevel === "fit" &&
+                              peaks.length > 1 &&
+                              index / (peaks.length - 1) <= progressRatio
                                 ? "#7c9f4f"
                                 : "#1a1a1a",
                             opacity:
-                              waveformPeaks.length > 0 || isWaveformLoading ? 0.98 : 0.7,
+                              waveformPeaks.length > 0 || isWaveformLoading
+                                ? 0.98
+                                : 0.7,
                           }}
                         />
                       );
                     })}
                   </div>
+                  {trimStartRatio !== null ? (
+                    <div
+                      className="pointer-events-none absolute inset-y-2 w-[2px] rounded-full bg-[#8a6a60] shadow-[0_0_0_1px_rgba(255,255,255,0.78)]"
+                      style={{
+                        left:
+                          zoomLevel === "detail" || zoomLevel === "focus"
+                            ? `${waveformGutterWidth + trimStartRatio * trackWidth - 1}px`
+                            : trackWidth > 0
+                              ? `calc(${trimStartRatio * 100}% - 1px)`
+                              : "0px",
+                      }}
+                    />
+                  ) : null}
+                  {trimStartRatio !== null ? (
+                    <span
+                      className="pointer-events-none absolute top-1/2 -translate-y-1/2 text-lg font-semibold leading-none text-[#8a6a60]"
+                      style={{
+                        left:
+                          zoomLevel === "detail" || zoomLevel === "focus"
+                            ? `${waveformGutterWidth + trimStartRatio * trackWidth - 10}px`
+                            : trackWidth > 0
+                              ? `calc(${trimStartRatio * 100}% - 10px)`
+                              : "0px",
+                      }}
+                    >
+                      [
+                    </span>
+                  ) : null}
+                  {trimEndRatio !== null ? (
+                    <div
+                      className="pointer-events-none absolute inset-y-2 w-[2px] rounded-full bg-[#8a6a60] shadow-[0_0_0_1px_rgba(255,255,255,0.78)]"
+                      style={{
+                        left:
+                          zoomLevel === "detail" || zoomLevel === "focus"
+                            ? `${waveformGutterWidth + trimEndRatio * trackWidth - 1}px`
+                            : trackWidth > 0
+                              ? `calc(${trimEndRatio * 100}% - 1px)`
+                              : "0px",
+                      }}
+                    />
+                  ) : null}
+                  {trimEndRatio !== null ? (
+                    <span
+                      className="pointer-events-none absolute top-1/2 -translate-y-1/2 text-lg font-semibold leading-none text-[#8a6a60]"
+                      style={{
+                        left:
+                          zoomLevel === "detail" || zoomLevel === "focus"
+                            ? `${waveformGutterWidth + trimEndRatio * trackWidth + 2}px`
+                            : trackWidth > 0
+                              ? `calc(${trimEndRatio * 100}% + 2px)`
+                              : "2px",
+                      }}
+                    >
+                      ]
+                    </span>
+                  ) : null}
                 </button>
               </div>
               <div
@@ -743,8 +1046,12 @@ export function AdminKirtanAudioPlayer({
           )}
 
           <div className="mt-1.5 flex items-center justify-between text-[11px] font-medium tabular-nums text-[#9a776c]">
-            <span>{formatTime(zoomLevel === "fit" ? 0 : visibleStartTime)}</span>
-            <span>{formatTime(zoomLevel === "fit" ? duration : visibleEndTime)}</span>
+            <span>
+              {formatTime(zoomLevel === "fit" ? 0 : visibleStartTime)}
+            </span>
+            <span>
+              {formatTime(zoomLevel === "fit" ? duration : visibleEndTime)}
+            </span>
           </div>
         </div>
 
@@ -761,7 +1068,9 @@ export function AdminKirtanAudioPlayer({
             type="button"
             onClick={() => void togglePlayback()}
             disabled={!audioUrl}
-            aria-label={isPlaying ? "Pause audio preview" : "Play audio preview"}
+            aria-label={
+              isPlaying ? "Pause audio preview" : "Play audio preview"
+            }
             className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-r from-[color:var(--theme-player-green)] to-[color:var(--theme-player-green-mid)] text-white shadow-[0_12px_26px_rgba(121,161,79,0.24)] disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isPlaying ? (
@@ -792,6 +1101,67 @@ export function AdminKirtanAudioPlayer({
             +10s
           </button>
         </div>
+
+        {trimModeOpen ? (
+          <div className="rounded-[var(--theme-radius-card)] border border-[#ead6cd] bg-white/75 px-3 py-3">
+            <div className="grid gap-2 lg:grid-cols-[1fr_auto_1fr] lg:items-center">
+              <div />
+              <div className="flex flex-wrap items-center justify-center gap-2 text-xs text-[#87675d]">
+                <span className="inline-flex min-w-[6.5rem] justify-end text-right">
+                  {trimStart !== null ? `Inpoint: ${formatTime(trimStart)}` : ""}
+                </span>
+                <button
+                  type="button"
+                  onClick={captureTrimStart}
+                  disabled={!audioUrl || trimState === "trimming"}
+                  className="w-[5.75rem] rounded-[0.7rem] border border-[#e7d0c6] bg-white/90 px-3 py-2 text-xs font-semibold text-[#87675d] disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Set In
+                </button>
+                <button
+                  type="button"
+                  onClick={captureTrimEnd}
+                  disabled={!audioUrl || trimState === "trimming"}
+                  className="w-[5.75rem] rounded-[0.7rem] border border-[#e7d0c6] bg-white/90 px-3 py-2 text-xs font-semibold text-[#87675d] disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Set Out
+                </button>
+                <span className="inline-flex min-w-[6.75rem] justify-start text-left">
+                  {trimEnd !== null ? `Outpoint: ${formatTime(trimEnd)}` : ""}
+                </span>
+              </div>
+              <div className="flex flex-wrap items-center justify-end gap-2 text-xs text-[#87675d]">
+                <button
+                  type="button"
+                  onClick={resetTrimSelection}
+                  disabled={
+                    trimState === "trimming" ||
+                    (trimStart === null && trimEnd === null)
+                  }
+                  className="rounded-[0.7rem] border border-[#e7d0c6] bg-white/90 px-3 py-2 text-xs font-semibold text-[#87675d] disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Reset
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void applyTrim()}
+                  disabled={
+                    !audioUrl ||
+                    !trimSelectionIsValid ||
+                    trimState === "trimming"
+                  }
+                  className="rounded-[0.7rem] bg-gradient-to-r from-[color:var(--theme-player-green)] to-[color:var(--theme-player-green-mid)] px-3 py-2 text-xs font-semibold text-white shadow-[0_10px_22px_rgba(121,161,79,0.22)] disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {trimState === "trimming" ? "Applying Trim..." : "Apply"}
+                </button>
+              </div>
+            </div>
+            <p className="mt-3 text-center text-[11px] text-[#9a776c]">
+              Use left/right arrows for fine nudging. Hold Shift for 1-second
+              steps. Press `I` for In and `O` for Out.
+            </p>
+          </div>
+        ) : null}
 
         {error ? (
           <p className="text-sm text-[#a45e5a]">{error}</p>

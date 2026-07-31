@@ -104,6 +104,7 @@ export function KirtansCmsPage() {
     Record<string, SaveState>
   >({});
   const [publishingState, setPublishingState] = useState<SaveState>("idle");
+  const [typeState, setTypeState] = useState<SaveState>("idle");
   const [tagState, setTagState] = useState<SaveState>("idle");
   const [listError, setListError] = useState<string | null>(null);
   const [detailError, setDetailError] = useState<string | null>(null);
@@ -295,6 +296,55 @@ export function KirtansCmsPage() {
           : item,
       ),
     );
+  }
+
+  async function changeType(nextType: TypeFilter) {
+    if (!selected || (nextType !== "MM" && nextType !== "BHJ" && nextType !== "HK")) {
+      return;
+    }
+
+    setTypeState("saving");
+    setDetailError(null);
+
+    try {
+      const response = await fetch(`/api/admin/kirtans/${selected.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: nextType }),
+      });
+      const json = await response.json();
+
+      if (!response.ok) {
+        throw new Error(json.error ?? "Failed to update type");
+      }
+
+      const detail = json.kirtan as AdminKirtanDetail;
+      setSelected(detail);
+      setTitleDrafts({
+        first_line:
+          detail.titles.find((row) => row.kind === "first_line")?.title ?? "",
+        official:
+          detail.titles.find((row) => row.kind === "official")?.title ?? "",
+      });
+      setKirtans((current) =>
+        current.map((item) =>
+          item.id === detail.id
+            ? {
+                ...item,
+                title: detail.title,
+                type: detail.type,
+                sequence_num: detail.sequence_num,
+              }
+            : item,
+        ),
+      );
+      setTypeState("saved");
+    } catch (typeError) {
+      setTypeState("error");
+      setDetailError(
+        typeError instanceof Error ? typeError.message : "Failed to update type",
+      );
+    }
   }
 
   async function togglePublished(nextPublished: boolean) {
@@ -686,7 +736,30 @@ export function KirtansCmsPage() {
                       </div>
                       <div>
                         <dt className={detailFieldLabelClassName()}>Type</dt>
-                        <dd className="mt-1 font-medium">{selected.type}</dd>
+                        <dd className="mt-1">
+                          <div className="flex items-center gap-3">
+                            <select
+                              value={selected.type}
+                              onChange={(event) =>
+                                void changeType(event.target.value as TypeFilter)
+                              }
+                              className="rounded-[0.7rem] border border-[color:var(--theme-page-home-discovery-gold)] bg-white/90 px-3 py-2 text-sm font-medium text-[#6c514a] outline-none transition focus:border-[color:var(--theme-player-green)] focus:ring-2 focus:ring-[color:var(--theme-player-green-soft)]"
+                            >
+                              <option value="MM">Maha Mantra</option>
+                              <option value="BHJ">Bhajan</option>
+                              <option value="HK">Hari-katha</option>
+                            </select>
+                            <span className="text-xs text-[#9d786d]">
+                              {typeState === "saving"
+                                ? "Saving…"
+                                : typeState === "saved"
+                                  ? "Saved"
+                                  : typeState === "error"
+                                    ? "Error"
+                                    : ""}
+                            </span>
+                          </div>
+                        </dd>
                       </div>
                       <div>
                         <dt className={detailFieldLabelClassName()}>
