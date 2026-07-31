@@ -783,8 +783,8 @@ export function AdminKirtanAudioPlayer({
         onChange={handleFileSelection}
         className="hidden"
       />
-      <div className="flex flex-col gap-3">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+      <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-2 lg:flex-row lg:items-start lg:justify-between">
           <div className="min-w-0">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#b18472]">
               Audio preview
@@ -793,26 +793,29 @@ export function AdminKirtanAudioPlayer({
               {fileName ?? `${title}.audio`}
             </p>
           </div>
-          <div className="flex shrink-0 flex-wrap items-center gap-2 lg:flex-nowrap lg:justify-end">
-            {(["fit", "focus", "detail"] as const).map((level) => (
-              <button
-                key={level}
-                type="button"
-                onClick={() => setZoomLevel(level)}
-                className={[
-                  "rounded-full border px-3 py-1.5 text-xs font-semibold transition",
-                  zoomLevel === level
-                    ? "border-[color:var(--theme-player-green)] bg-[color:var(--theme-player-green-soft)] text-[color:var(--theme-player-green)]"
-                    : "border-[#e6cfc4] bg-white/85 text-[#8a6a60]",
-                ].join(" ")}
-              >
-                {level === "fit"
-                  ? "Fit"
-                  : level === "focus"
-                    ? "Focus"
-                    : "Detail"}
-              </button>
-            ))}
+          <div className="mt-1 flex shrink-0 flex-wrap items-center gap-2 lg:mt-3 lg:flex-nowrap lg:justify-end">
+            <div className="flex overflow-hidden rounded-full border border-[#e6cfc4] bg-white/88 shadow-[inset_0_1px_0_rgba(255,255,255,0.72)]">
+              {(["fit", "focus", "detail"] as const).map((level, index) => (
+                <button
+                  key={level}
+                  type="button"
+                  onClick={() => setZoomLevel(level)}
+                  className={[
+                    "relative px-3 py-1.5 text-xs font-semibold transition",
+                    index > 0 ? "border-l border-[#ead7cd]" : "",
+                    zoomLevel === level
+                      ? "bg-[color:var(--theme-player-green-soft)] text-[color:var(--theme-player-green)]"
+                      : "bg-transparent text-[#8a6a60] hover:bg-white/80",
+                  ].join(" ")}
+                >
+                  {level === "fit"
+                    ? "Fit"
+                    : level === "focus"
+                      ? "Focus"
+                      : "Detail"}
+                </button>
+              ))}
+            </div>
             <button
               type="button"
               onClick={openReplacePicker}
