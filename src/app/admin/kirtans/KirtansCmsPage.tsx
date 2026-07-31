@@ -115,13 +115,16 @@ export function KirtansCmsPage() {
   const [publishingState, setPublishingState] = useState<SaveState>("idle");
   const [typeState, setTypeState] = useState<SaveState>("idle");
   const [deleteState, setDeleteState] = useState<SaveState>("idle");
-  const [leadSingerOptions, setLeadSingerOptions] = useState<AdminLeadSingerOption[]>([]);
+  const [leadSingerOptions, setLeadSingerOptions] = useState<
+    AdminLeadSingerOption[]
+  >([]);
   const [sangaOptions, setSangaOptions] = useState<AdminSangaOption[]>([]);
   const [tagState, setTagState] = useState<SaveState>("idle");
   const [listError, setListError] = useState<string | null>(null);
   const [detailError, setDetailError] = useState<string | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [createType, setCreateType] = useState<Exclude<TypeFilter, "all">>("MM");
+  const [createType, setCreateType] =
+    useState<Exclude<TypeFilter, "all">>("MM");
   const [createLeadSingerId, setCreateLeadSingerId] = useState("");
   const [createSangaId, setCreateSangaId] = useState("");
   const [createPublished, setCreatePublished] = useState(false);
@@ -302,11 +305,14 @@ export function KirtansCmsPage() {
         throw new Error(json.error ?? "Failed to load create options");
       }
 
-      const nextLeadSingers = (json.leadSingers ?? []) as AdminLeadSingerOption[];
+      const nextLeadSingers = (json.leadSingers ??
+        []) as AdminLeadSingerOption[];
       const nextSangas = (json.sangas ?? []) as AdminSangaOption[];
       setLeadSingerOptions(nextLeadSingers);
       setSangaOptions(nextSangas);
-      setCreateLeadSingerId((current) => current || nextLeadSingers[0]?.id || "");
+      setCreateLeadSingerId(
+        (current) => current || nextLeadSingers[0]?.id || "",
+      );
     }
 
     loadCreateOptions().catch((loadError) => {
@@ -418,7 +424,10 @@ export function KirtansCmsPage() {
   }
 
   async function changeType(nextType: TypeFilter) {
-    if (!selected || (nextType !== "MM" && nextType !== "BHJ" && nextType !== "HK")) {
+    if (
+      !selected ||
+      (nextType !== "MM" && nextType !== "BHJ" && nextType !== "HK")
+    ) {
       return;
     }
 
@@ -461,7 +470,9 @@ export function KirtansCmsPage() {
     } catch (typeError) {
       setTypeState("error");
       setDetailError(
-        typeError instanceof Error ? typeError.message : "Failed to update type",
+        typeError instanceof Error
+          ? typeError.message
+          : "Failed to update type",
       );
     }
   }
@@ -1004,7 +1015,9 @@ export function KirtansCmsPage() {
                             <select
                               value={selected.type}
                               onChange={(event) =>
-                                void changeType(event.target.value as TypeFilter)
+                                void changeType(
+                                  event.target.value as TypeFilter,
+                                )
                               }
                               className="rounded-[0.7rem] border border-[color:var(--theme-page-home-discovery-gold)] bg-white/90 px-3 py-2 text-sm font-medium text-[#6c514a] outline-none transition focus:border-[color:var(--theme-player-green)] focus:ring-2 focus:ring-[color:var(--theme-player-green-soft)]"
                             >
@@ -1269,16 +1282,6 @@ export function KirtansCmsPage() {
                   Create a kirtan
                 </h3>
               </div>
-              <button
-                type="button"
-                onClick={() => {
-                  setIsCreateModalOpen(false);
-                  resetCreateForm();
-                }}
-                className="rounded-[var(--theme-radius-button)] border border-[#ead6cb] bg-white/80 px-3 py-1.5 text-sm text-[#8f6c65]"
-              >
-                Close
-              </button>
             </div>
 
             <div className="mt-5 grid gap-4 md:grid-cols-2">
@@ -1287,7 +1290,9 @@ export function KirtansCmsPage() {
                 <select
                   value={createType}
                   onChange={(event) =>
-                    setCreateType(event.target.value as Exclude<TypeFilter, "all">)
+                    setCreateType(
+                      event.target.value as Exclude<TypeFilter, "all">,
+                    )
                   }
                   className={`${fieldClassName()} mt-1`}
                 >
@@ -1301,21 +1306,25 @@ export function KirtansCmsPage() {
                 <>
                   <div className="md:col-span-2">
                     <label className={detailFieldLabelClassName()}>
-                      First line title
+                      First Line Title (first line of the song)
                     </label>
                     <input
                       value={createFirstLineTitle}
-                      onChange={(event) => setCreateFirstLineTitle(event.target.value)}
+                      onChange={(event) =>
+                        setCreateFirstLineTitle(event.target.value)
+                      }
                       className={`${fieldClassName()} mt-1`}
                     />
                   </div>
                   <div className="md:col-span-2">
                     <label className={detailFieldLabelClassName()}>
-                      Official title
+                      Official Title (if applicable)
                     </label>
                     <input
                       value={createOfficialTitle}
-                      onChange={(event) => setCreateOfficialTitle(event.target.value)}
+                      onChange={(event) =>
+                        setCreateOfficialTitle(event.target.value)
+                      }
                       className={`${fieldClassName()} mt-1`}
                     />
                   </div>
@@ -1324,7 +1333,9 @@ export function KirtansCmsPage() {
 
               {createType === "HK" ? (
                 <div className="md:col-span-2">
-                  <label className={detailFieldLabelClassName()}>Base title</label>
+                  <label className={detailFieldLabelClassName()}>
+                    Base title
+                  </label>
                   <input
                     value={createBaseTitle}
                     onChange={(event) => setCreateBaseTitle(event.target.value)}
@@ -1334,10 +1345,14 @@ export function KirtansCmsPage() {
               ) : null}
 
               <div>
-                <label className={detailFieldLabelClassName()}>Lead singer</label>
+                <label className={detailFieldLabelClassName()}>
+                  Lead singer
+                </label>
                 <select
                   value={createLeadSingerId}
-                  onChange={(event) => setCreateLeadSingerId(event.target.value)}
+                  onChange={(event) =>
+                    setCreateLeadSingerId(event.target.value)
+                  }
                   className={`${fieldClassName()} mt-1`}
                 >
                   {leadSingerOptions.map((leadSinger) => (
@@ -1384,14 +1399,18 @@ export function KirtansCmsPage() {
                 </label>
                 <input
                   value={createRecordedDate}
-                  onChange={(event) => setCreateRecordedDate(event.target.value)}
+                  onChange={(event) =>
+                    setCreateRecordedDate(event.target.value)
+                  }
                   placeholder="yyyy/mm/dd"
                   className={`${fieldClassName()} mt-1`}
                 />
               </div>
 
               <div className="md:col-span-2">
-                <label className={detailFieldLabelClassName()}>Audio file</label>
+                <label className={detailFieldLabelClassName()}>
+                  Audio file
+                </label>
                 <input
                   type="file"
                   accept={ADMIN_AUDIO_ACCEPT}
