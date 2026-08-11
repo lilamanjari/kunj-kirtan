@@ -34,7 +34,6 @@ type KirtanListItemProps = {
   titleOverride?: string;
   subtitleOverride?: string;
   useShortDate?: boolean;
-  truncateSangaAt?: number;
   stackActionsOnMobile?: boolean;
   isActive: boolean;
   isPlaying: boolean;
@@ -55,7 +54,6 @@ export default function KirtanListItem({
   titleOverride,
   subtitleOverride,
   useShortDate = false,
-  truncateSangaAt,
   stackActionsOnMobile = false,
   isActive,
   isPlaying,
@@ -86,10 +84,7 @@ export default function KirtanListItem({
     `${sequenceLabel ? `${sequenceLabel} by ` : ""}${kirtan.lead_singer ?? ""}`;
   const hasSubtitle = Boolean(subtitleText.trim());
   const borderTint = getListItemBorderTint(kirtan);
-  const displaySanga =
-    truncateSangaAt && kirtan.sanga && kirtan.sanga.length > truncateSangaAt
-      ? `${kirtan.sanga.slice(0, truncateSangaAt).trimEnd()}...`
-      : kirtan.sanga;
+  const displaySanga = kirtan.sanga ?? "";
   const recordedDateLabel = kirtan.recorded_date
     ? useShortDate
       ? formatDateShort(
@@ -101,10 +96,8 @@ export default function KirtanListItem({
           kirtan.recorded_date_precision,
         )
     : "";
-  const metadataText =
-    displaySanga && recordedDateLabel
-      ? `${displaySanga} • ${recordedDateLabel}`
-      : displaySanga || recordedDateLabel;
+  const hasSanga = Boolean(displaySanga);
+  const hasRecordedDate = Boolean(recordedDateLabel);
   const cardBackground = kirtan.is_rare_gem
     ? "bg-[rgba(255,250,241,0.96)]"
     : isActive
@@ -195,8 +188,18 @@ export default function KirtanListItem({
               : `${hasSubtitle ? "-mt-3" : "-mt-2"} flex items-end justify-between gap-0`
           }`}
         >
-          <div className="min-w-0 flex-1 self-center sm:self-auto">
-            <span className="truncate">{metadataText}</span>
+          <div className="min-w-0 flex flex-1 items-center self-center sm:self-auto">
+            {hasSanga ? (
+              <span className="min-w-0 truncate" title={displaySanga}>
+                {displaySanga}
+              </span>
+            ) : null}
+            {hasSanga && hasRecordedDate ? (
+              <span className="shrink-0 px-1.5">•</span>
+            ) : null}
+            {hasRecordedDate ? (
+              <span className="shrink-0">{recordedDateLabel}</span>
+            ) : null}
           </div>
           <div
             className={`relative z-[3] flex shrink-0 items-center gap-1 ${

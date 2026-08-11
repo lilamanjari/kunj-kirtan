@@ -78,7 +78,7 @@ import AlphabetRail from "@/lib/components/AlphabetRail";
 import { ALPHABET } from "@/lib/alphabets";
 import { useDictionary } from "@/lib/i18n/LocaleProvider";
 import LeadSingerAvatar from "@/lib/components/LeadSingerAvatar";
-import { getKirtanCardText } from "@/lib/kirtanCardPresentation";
+import { getBhajanItemDisplayProps, getKirtanCardText } from "@/lib/kirtanCardPresentation";
 import { displayHeadingClassName } from "@/lib/theme/componentThemes";
 import { buildSharedCollectionCard } from "@/lib/collectionCardPresets";
 
@@ -904,6 +904,7 @@ export default function BhajansPageClient({
                     <Fragment key={getBrowseEntryId(row.bhajan)}>
                       <KirtanListItem
                         kirtan={row.bhajan}
+                        {...getBhajanItemDisplayProps(row.bhajan)}
                         leadingVisual={
                           <LeadSingerAvatar
                             name={row.bhajan.lead_singer}
@@ -911,13 +912,6 @@ export default function BhajansPageClient({
                             alt={row.bhajan.lead_singer_image_alt}
                           />
                         }
-                        titleOverride={getKirtanCardText(row.bhajan).title}
-                        subtitleOverride={
-                          getKirtanCardText(row.bhajan).subtitle
-                        }
-                        useShortDate
-                        truncateSangaAt={10}
-                        stackActionsOnMobile
                         isActive={isActive(row.bhajan)}
                         isPlaying={isPlaying(row.bhajan)}
                         isLoading={isLoading(row.bhajan)}

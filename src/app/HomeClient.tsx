@@ -6,7 +6,7 @@ import HomeFavoritesStrip from "@/lib/components/HomeFavoritesStrip";
 import HomePopularStrip from "@/lib/components/HomePopularStrip";
 import HomeRecommendedStrip from "@/lib/components/HomeRecommendedStrip";
 import KirtanListItem from "@/lib/components/KirtanListItem";
-import { getKirtanListDisplayProps } from "@/lib/kirtanCardPresentation";
+import { getMixedListItemDisplayProps } from "@/lib/kirtanCardPresentation";
 import { greenSurfaceTheme, homePalette } from "@/lib/theme/pagePalettes";
 import { radiusClassNames } from "@/lib/theme/radii";
 import Image from "next/image";
@@ -397,7 +397,7 @@ export default function HomeClient({ data }: { data: HomeData }) {
                         alt={k.lead_singer_image_alt}
                       />
                     }
-                    {...getKirtanListDisplayProps(k)}
+                    {...getMixedListItemDisplayProps(k)}
                     isActive={isActive(k)}
                     isPlaying={isPlaying(k)}
                     isLoading={isLoading(k)}

@@ -8,7 +8,7 @@ import { useAudioPlayer } from "@/lib/audio/AudioPlayerContext";
 import KirtanListItem from "@/lib/components/KirtanListItem";
 import SubpageHeader from "@/lib/components/SubpageHeader";
 import { useDictionary } from "@/lib/i18n/LocaleProvider";
-import { getKirtanListDisplayProps } from "@/lib/kirtanCardPresentation";
+import { getMixedListItemDisplayProps } from "@/lib/kirtanCardPresentation";
 import { displayHeadingClassName } from "@/lib/theme/componentThemes";
 
 export default function FavoritesPageClient() {
@@ -141,7 +141,7 @@ export default function FavoritesPageClient() {
                 <KirtanListItem
                   key={kirtan.id}
                   kirtan={kirtan}
-                  {...getKirtanListDisplayProps(kirtan)}
+                  {...getMixedListItemDisplayProps(kirtan)}
                   isActive={isActive(kirtan)}
                   isPlaying={isPlaying(kirtan)}
                   isLoading={isLoading(kirtan)}

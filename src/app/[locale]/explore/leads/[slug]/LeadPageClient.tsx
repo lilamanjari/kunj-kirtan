@@ -24,22 +24,7 @@ import {
 } from "@/lib/media";
 import { displayHeadingClassName } from "@/lib/theme/componentThemes";
 import { OTHER_LEAD_ID } from "@/lib/leadConstants";
-
-function getLeadPageListTitle(kirtan: KirtanSummary) {
-  if (kirtan.sequence_num) {
-    return `${kirtan.title} #${kirtan.sequence_num}`;
-  }
-
-  return kirtan.title;
-}
-
-function getOtherLeadsMahaMantraSubtitle(kirtan: KirtanSummary) {
-  if (kirtan.sequence_num) {
-    return `${kirtan.title} #${kirtan.sequence_num}`;
-  }
-
-  return kirtan.title;
-}
+import { getLeadPageItemDisplayProps } from "@/lib/kirtanCardPresentation";
 
 function getRecordedYear(kirtan: KirtanSummary) {
   return kirtan.recorded_date?.slice(0, 4) || "Undated";
@@ -386,7 +371,10 @@ export default function LeadPageClient({
               kirtan={featuredKirtan}
               titleOverride={
                 isOtherLeadView
-                  ? getLeadPageListTitle(featuredKirtan)
+                  ? getLeadPageItemDisplayProps(featuredKirtan, {
+                      isOtherLeadView,
+                      activeType,
+                    }).titleOverride
                   : undefined
               }
               subtitleOverride={
@@ -515,21 +503,10 @@ export default function LeadPageClient({
                             />
                           ) : undefined
                         }
-                        titleOverride={
-                          isOtherLeadView && activeType === "MM"
-                            ? (k.lead_singer ?? getLeadPageListTitle(k))
-                            : getLeadPageListTitle(k)
-                        }
-                        subtitleOverride={
-                          isOtherLeadView
-                            ? activeType === "MM"
-                              ? getOtherLeadsMahaMantraSubtitle(k)
-                              : (k.lead_singer ?? "")
-                            : ""
-                        }
-                        useShortDate
-                        truncateSangaAt={25}
-                        stackActionsOnMobile
+                        {...getLeadPageItemDisplayProps(k, {
+                          isOtherLeadView,
+                          activeType,
+                        })}
                         isActive={isActive(k)}
                         isPlaying={isPlaying(k)}
                         isLoading={isAudioLoading(k)}

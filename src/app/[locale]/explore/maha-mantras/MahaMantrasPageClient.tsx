@@ -23,6 +23,7 @@ import { mahaMantrasPalette } from "@/lib/theme/pagePalettes";
 import { useDictionary } from "@/lib/i18n/LocaleProvider";
 import { displayHeadingClassName } from "@/lib/theme/componentThemes";
 import { buildSharedCollectionCard } from "@/lib/collectionCardPresets";
+import { getMahaMantraItemDisplayProps } from "@/lib/kirtanCardPresentation";
 
 type CollectionFilterKey = "ALL" | "RARE_GEMS" | "WITH_HARMONIUM";
 
@@ -407,6 +408,7 @@ export default function MahaMantrasPageClient({
               <KirtanListItem
                 key={m.id}
                 kirtan={m}
+                {...getMahaMantraItemDisplayProps(m)}
                 leadingVisual={
                   <LeadSingerAvatar
                     name={m.lead_singer}
@@ -417,11 +419,6 @@ export default function MahaMantrasPageClient({
                 isActive={isActive(m)}
                 isPlaying={isPlaying(m)}
                 isLoading={isLoading(m)}
-                titleOverride={m.lead_singer ?? m.title}
-                subtitleOverride={`${m.title}${m.sequence_num ? ` #${m.sequence_num}` : ""}`}
-                useShortDate
-                truncateSangaAt={10}
-                stackActionsOnMobile
                 onToggle={() => toggle(m)}
                 onEnqueue={enqueue}
                 onDequeue={dequeueById}

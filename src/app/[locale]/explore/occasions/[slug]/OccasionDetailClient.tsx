@@ -13,7 +13,7 @@ import FeaturedKirtanCard from "@/lib/components/FeaturedKirtanCard";
 import { occasionsPalette } from "@/lib/theme/pagePalettes";
 import { useDictionary } from "@/lib/i18n/LocaleProvider";
 import LeadSingerAvatar from "@/lib/components/LeadSingerAvatar";
-import { getKirtanCardText } from "@/lib/kirtanCardPresentation";
+import { getKirtanCardText, getMixedListItemDisplayProps } from "@/lib/kirtanCardPresentation";
 
 export default function OccasionDetailClient({
   initialData,
@@ -53,11 +53,7 @@ export default function OccasionDetailClient({
                 alt={k.lead_singer_image_alt}
               />
             }
-            titleOverride={getKirtanCardText(k).title}
-            subtitleOverride={getKirtanCardText(k).subtitle}
-            useShortDate
-            truncateSangaAt={10}
-            stackActionsOnMobile
+            {...getMixedListItemDisplayProps(k)}
             isActive={isActive(k)}
             isPlaying={isPlaying(k)}
             isLoading={isLoading(k)}
