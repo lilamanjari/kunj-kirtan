@@ -14,6 +14,7 @@ import {
 } from "@bradleyhodges/sfsymbols";
 import type { KirtanSummary } from "@/types/kirtan";
 import KirtanListItem from "@/lib/components/KirtanListItem";
+import { getKirtanListDisplayProps } from "@/lib/kirtanCardPresentation";
 import {
   audioProgressColor,
   audioQueuePillClassName,
@@ -191,6 +192,7 @@ export default function AudioPlayerBar() {
                     <ul>
                       <KirtanListItem
                         kirtan={current}
+                        {...getKirtanListDisplayProps(current)}
                         isActive={true}
                         isPlaying={isPlaying()}
                         isLoading={isBuffering}
@@ -217,6 +219,7 @@ export default function AudioPlayerBar() {
                           <KirtanListItem
                             key={item.id}
                             kirtan={item}
+                            {...getKirtanListDisplayProps(item)}
                             isActive={false}
                             isPlaying={false}
                             isLoading={false}

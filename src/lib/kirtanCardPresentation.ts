@@ -24,7 +24,11 @@ export function getKirtanListDisplayProps(kirtan: KirtanSummary) {
     titleOverride: text.title,
     subtitleOverride: text.subtitle,
     useShortDate: true,
-    truncateSangaAt: 10,
+    truncateSangaAt: 15,
     stackActionsOnMobile: true,
   } as const;
+}
+
+export function getCompactKirtanListDisplayProps(kirtan: KirtanSummary) {
+  return getKirtanListDisplayProps(kirtan);
 }
