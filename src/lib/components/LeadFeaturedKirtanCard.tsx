@@ -1,6 +1,8 @@
 "use client";
 
+import { useAudioPlayer } from "@/lib/audio/AudioPlayerContext";
 import Equalizer from "@/lib/components/Equalizer";
+import OfflineDownloadBadge from "@/lib/components/OfflineDownloadBadge";
 import { useDictionary, useLocale } from "@/lib/i18n/LocaleProvider";
 import {
   appendImageVersion,
@@ -56,6 +58,7 @@ export default function LeadFeaturedKirtanCard({
 }: LeadFeaturedKirtanCardProps) {
   const dictionary = useDictionary();
   const locale = useLocale();
+  const { isOfflineAvailable, isOfflineDownloading } = useAudioPlayer();
   const titleText =
     titleOverride ??
     `${kirtan.title}${getKirtanSequenceLabel(kirtan.sequence_num) ? ` ${getKirtanSequenceLabel(kirtan.sequence_num)}` : ""}`;
@@ -113,9 +116,16 @@ export default function LeadFeaturedKirtanCard({
             {titleText}
           </h2>
           {subtitleText ? (
-            <p className="mt-1.5 text-[0.92rem] leading-snug text-[#96786a]">
-              {subtitleText}
-            </p>
+            <div className="mt-1.5 flex items-center gap-2">
+              <p className="text-[0.92rem] leading-snug text-[#96786a]">
+                {subtitleText}
+              </p>
+              <OfflineDownloadBadge
+                downloaded={isOfflineAvailable(kirtan.id)}
+                downloading={isOfflineDownloading(kirtan.id)}
+                className="shrink-0"
+              />
+            </div>
           ) : null}
         </div>
 

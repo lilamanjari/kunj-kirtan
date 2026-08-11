@@ -1,6 +1,8 @@
 import type { ReactNode } from "react";
+import { useAudioPlayer } from "@/lib/audio/AudioPlayerContext";
 import Equalizer from "@/lib/components/Equalizer";
 import LeadSingerAvatar from "@/lib/components/LeadSingerAvatar";
+import OfflineDownloadBadge from "@/lib/components/OfflineDownloadBadge";
 import { buildBucketImageUrl, buildTransformedImageUrl } from "@/lib/media";
 import { formatKirtanTitle } from "@/lib/kirtanTitle";
 import {
@@ -72,6 +74,7 @@ export default function FeaturedKirtanCard({
   subtitleOverride,
 }: FeaturedKirtanCardProps) {
   const dictionary = useDictionary();
+  const { isOfflineAvailable, isOfflineDownloading } = useAudioPlayer();
   const sequenceLabel = getKirtanSequenceLabel(kirtan.sequence_num);
   const durationLabel = formatKirtanDuration(kirtan.duration_seconds);
   const displayTitle = formatKirtanTitle(kirtan.type, kirtan.title);
@@ -224,6 +227,11 @@ export default function FeaturedKirtanCard({
                 {durationLabel}
               </span>
             ) : null}
+            <OfflineDownloadBadge
+              downloaded={isOfflineAvailable(kirtan.id)}
+              downloading={isOfflineDownloading(kirtan.id)}
+              className="shrink-0"
+            />
           </div>
 
           {onToggleFavorite || onEnqueue ? (
@@ -334,6 +342,11 @@ export default function FeaturedKirtanCard({
                 {durationLabel}
               </span>
             ) : null}
+            <OfflineDownloadBadge
+              downloaded={isOfflineAvailable(kirtan.id)}
+              downloading={isOfflineDownloading(kirtan.id)}
+              className="shrink-0"
+            />
           </div>
 
           {isActive && isPlaying ? (

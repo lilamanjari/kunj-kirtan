@@ -52,7 +52,7 @@ export default function HomeRailKirtanCard({
       tabIndex={0}
       onClick={onActivate}
       onKeyDown={handleKeyDown}
-      className={`group relative flex h-[12.5rem] w-[10rem] shrink-0 flex-col overflow-hidden border p-3.5 text-left ${radiusClassNames.card} ${
+      className={`group relative flex h-[12.5rem] w-[10rem] shrink-0 flex-col overflow-hidden border px-3 py-3.5 text-left ${radiusClassNames.card} ${
         isActive && isPlaying ? "animate-breathe" : ""
       }`}
       style={{
@@ -72,9 +72,9 @@ export default function HomeRailKirtanCard({
       </div>
 
       <div className="relative z-10 flex h-full flex-col">
-        <div className="flex items-start justify-between gap-3">
+        <div className="flex items-start justify-between gap-2">
           {leadingSlot}
-          <div className="flex items-center gap-1.5">{trailingTopSlot}</div>
+          <div className="flex shrink-0 items-center gap-1">{trailingTopSlot}</div>
         </div>
 
         <div className="mt-3 min-h-0 flex-1 space-y-2">

@@ -16,3 +16,15 @@ export function getKirtanCardText(kirtan: KirtanSummary) {
     subtitle: kirtan.lead_singer ?? "",
   };
 }
+
+export function getKirtanListDisplayProps(kirtan: KirtanSummary) {
+  const text = getKirtanCardText(kirtan);
+
+  return {
+    titleOverride: text.title,
+    subtitleOverride: text.subtitle,
+    useShortDate: true,
+    truncateSangaAt: 10,
+    stackActionsOnMobile: true,
+  } as const;
+}

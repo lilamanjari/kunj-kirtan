@@ -4,6 +4,7 @@ import { AudioPlayerProvider } from "@/lib/audio/AudioPlayerContext";
 import ClientAudioPlayerBar from "@/lib/components/ClientAudioPlayerBar";
 import OfflineBanner from "@/lib/components/OfflineBanner";
 import QueueToast from "@/lib/components/QueueToast";
+import ServiceWorkerRegistrar from "@/lib/components/ServiceWorkerRegistrar";
 import { LocaleProvider } from "@/lib/i18n/LocaleProvider";
 import { getDictionary } from "@/lib/i18n/getDictionary";
 import { isLocale, supportedLocales } from "@/lib/i18n/config";
@@ -29,8 +30,9 @@ export default async function LocaleLayout({
 
   return (
     <LocaleProvider locale={locale} dictionary={dictionary}>
-      <AudioPlayerProvider>
+      <AudioPlayerProvider locale={locale}>
         {children}
+        <ServiceWorkerRegistrar />
         <OfflineBanner />
         <QueueToast />
         <Suspense fallback={null}>

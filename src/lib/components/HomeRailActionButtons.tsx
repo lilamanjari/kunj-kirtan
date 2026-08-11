@@ -1,5 +1,7 @@
 "use client";
 
+import { useAudioPlayer } from "@/lib/audio/AudioPlayerContext";
+import OfflineDownloadBadge from "@/lib/components/OfflineDownloadBadge";
 import { SFIcon } from "@bradleyhodges/sfsymbols-react";
 import { sfSuitHeart, sfSuitHeartFill } from "@bradleyhodges/sfsymbols";
 import type { KirtanSummary } from "@/types/kirtan";
@@ -30,6 +32,7 @@ export default function HomeRailActionButtons({
   mutedBackground = true,
 }: HomeRailActionButtonsProps) {
   const dictionary = useDictionary();
+  const { isOfflineAvailable, isOfflineDownloading } = useAudioPlayer();
   const baseButtonClass = mutedBackground
     ? iconButtonInactiveClassName.replace(
         "bg-[var(--theme-icon-button-bg-rest)]",
@@ -38,14 +41,18 @@ export default function HomeRailActionButtons({
     : iconButtonInactiveClassName;
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-1.5">
+      <OfflineDownloadBadge
+        downloaded={isOfflineAvailable(kirtan.id)}
+        downloading={isOfflineDownloading(kirtan.id)}
+      />
       <button
         type="button"
         onClick={(event) => {
           event.stopPropagation();
           onToggleFavorite(kirtan);
         }}
-        className={`inline-flex h-7 w-7 items-center justify-center rounded-full border transition ${
+        className={`inline-flex h-6.5 w-6.5 items-center justify-center rounded-full border transition ${
           isFavorited ? favoriteActiveClassName : baseButtonClass
         }`}
         aria-label={
@@ -61,7 +68,7 @@ export default function HomeRailActionButtons({
       >
         <SFIcon
           icon={isFavorited || showFilledHeart ? sfSuitHeartFill : sfSuitHeart}
-          className="h-3.5 w-3.5"
+          className="h-3.25 w-3.25"
         />
       </button>
       <button
@@ -70,7 +77,7 @@ export default function HomeRailActionButtons({
           event.stopPropagation();
           onToggleQueue(kirtan);
         }}
-        className={`inline-flex h-7 w-7 items-center justify-center rounded-full border transition ${
+        className={`inline-flex h-6.5 w-6.5 items-center justify-center rounded-full border transition ${
           isQueued ? queueActiveClassName : baseButtonClass
         }`}
         aria-label={
@@ -84,7 +91,7 @@ export default function HomeRailActionButtons({
             : dictionary.actions.addToQueue
         }
       >
-        <span className="text-[18px] leading-none">
+        <span className="text-[16px] leading-none">
           {isQueued ? "✓" : "+"}
         </span>
       </button>

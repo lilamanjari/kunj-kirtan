@@ -28,16 +28,19 @@ export function formatDateShort(
   const intlLocale = getIntlLocale(locale);
   if (precision === "year") {
     return d.toLocaleDateString(intlLocale, {
+      timeZone: "UTC",
       year: "numeric",
     });
   }
   if (precision === "month") {
     return d.toLocaleDateString(intlLocale, {
+      timeZone: "UTC",
       month: "short",
       year: "numeric",
     });
   }
   return d.toLocaleDateString(intlLocale, {
+    timeZone: "UTC",
     day: "numeric",
     month: "short",
     year: "numeric",
@@ -54,16 +57,19 @@ export function formatDateLong(
   const intlLocale = getIntlLocale(locale);
   if (precision === "year") {
     return d.toLocaleDateString(intlLocale, {
+      timeZone: "UTC",
       year: "numeric",
     });
   }
   if (precision === "month") {
     return d.toLocaleDateString(intlLocale, {
+      timeZone: "UTC",
       month: "long",
       year: "numeric",
     });
   }
   return d.toLocaleDateString(intlLocale, {
+    timeZone: "UTC",
     day: "numeric",
     month: "long",
     year: "numeric",

@@ -69,7 +69,7 @@ describe("POST /api/revalidate/[target]", () => {
     expect(revalidateTag).toHaveBeenCalledWith("explore-leads-slugs", "max");
     expect(revalidatePath).toHaveBeenCalledWith("/api/explore/bhajans", "page");
     expect(revalidatePath).toHaveBeenCalledWith("/explore/leads", "page");
-    expect(revalidatePath).toHaveBeenCalledTimes(8);
+    expect(revalidatePath).toHaveBeenCalledTimes(9);
   });
 
   it("revalidates all groups", async () => {

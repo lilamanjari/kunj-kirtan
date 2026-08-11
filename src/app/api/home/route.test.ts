@@ -25,6 +25,34 @@ vi.mock("@/lib/server/featured", () => ({
   }),
 }));
 
+vi.mock("@/lib/server/homeFeaturedItem", () => ({
+  fetchHomeCurrentOccasion: vi.fn().mockResolvedValue({
+    data: {
+      name: "Purushottama Vrata",
+      slug: "purushottama-vrata",
+      header: "Current Vrata",
+      subtitle: "July 1 - July 29",
+    },
+    error: null,
+  }),
+}));
+
+vi.mock("@/lib/server/leadDirectory", () => ({
+  fetchLeadDirectory: vi.fn().mockResolvedValue({
+    leads: [],
+    otherLeadIds: [],
+    otherCounts: { MM: 0, BHJ: 0, HK: 0 },
+    error: null,
+  }),
+}));
+
+vi.mock("@/lib/server/leadSingerImages", () => ({
+  fetchPrimaryLeadSingerImages: vi.fn().mockResolvedValue({
+    imagesByLeadSingerId: new Map<string, never>(),
+    error: null,
+  }),
+}));
+
 type MockResult = { data: unknown; error: null | { message: string } };
 type MockBuilder = {
   select: ReturnType<typeof vi.fn>;
@@ -109,25 +137,18 @@ describe("GET /api/home", () => {
         error: null,
       },
       {
-        data: [
-          {
-            id: "f1",
-            entity_table: "tags",
-            entity_id: "tag-1",
-            title_override: "Current Vrata",
-            subtitle: "July 1 - July 29",
-            starts_at: null,
-            ends_at: null,
-          },
-        ],
+        data: [],
+        count: 10,
         error: null,
       },
       {
-        data: {
-          id: "tag-1",
-          name: "Purushottama Vrata",
-          slug: "purushottama-vrata",
-        },
+        data: [],
+        count: 20,
+        error: null,
+      },
+      {
+        data: [],
+        count: 5,
         error: null,
       },
       {
@@ -245,7 +266,9 @@ describe("GET /api/home", () => {
       { data: [], error: null },
       { data: [], error: null },
       { data: [{ kirtan_id: "k4" }], error: null },
-      { data: null, error: null },
+      { data: [], count: 10, error: null },
+      { data: [], count: 20, error: null },
+      { data: [], count: 5, error: null },
       { data: null, error: { message: "Recommended error" } },
     ];
 
@@ -296,7 +319,9 @@ describe("GET /api/home", () => {
         data: [{ kirtan_id: "k1" }, { kirtan_id: "k4" }],
         error: null,
       },
-      { data: null, error: null },
+      { data: [], count: 10, error: null },
+      { data: [], count: 20, error: null },
+      { data: [], count: 5, error: null },
       {
         data: [
           {

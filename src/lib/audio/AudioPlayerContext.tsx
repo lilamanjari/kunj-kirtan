@@ -6,7 +6,16 @@ import { useQueue } from "./useQueue";
 import { useFavorites } from "./useFavorites";
 import { KirtanSummary } from "@/types/kirtan";
 import { formatKirtanTitle } from "@/lib/kirtanTitle";
-import { markOffline, recordRequestSuccess } from "@/lib/net/offlineStore";
+import {
+  getOfflineSnapshot,
+  markOffline,
+  recordRequestSuccess,
+} from "@/lib/net/offlineStore";
+import { useOfflineFavorites } from "@/lib/offline/useOfflineFavorites";
+import {
+  enqueueOfflinePlayLog,
+  flushOfflinePlayLogs,
+} from "@/lib/offline/playLogQueue";
 
 export type AudioPlayerApi = ReturnType<typeof useAudioPlayerInternal>;
 
@@ -41,11 +50,17 @@ function shuffleKirtans(items: KirtanSummary[]) {
   return shuffled;
 }
 
-function useAudioPlayerInternal() {
+function useAudioPlayerInternal(locale: string) {
   const playback = usePlayback();
   const queueApi = useQueue();
   const favoritesApi = useFavorites();
+  const offlineApi = useOfflineFavorites({
+    favorites: favoritesApi.favorites,
+    locale,
+  });
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const offlineBlobUrlRef = useRef<string | null>(null);
+  const offlineBlobTrackIdRef = useRef<string | null>(null);
   const historyRef = useRef<KirtanSummary[]>([]);
   const lastCurrentRef = useRef<KirtanSummary | null>(null);
   // Audio event listeners are attached once, so they read this ref instead of a possibly stale playback.state closure.
@@ -55,6 +70,9 @@ function useAudioPlayerInternal() {
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
   const [isBuffering, setIsBuffering] = useState(false);
+  const [networkOnline, setNetworkOnline] = useState(
+    typeof navigator === "undefined" ? true : navigator.onLine,
+  );
 
   //Variables used for Continue Playback:
   const pendingSeekRef = useRef<number | null>(null); //Seek to this position once audio metadata has loaded
@@ -68,14 +86,39 @@ function useAudioPlayerInternal() {
   const [playToken, setPlayToken] = useState<{
     kirtanId: string | null;
     token: string | null;
+    loading: boolean;
   }>({
     kirtanId: null,
     token: null,
+    loading: false,
   });
 
   useEffect(() => {
     playbackStateRef.current = playback.state;
   }, [playback.state]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const update = () => {
+      setNetworkOnline(navigator.onLine);
+    };
+    update();
+    window.addEventListener("online", update);
+    window.addEventListener("offline", update);
+    return () => {
+      window.removeEventListener("online", update);
+      window.removeEventListener("offline", update);
+    };
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (offlineBlobUrlRef.current) {
+        URL.revokeObjectURL(offlineBlobUrlRef.current);
+        offlineBlobTrackIdRef.current = null;
+      }
+    };
+  }, []);
 
   // Initialize a single shared audio element and wire basic listeners.
   useEffect(() => {
@@ -235,14 +278,47 @@ function useAudioPlayerInternal() {
 
   // Fetch a short-lived signed token for the current kirtan before logging playback.
   useEffect(() => {
+    const flush = () => {
+      if (typeof window === "undefined" || !navigator.onLine) return;
+      void flushOfflinePlayLogs()
+        .then(() => {
+          recordRequestSuccess();
+        })
+        .catch(() => {
+          // keep queued logs for the next online attempt
+        });
+    };
+
+    flush();
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        flush();
+      }
+    };
+    window.addEventListener("online", flush);
+    window.addEventListener("focus", flush);
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () => {
+      window.removeEventListener("online", flush);
+      window.removeEventListener("focus", flush);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
+  }, []);
+
+  useEffect(() => {
     const current = playback.current;
     if (!current) {
-      setPlayToken({ kirtanId: null, token: null });
+      setPlayToken({ kirtanId: null, token: null, loading: false });
+      return;
+    }
+
+    if (!networkOnline || getOfflineSnapshot().isOffline) {
+      setPlayToken({ kirtanId: current.id, token: null, loading: false });
       return;
     }
 
     const controller = new AbortController();
-    setPlayToken({ kirtanId: current.id, token: null });
+    setPlayToken({ kirtanId: current.id, token: null, loading: true });
 
     fetch(`/api/plays/token?kirtan_id=${encodeURIComponent(current.id)}`, {
       signal: controller.signal,
@@ -254,17 +330,17 @@ function useAudioPlayerInternal() {
       })
       .then((token) => {
         if (!controller.signal.aborted) {
-          setPlayToken({ kirtanId: current.id, token });
+          setPlayToken({ kirtanId: current.id, token, loading: false });
         }
       })
       .catch(() => {
         if (!controller.signal.aborted) {
-          setPlayToken({ kirtanId: current.id, token: null });
+          setPlayToken({ kirtanId: current.id, token: null, loading: false });
         }
       });
 
     return () => controller.abort();
-  }, [playback.current?.id]);
+  }, [networkOnline, playback.current?.id]);
 
   // Record one qualified play per playback session once the listener reaches 15 seconds.
   useEffect(() => {
@@ -272,14 +348,12 @@ function useAudioPlayerInternal() {
     if (!current) return;
     if (playback.state !== "playing") return;
     if (currentTime < 15) return;
-    if (playToken.kirtanId !== current.id || !playToken.token) return;
 
     if (trackedPlayRef.current.kirtanId !== current.id) {
       trackedPlayRef.current = { kirtanId: current.id, sent: false };
     }
 
     if (trackedPlayRef.current.sent) return;
-    trackedPlayRef.current.sent = true;
 
     try {
       const clientId = window.localStorage
@@ -289,26 +363,63 @@ function useAudioPlayerInternal() {
         ? getOrCreateStorageId(window.sessionStorage, SESSION_ID_KEY)
         : null;
 
-      fetch("/api/plays", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          kirtan_id: current.id,
-          seconds_played: Math.max(15, Math.round(currentTime)),
-          client_id: clientId,
-          session_id: sessionId,
-          token: playToken.token,
-        }),
-        keepalive: true,
-      }).catch(() => {});
+      const payload = {
+        kirtan_id: current.id,
+        seconds_played: Math.max(15, Math.round(currentTime)),
+        client_id: clientId,
+        session_id: sessionId,
+      };
+
+      const isOffline = !networkOnline || getOfflineSnapshot().isOffline;
+      if (isOffline) {
+        trackedPlayRef.current.sent = true;
+        enqueueOfflinePlayLog({
+          ...payload,
+          played_at: new Date().toISOString(),
+        });
+        return;
+      }
+
+      if (playToken.kirtanId !== current.id || playToken.loading) {
+        return;
+      }
+
+      if (playToken.kirtanId === current.id && playToken.token) {
+        trackedPlayRef.current.sent = true;
+        fetch("/api/plays", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            ...payload,
+            token: playToken.token,
+          }),
+          keepalive: true,
+        })
+          .then(() => {
+            recordRequestSuccess();
+          })
+          .catch(() => {
+            enqueueOfflinePlayLog({
+              ...payload,
+              played_at: new Date().toISOString(),
+            });
+          });
+        return;
+      }
+
+      trackedPlayRef.current.sent = true;
+      enqueueOfflinePlayLog({
+        ...payload,
+        played_at: new Date().toISOString(),
+      });
     } catch {
       // ignore analytics failures
     }
-  }, [currentTime, playback.current?.id, playback.state, playToken]);
+  }, [currentTime, networkOnline, playback.current?.id, playback.state, playToken]);
 
-  // Sync playback state to the underlying audio element.
+  // Sync the current track source to the underlying audio element.
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio || !playback.current) return;
@@ -338,11 +449,76 @@ function useAudioPlayerInternal() {
       });
     }
 
-    if (audio.src !== playback.current.audio_url) {
-      audio.src = playback.current.audio_url;
-      audio.currentTime = 0;
-      audio.load();
-    }
+    let cancelled = false;
+
+    const applyAudioSource = async () => {
+      const isCurrentTrackOfflineAvailable = offlineApi.isOfflineAvailable(
+        playback.current!.id,
+      );
+      if (
+        isCurrentTrackOfflineAvailable &&
+        offlineBlobUrlRef.current &&
+        offlineBlobTrackIdRef.current === playback.current!.id &&
+        audio.src === offlineBlobUrlRef.current
+      ) {
+        return;
+      }
+
+      const offlineSource = isCurrentTrackOfflineAvailable
+        ? await offlineApi.getOfflineAudioObjectUrl(playback.current!.id)
+        : null;
+
+      if (cancelled) {
+        if (offlineSource) {
+          URL.revokeObjectURL(offlineSource);
+        }
+        return;
+      }
+
+      const nextSrc = offlineSource ?? playback.current!.audio_url;
+      if (audio.src !== nextSrc) {
+        if (offlineBlobUrlRef.current && offlineBlobUrlRef.current !== nextSrc) {
+          URL.revokeObjectURL(offlineBlobUrlRef.current);
+        }
+        offlineBlobUrlRef.current = offlineSource;
+        offlineBlobTrackIdRef.current = offlineSource ? playback.current!.id : null;
+        audio.src = nextSrc;
+        audio.currentTime = 0;
+        audio.load();
+
+        if (
+          playbackStateRef.current === "loading" ||
+          playbackStateRef.current === "playing"
+        ) {
+          audio
+            .play()
+            .then(() => {
+              playback.setState("playing");
+            })
+            .catch(() => {
+              playback.setState("paused");
+            });
+        }
+      } else if (offlineSource && offlineSource !== offlineBlobUrlRef.current) {
+        if (offlineBlobUrlRef.current) {
+          URL.revokeObjectURL(offlineBlobUrlRef.current);
+        }
+        offlineBlobUrlRef.current = offlineSource;
+        offlineBlobTrackIdRef.current = playback.current!.id;
+      }
+    };
+
+    void applyAudioSource();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [offlineApi.downloadedIdsKey, playback.current?.id]);
+
+  // Sync playback state to the underlying audio element.
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio || !playback.current) return;
 
     if (playback.state === "loading") {
       audio
@@ -466,15 +642,29 @@ function useAudioPlayerInternal() {
     clearFavorites: favoritesApi.clearFavorites,
     isFavorited: favoritesApi.isFavorited,
     favoritesNotice: favoritesApi.notice,
+    offlineLoaded: offlineApi.offlineLoaded,
+    offlineSupported: offlineApi.offlineSupported,
+    offlineEnabled: offlineApi.offlineEnabled,
+    offlineStorageLimitReached: offlineApi.offlineStorageLimitReached,
+    offlineSelectedCount: offlineApi.offlineSelectedCount,
+    offlineDownloadedCount: offlineApi.offlineDownloadedCount,
+    offlineDownloadingCount: offlineApi.offlineDownloadingCount,
+    toggleOfflineEnabled: offlineApi.toggleOfflineEnabled,
+    toggleOfflineForKirtan: offlineApi.toggleOfflineForKirtan,
+    isOfflineSelected: offlineApi.isOfflineSelected,
+    isOfflineAvailable: offlineApi.isOfflineAvailable,
+    isOfflineDownloading: offlineApi.isOfflineDownloading,
   };
 }
 
 export function AudioPlayerProvider({
+  locale,
   children,
 }: {
+  locale: string;
   children: React.ReactNode;
 }) {
-  const api = useAudioPlayerInternal();
+  const api = useAudioPlayerInternal(locale);
 
   return (
     <AudioPlayerContext.Provider value={api}>

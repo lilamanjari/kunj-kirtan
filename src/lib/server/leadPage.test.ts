@@ -6,6 +6,7 @@ const fetchLeadDirectoryMock = vi.fn();
 const fetchLeadCountsMock = vi.fn();
 const fetchLeadKirtansPageMock = vi.fn();
 const fetchKirtanTagFlagsMock = vi.fn();
+const fetchPrimaryLeadSingerImagesMock = vi.fn();
 const getDailyRareGemMock = vi.fn();
 
 vi.mock("next/cache", () => ({
@@ -44,6 +45,9 @@ vi.mock("@/lib/supabase", () => ({
 
 vi.mock("@/lib/server/leadDirectory", () => ({
   fetchLeadDirectory: (...args: unknown[]) => fetchLeadDirectoryMock(...args),
+}));
+
+vi.mock("@/lib/leadConstants", () => ({
   OTHER_LEAD_ID: "others",
   OTHER_LEAD_SLUG: "others",
   OTHER_LEAD_LABEL: "Other Lead Singers",
@@ -58,6 +62,11 @@ vi.mock("@/lib/server/leadKirtans", () => ({
 
 vi.mock("@/lib/server/kirtanTags", () => ({
   fetchKirtanTagFlags: (...args: unknown[]) => fetchKirtanTagFlagsMock(...args),
+}));
+
+vi.mock("@/lib/server/leadSingerImages", () => ({
+  fetchPrimaryLeadSingerImages: (...args: unknown[]) =>
+    fetchPrimaryLeadSingerImagesMock(...args),
 }));
 
 vi.mock("@/lib/server/featured", () => ({
@@ -85,6 +94,7 @@ describe("getLeadPageData", () => {
     fetchLeadCountsMock.mockReset();
     fetchLeadKirtansPageMock.mockReset();
     fetchKirtanTagFlagsMock.mockReset();
+    fetchPrimaryLeadSingerImagesMock.mockReset();
     getDailyRareGemMock.mockReset();
 
     maybeSingleMock.mockResolvedValue({
@@ -107,6 +117,11 @@ describe("getLeadPageData", () => {
     fetchKirtanTagFlagsMock.mockResolvedValue({
       harmoniumIds: new Set<string>(),
       rareGemIds: new Set<string>(),
+      error: null,
+    });
+
+    fetchPrimaryLeadSingerImagesMock.mockResolvedValue({
+      imagesByLeadSingerId: new Map<string, never>(),
       error: null,
     });
 

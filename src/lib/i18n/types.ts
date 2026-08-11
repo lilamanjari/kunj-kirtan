@@ -11,6 +11,11 @@ export type AppDictionary = {
     recentlyAdded: string;
     aboutKunjKirtan: string;
     offlineCheckConnection: string;
+    offlineFavorites: string;
+    offlineFavoritesEnabled: string;
+    offlineFavoritesDisabled: string;
+    offlineAvailable: string;
+    offlineStorageLimitReached: string;
     noFavoritesYet: string;
   };
   explore: {
@@ -80,6 +85,8 @@ export type AppDictionary = {
     removeFromFavorites: string;
     addToQueue: string;
     removeFromQueue: string;
+    addToOffline: string;
+    removeFromOffline: string;
     goToHomePage: string;
     backToTop: string;
     jumpToLetter: string;
