@@ -6,7 +6,10 @@ import HomeFavoritesStrip from "@/lib/components/HomeFavoritesStrip";
 import HomePopularStrip from "@/lib/components/HomePopularStrip";
 import HomeRecommendedStrip from "@/lib/components/HomeRecommendedStrip";
 import KirtanListItem from "@/lib/components/KirtanListItem";
-import { getMixedListItemDisplayProps } from "@/lib/kirtanCardPresentation";
+import {
+  getKirtanCardText,
+  getMixedListItemDisplayProps,
+} from "@/lib/kirtanCardPresentation";
 import { greenSurfaceTheme, homePalette } from "@/lib/theme/pagePalettes";
 import { radiusClassNames } from "@/lib/theme/radii";
 import Image from "next/image";
@@ -26,7 +29,6 @@ import {
 } from "@/lib/theme/componentThemes";
 import { formatDateLong, parseDateSafe } from "@/lib/utils/date";
 import LeadSingerAvatar from "@/lib/components/LeadSingerAvatar";
-import { getKirtanCardText } from "@/lib/kirtanCardPresentation";
 
 const exploreTileStyles: Record<
   string,

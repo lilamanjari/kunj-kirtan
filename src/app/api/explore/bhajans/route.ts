@@ -6,6 +6,7 @@ import { getDailyRareGem } from "@/lib/server/featured";
 import { ServerTiming, jsonWithServerTiming } from "@/lib/server/serverTiming";
 import { buildBhajanAlphabetIndex } from "@/lib/server/bhajanAlphabet";
 import { fetchBhajanLeadSingerImagesByKirtanId } from "@/lib/server/bhajanLeadImages";
+import { getDisplayKirtanTitle } from "@/lib/server/bhajanDisplayTitle";
 import {
   fetchBhajanCollectionCounts,
   fetchBhajanCollectionKirtanIds,
@@ -252,7 +253,7 @@ export async function GET(req: Request) {
         id: featured.kirtan.id,
         audio_url: featured.kirtan.audio_url ?? "",
         type: featured.kirtan.type,
-        title: featured.kirtan.title,
+        title: getDisplayKirtanTitle(featured.kirtan),
         lead_singer: featured.kirtan.lead_singer,
         lead_singer_id: featured.kirtan.lead_singer_id ?? null,
         lead_singer_image_url:

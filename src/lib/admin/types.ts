@@ -72,3 +72,16 @@ export type AdminSangaOption = {
   id: string;
   name: string;
 };
+
+export type AdminSangaSummary = {
+  id: string;
+  name: string;
+  kirtan_count: number;
+  lead_singer_count: number;
+  total_usage_count: number;
+};
+
+export type AdminSangaDetail = AdminSangaSummary & {
+  linked_kirtan_ids: string[];
+  linked_lead_singer_ids: string[];
+};

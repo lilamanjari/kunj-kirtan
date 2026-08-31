@@ -7,6 +7,7 @@ import { unstable_cache } from "next/cache";
 import { buildBhajanAlphabetIndex } from "@/lib/server/bhajanAlphabet";
 import { fetchBhajanLeadSingerImagesByKirtanId } from "@/lib/server/bhajanLeadImages";
 import { fetchBhajanCollectionCounts } from "@/lib/server/bhajanCollections";
+import { getDisplayKirtanTitle } from "@/lib/server/bhajanDisplayTitle";
 
 const getCachedBhajanAlphabetIndex = unstable_cache(
   async () => buildBhajanAlphabetIndex(null),
@@ -104,7 +105,7 @@ const getCachedBhajansPageData = unstable_cache(
           id: featured.kirtan.id,
           audio_url: featured.kirtan.audio_url ?? "",
           type: featured.kirtan.type,
-          title: featured.kirtan.title,
+          title: getDisplayKirtanTitle(featured.kirtan),
           lead_singer: featured.kirtan.lead_singer,
           lead_singer_id: featured.kirtan.lead_singer_id ?? null,
           lead_singer_image_url:

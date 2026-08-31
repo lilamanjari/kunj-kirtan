@@ -5,7 +5,9 @@ import type {
   AdminKirtanDetail,
   AdminKirtanListItem,
   AdminLeadSingerOption,
+  AdminSangaDetail,
   AdminSangaOption,
+  AdminSangaSummary,
   AdminTagDetail,
   AdminTagSummary,
 } from "@/lib/admin/types";
@@ -819,6 +821,132 @@ export async function getAdminTagCategories() {
   return Array.from(
     new Set((data ?? []).map((row) => row.category).filter(Boolean)),
   );
+}
+
+export async function listAdminSangas({
+  search,
+}: {
+  search?: string | null;
+}) {
+  let query = supabaseAdmin
+    .from("sangas")
+    .select("id, name")
+    .order("name", { ascending: true })
+    .limit(250);
+
+  if (search?.trim()) {
+    query = query.ilike("name", `%${search.trim()}%`);
+  }
+
+  const { data: sangas, error } = await query;
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  const sangaIds = (sangas ?? []).map((sanga) => sanga.id);
+  const kirtanCountsById = new Map<string, number>();
+  const leadSingerCountsById = new Map<string, number>();
+
+  if (sangaIds.length > 0) {
+    const [{ data: kirtans, error: kirtansError }, { data: leadSingers, error: leadSingersError }] =
+      await Promise.all([
+        supabaseAdmin
+          .from("kirtans")
+          .select("sanga_id")
+          .in("sanga_id", sangaIds),
+        supabaseAdmin
+          .from("lead_singers")
+          .select("home_sanga")
+          .in("home_sanga", sangaIds),
+      ]);
+
+    if (kirtansError) {
+      throw new Error(kirtansError.message);
+    }
+    if (leadSingersError) {
+      throw new Error(leadSingersError.message);
+    }
+
+    for (const row of kirtans ?? []) {
+      const sangaId = row.sanga_id;
+      if (!sangaId) continue;
+      kirtanCountsById.set(sangaId, (kirtanCountsById.get(sangaId) ?? 0) + 1);
+    }
+
+    for (const row of leadSingers ?? []) {
+      const sangaId = row.home_sanga;
+      if (!sangaId) continue;
+      leadSingerCountsById.set(
+        sangaId,
+        (leadSingerCountsById.get(sangaId) ?? 0) + 1,
+      );
+    }
+  }
+
+  return (sangas ?? []).map((sanga) => {
+    const kirtanCount = kirtanCountsById.get(sanga.id) ?? 0;
+    const leadSingerCount = leadSingerCountsById.get(sanga.id) ?? 0;
+
+    return {
+      id: sanga.id,
+      name: sanga.name,
+      kirtan_count: kirtanCount,
+      lead_singer_count: leadSingerCount,
+      total_usage_count: kirtanCount + leadSingerCount,
+    };
+  }) satisfies AdminSangaSummary[];
+}
+
+export async function getAdminSangaDetail(id: string) {
+  const { data: sanga, error } = await supabaseAdmin
+    .from("sangas")
+    .select("id, name")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  if (!sanga) {
+    return null;
+  }
+
+  const [{ data: kirtans, error: kirtansError }, { data: leadSingers, error: leadSingersError }] =
+    await Promise.all([
+      supabaseAdmin
+        .from("kirtans")
+        .select("id")
+        .eq("sanga_id", id),
+      supabaseAdmin
+        .from("lead_singers")
+        .select("id")
+        .eq("home_sanga", id),
+    ]);
+
+  if (kirtansError) {
+    throw new Error(kirtansError.message);
+  }
+  if (leadSingersError) {
+    throw new Error(leadSingersError.message);
+  }
+
+  const linkedKirtanIds = (kirtans ?? [])
+    .map((row) => row.id)
+    .filter((value): value is string => Boolean(value));
+  const linkedLeadSingerIds = (leadSingers ?? [])
+    .map((row) => row.id)
+    .filter((value): value is string => Boolean(value));
+
+  return {
+    id: sanga.id,
+    name: sanga.name,
+    kirtan_count: linkedKirtanIds.length,
+    lead_singer_count: linkedLeadSingerIds.length,
+    total_usage_count: linkedKirtanIds.length + linkedLeadSingerIds.length,
+    linked_kirtan_ids: linkedKirtanIds,
+    linked_lead_singer_ids: linkedLeadSingerIds,
+  } satisfies AdminSangaDetail;
 }
 
 export function getDisplayListTitle(

@@ -45,6 +45,28 @@ function TagsIcon() {
   );
 }
 
+function SangasIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      className="h-4.5 w-4.5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <circle cx="12" cy="8" r="2.2" />
+      <circle cx="6.5" cy="10" r="1.7" />
+      <circle cx="17.5" cy="10" r="1.7" />
+      <path d="M8.7 17.5c.6-2 2-3 3.3-3s2.7 1 3.3 3" />
+      <path d="M3.8 17.4c.4-1.5 1.4-2.3 2.7-2.3.8 0 1.5.3 2.1.9" />
+      <path d="M20.2 17.4c-.4-1.5-1.4-2.3-2.7-2.3-.8 0-1.5.3-2.1.9" />
+    </svg>
+  );
+}
+
 export function AdminShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
 
@@ -95,6 +117,16 @@ export function AdminShell({ children }: { children: ReactNode }) {
                 >
                   <TagsIcon />
                   <span className="font-display text-[1.14rem]">Tags</span>
+                </Link>
+                <Link
+                  href="/admin/sangas"
+                  className={navLinkClassName(
+                    pathname.startsWith("/admin/sangas"),
+                  )}
+                  style={{ marginLeft: "-1px" }}
+                >
+                  <SangasIcon />
+                  <span className="font-display text-[1.14rem]">Sangas</span>
                 </Link>
               </div>
             </nav>

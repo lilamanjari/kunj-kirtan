@@ -175,7 +175,7 @@ async function buildHomePageData() {
         id: featured.kirtan.id,
         audio_url: featured.kirtan.audio_url ?? "",
         type: featured.kirtan.type,
-        title: featured.kirtan.title,
+        title: getDisplayKirtanTitle(featured.kirtan),
         lead_singer: featured.kirtan.lead_singer,
         recorded_date: featured.kirtan.recorded_date,
         recorded_date_precision:
@@ -337,7 +337,6 @@ async function buildHomePageData() {
     const leadSingerImage = featured.kirtan.lead_singer_id
       ? imagesByLeadSingerId.get(featured.kirtan.lead_singer_id)
       : null;
-    featuredKirtan.title = getDisplayKirtanTitle(featured.kirtan);
     featuredKirtan.lead_singer_id = featured.kirtan.lead_singer_id ?? null;
     featuredKirtan.lead_singer_image_url = leadSingerImage?.url ?? null;
     featuredKirtan.lead_singer_image_alt =
