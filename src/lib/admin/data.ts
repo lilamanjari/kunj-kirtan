@@ -4,7 +4,10 @@ import { fetchPrimaryLeadSingerImages } from "@/lib/server/leadSingerImages";
 import type {
   AdminKirtanDetail,
   AdminKirtanListItem,
+  AdminLeadSingerDetail,
   AdminLeadSingerOption,
+  AdminLeadSingerKirtanSummary,
+  AdminLeadSingerSummary,
   AdminSangaDetail,
   AdminSangaOption,
   AdminSangaSummary,
@@ -310,6 +313,8 @@ export function slugifyTagName(name: string) {
     .replace(/^-+|-+$/g, "");
 }
 
+export const slugifyLeadSingerName = slugifyTagName;
+
 function mapTitleRows(
   rows: Array<{ kind: string | null; title: string | null }> | null | undefined,
 ) {
@@ -340,10 +345,12 @@ export async function listAdminKirtans({
   search,
   type,
   status,
+  selectedId,
 }: {
   search?: string | null;
   type?: KirtanType | "all" | null;
   status?: KirtanStatusFilter | null;
+  selectedId?: string | null;
 }) {
   const normalizedSearch = search?.trim() ?? "";
   const hasSearch = normalizedSearch.length > 0;
@@ -503,12 +510,81 @@ export async function listAdminKirtans({
             | Array<{ display_name?: string | null }>
             | null,
         ),
+      lead_singer_image_focus_x: leadSingerImage?.focus_x ?? null,
+      lead_singer_image_focus_y: leadSingerImage?.focus_y ?? null,
       duration_seconds:
         ((Array.isArray(row.audio_files) ? row.audio_files : [row.audio_files]).find(
           (audio) => audio?.is_current,
         )?.duration_seconds as number | null | undefined) ?? null,
     };
   }) satisfies AdminKirtanListItem[];
+
+  if (
+    selectedId &&
+    !kirtans.some((kirtan) => kirtan.id === selectedId)
+  ) {
+    const { data: selectedRow, error: selectedError } = await buildBaseQuery()
+      .eq("id", selectedId)
+      .maybeSingle();
+
+    if (selectedError) {
+      throw new Error(selectedError.message);
+    }
+
+    if (selectedRow) {
+      const typedSelectedRow = selectedRow as AdminListSearchRow;
+      const selectedLeadSingerId = typedSelectedRow.lead_singer_id;
+      const selectedImageLookup =
+        selectedLeadSingerId && !imagesByLeadSingerId.has(selectedLeadSingerId)
+          ? await fetchPrimaryLeadSingerImages([selectedLeadSingerId])
+          : null;
+
+      if (selectedImageLookup?.error) {
+        throw new Error(selectedImageLookup.error);
+      }
+
+      const selectedLeadSingerImage = selectedLeadSingerId
+        ? imagesByLeadSingerId.get(selectedLeadSingerId) ??
+          selectedImageLookup?.imagesByLeadSingerId.get(selectedLeadSingerId) ??
+          null
+        : null;
+
+      kirtans.unshift({
+        id: String(typedSelectedRow.id),
+        title: String(typedSelectedRow.title ?? ""),
+        type: typedSelectedRow.type as KirtanType,
+        published: Boolean(typedSelectedRow.published),
+        created_at: (typedSelectedRow.created_at as string | null) ?? null,
+        recorded_date: (typedSelectedRow.recorded_date as string | null) ?? null,
+        sequence_num: (typedSelectedRow.sequence_num as number | null) ?? null,
+        recorded_date_precision:
+          (typedSelectedRow.recorded_date_precision as RecordedDatePrecision | null) ??
+          null,
+        lead_singer: mapJoinedName(
+          typedSelectedRow.lead_singers as
+            | { display_name?: string | null }
+            | Array<{ display_name?: string | null }>
+            | null,
+        ),
+        lead_singer_image_url: selectedLeadSingerImage?.url ?? null,
+        lead_singer_image_alt:
+          selectedLeadSingerImage?.alt_text ??
+          mapJoinedName(
+            typedSelectedRow.lead_singers as
+              | { display_name?: string | null }
+              | Array<{ display_name?: string | null }>
+              | null,
+          ),
+        lead_singer_image_focus_x: selectedLeadSingerImage?.focus_x ?? null,
+        lead_singer_image_focus_y: selectedLeadSingerImage?.focus_y ?? null,
+        duration_seconds:
+          ((Array.isArray(typedSelectedRow.audio_files)
+            ? typedSelectedRow.audio_files
+            : [typedSelectedRow.audio_files]).find((audio) => audio?.is_current)
+            ?.duration_seconds as number | null | undefined) ?? null,
+      });
+    }
+  }
 
   return {
     kirtans,
@@ -636,6 +712,8 @@ export async function getAdminKirtanDetail(id: string) {
           | Array<{ display_name?: string | null }>
           | null,
       ),
+    lead_singer_image_focus_x: leadSingerImage?.focus_x ?? null,
+    lead_singer_image_focus_y: leadSingerImage?.focus_y ?? null,
     sanga: mapJoinedName(
       kirtan.sangas as { name?: string | null } | Array<{ name?: string | null }> | null,
     ),
@@ -947,6 +1025,392 @@ export async function getAdminSangaDetail(id: string) {
     linked_kirtan_ids: linkedKirtanIds,
     linked_lead_singer_ids: linkedLeadSingerIds,
   } satisfies AdminSangaDetail;
+}
+
+type AdminLeadSingerListRow = {
+  id: string;
+  canonical_name: string | null;
+  display_name: string | null;
+  slug: string | null;
+  description: string | null;
+  priority: number | null;
+  is_identified: boolean | null;
+  home_sanga: string | null;
+  sangas: { name?: string | null } | Array<{ name?: string | null }> | null;
+};
+
+type AdminLeadSingerDetailKirtanRow = {
+  id: string;
+  title: string | null;
+  type: KirtanType;
+  published: boolean | null;
+  recorded_date: string | null;
+  recorded_date_precision: RecordedDatePrecision | null;
+  sequence_num: number | null;
+  created_at: string | null;
+  audio_files:
+    | { duration_seconds?: number | null; is_current?: boolean | null }
+    | Array<{ duration_seconds?: number | null; is_current?: boolean | null }>
+    | null;
+  kirtan_titles:
+    | Array<{ kind?: string | null; title?: string | null }>
+    | { kind?: string | null; title?: string | null }
+    | null;
+};
+
+async function getAdminLeadSingerImages(leadSingerIds: string[]) {
+  const uniqueLeadSingerIds = Array.from(new Set(leadSingerIds.filter(Boolean)));
+  if (uniqueLeadSingerIds.length === 0) {
+    return new Map<
+      string,
+      {
+        image_key: string;
+        alt_text: string | null;
+        url: string | null;
+        focus_x: number | null;
+        focus_y: number | null;
+      }
+    >();
+  }
+
+  const { data: rowsWithFocus, error: errorWithFocus } = await supabaseAdmin
+    .from("lead_singer_images")
+    .select("lead_singer_id, image_key, alt_text, focus_x, focus_y, created_at")
+    .in("lead_singer_id", uniqueLeadSingerIds)
+    .order("created_at", { ascending: false });
+
+  let data = rowsWithFocus;
+
+  if (errorWithFocus) {
+    if (
+      !errorWithFocus.message.includes("lead_singer_images.focus_x does not exist") &&
+      !errorWithFocus.message.includes("lead_singer_images.focus_y does not exist")
+    ) {
+      throw new Error(errorWithFocus.message);
+    }
+
+    const { data: fallbackRows, error: fallbackError } = await supabaseAdmin
+      .from("lead_singer_images")
+      .select("lead_singer_id, image_key, alt_text, created_at")
+      .in("lead_singer_id", uniqueLeadSingerIds)
+      .order("created_at", { ascending: false });
+
+    if (fallbackError) {
+      throw new Error(fallbackError.message);
+    }
+
+    data = (fallbackRows ?? []).map((row) => ({
+      ...row,
+      focus_x: null,
+      focus_y: null,
+    }));
+  }
+
+  const publicImageMapResult = await fetchPrimaryLeadSingerImages(
+    uniqueLeadSingerIds,
+  );
+  const publicImageMap = publicImageMapResult.imagesByLeadSingerId;
+  const publicImageError = publicImageMapResult.error;
+  if (publicImageError) {
+    throw new Error(publicImageError);
+  }
+
+  const images = new Map<
+    string,
+    {
+      image_key: string;
+      alt_text: string | null;
+      url: string | null;
+      focus_x: number | null;
+      focus_y: number | null;
+    }
+  >();
+
+  for (const row of data ?? []) {
+    if (!row.lead_singer_id || !row.image_key || images.has(row.lead_singer_id)) {
+      continue;
+    }
+
+    images.set(row.lead_singer_id, {
+      image_key: row.image_key,
+      alt_text: row.alt_text ?? null,
+      url: publicImageMap.get(row.lead_singer_id)?.url ?? null,
+      focus_x: row.focus_x ?? publicImageMap.get(row.lead_singer_id)?.focus_x ?? null,
+      focus_y: row.focus_y ?? publicImageMap.get(row.lead_singer_id)?.focus_y ?? null,
+    });
+  }
+
+  return images;
+}
+
+function mapLeadSingerSummary(
+  leadSinger: AdminLeadSingerListRow,
+  kirtanCount: number,
+  image?: {
+    image_key: string;
+    alt_text: string | null;
+    url: string | null;
+    focus_x: number | null;
+    focus_y: number | null;
+  } | null,
+) {
+  return {
+    id: leadSinger.id,
+    canonical_name: leadSinger.canonical_name ?? leadSinger.display_name ?? "",
+    display_name: leadSinger.display_name ?? "",
+    slug: leadSinger.slug ?? "",
+    description: leadSinger.description ?? null,
+    priority: leadSinger.priority ?? 100,
+    is_identified: Boolean(leadSinger.is_identified),
+    home_sanga_id: leadSinger.home_sanga ?? null,
+    home_sanga_name: mapJoinedName(
+      leadSinger.sangas as
+        | { name?: string | null }
+        | Array<{ name?: string | null }>
+        | null,
+    ),
+    image_url: image?.url ?? null,
+    image_alt: image?.alt_text ?? leadSinger.display_name ?? null,
+    image_key: image?.image_key ?? null,
+    image_focus_x: image?.focus_x ?? null,
+    image_focus_y: image?.focus_y ?? null,
+    kirtan_count: kirtanCount,
+  } satisfies AdminLeadSingerSummary;
+}
+
+export async function listAdminLeadSingers({
+  search,
+  identified,
+}: {
+  search?: string | null;
+  identified?: "all" | "identified" | "hidden";
+}) {
+  let query = supabaseAdmin
+    .from("lead_singers")
+    .select(
+      "id, canonical_name, display_name, slug, description, priority, is_identified, home_sanga, sangas:home_sanga(name)",
+    )
+    .order("priority", { ascending: true })
+    .order("display_name", { ascending: true })
+    .limit(500);
+
+  if (search?.trim()) {
+    query = query.or(
+      [
+        `display_name.ilike.%${search.trim()}%`,
+        `canonical_name.ilike.%${search.trim()}%`,
+        `slug.ilike.%${search.trim()}%`,
+      ].join(","),
+    );
+  }
+
+  if (identified === "identified") {
+    query = query.eq("is_identified", true);
+  } else if (identified === "hidden") {
+    query = query.eq("is_identified", false);
+  }
+
+  const { data, error } = await query;
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  const leads = (data ?? []) as AdminLeadSingerListRow[];
+  const leadSingerIds = leads.map((row) => row.id).filter(Boolean);
+  const countsById = new Map<string, number>();
+
+  if (leadSingerIds.length > 0) {
+    const { data: kirtans, error: kirtansError } = await supabaseAdmin
+      .from("kirtans")
+      .select("lead_singer_id")
+      .in("lead_singer_id", leadSingerIds);
+
+    if (kirtansError) {
+      throw new Error(kirtansError.message);
+    }
+
+    for (const row of kirtans ?? []) {
+      const leadSingerId = row.lead_singer_id;
+      if (!leadSingerId) continue;
+      countsById.set(
+        leadSingerId,
+        (countsById.get(leadSingerId) ?? 0) + 1,
+      );
+    }
+  }
+
+  const imagesByLeadSingerId = await getAdminLeadSingerImages(leadSingerIds);
+
+  return leads.map((leadSinger) =>
+    mapLeadSingerSummary(
+      leadSinger,
+      countsById.get(leadSinger.id) ?? 0,
+      imagesByLeadSingerId.get(leadSinger.id) ?? null,
+    ),
+  );
+}
+
+export async function listAdminLeadSingerFormOptions() {
+  const { data: sangas, error } = await supabaseAdmin
+    .from("sangas")
+    .select("id, name")
+    .order("name", { ascending: true })
+    .limit(500);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return {
+    sangas: (sangas ?? [])
+      .filter(
+        (row): row is { id: string; name: string } =>
+          Boolean(row.id) && Boolean(row.name),
+      )
+      .map((row) => ({
+        id: row.id,
+        name: row.name,
+      })) satisfies AdminSangaOption[],
+  };
+}
+
+export async function getAdminLeadSingerDetail(id: string) {
+  const { data: leadSinger, error } = await supabaseAdmin
+    .from("lead_singers")
+    .select(
+      "id, canonical_name, display_name, slug, description, priority, is_identified, home_sanga, sangas:home_sanga(name)",
+    )
+    .eq("id", id)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  if (!leadSinger) {
+    return null;
+  }
+
+  const imagesByLeadSingerId = await getAdminLeadSingerImages([id]);
+  const firstKirtanPage = await listAdminLeadSingerKirtans({
+    leadSingerId: id,
+    limit: 20,
+    offset: 0,
+  });
+
+  const summary = mapLeadSingerSummary(
+    leadSinger as AdminLeadSingerListRow,
+    firstKirtanPage.total_count,
+    imagesByLeadSingerId.get(id) ?? null,
+  );
+
+  return {
+    ...summary,
+    kirtans: firstKirtanPage.kirtans,
+    kirtans_total_count: firstKirtanPage.total_count,
+    kirtans_has_more: firstKirtanPage.has_more,
+    kirtans_next_offset: firstKirtanPage.next_offset,
+  } satisfies AdminLeadSingerDetail;
+}
+
+export async function listAdminLeadSingerKirtans({
+  leadSingerId,
+  limit = 20,
+  offset = 0,
+}: {
+  leadSingerId: string;
+  limit?: number;
+  offset?: number;
+}) {
+  const safeLimit = Math.max(1, Math.min(50, Math.floor(limit)));
+  const safeOffset = Math.max(0, Math.floor(offset));
+
+  const [{ data: kirtans, error: kirtansError }, { count, error: countError }] =
+    await Promise.all([
+      supabaseAdmin
+        .from("kirtans")
+        .select(
+          `
+            id,
+            title,
+            type,
+            published,
+            recorded_date,
+            recorded_date_precision,
+            sequence_num,
+            created_at,
+            audio_files!left(duration_seconds, is_current),
+            kirtan_titles(kind, title)
+          `,
+        )
+        .eq("lead_singer_id", leadSingerId)
+        .order("recorded_date", { ascending: false, nullsFirst: false })
+        .order("created_at", { ascending: false })
+        .order("id", { ascending: false })
+        .range(safeOffset, safeOffset + safeLimit - 1),
+      supabaseAdmin
+        .from("kirtans")
+        .select("id", { count: "exact", head: true })
+        .eq("lead_singer_id", leadSingerId),
+    ]);
+
+  if (kirtansError) {
+    throw new Error(kirtansError.message);
+  }
+
+  if (countError) {
+    throw new Error(countError.message);
+  }
+
+  const mappedKirtans = ((kirtans ?? []) as AdminLeadSingerDetailKirtanRow[]).map(
+    (row) => {
+      const titles = mapTitleRows(
+        (Array.isArray(row.kirtan_titles)
+          ? row.kirtan_titles
+          : row.kirtan_titles
+            ? [row.kirtan_titles]
+            : []) as Array<{ kind: string | null; title: string | null }>,
+      );
+
+      const displayTitle = getDisplayKirtanTitle({
+        type: row.type,
+        title: row.title ?? "",
+        display_title: null,
+        official_title:
+          titles.find((title) => title.kind === "official")?.title ?? null,
+        first_line_title:
+          titles.find((title) => title.kind === "first_line")?.title ?? null,
+      });
+
+      return {
+        id: row.id,
+        title: displayTitle,
+        type: row.type,
+        published: Boolean(row.published),
+        recorded_date: row.recorded_date ?? null,
+        recorded_date_precision:
+          (row.recorded_date_precision as RecordedDatePrecision | null) ?? null,
+        duration_seconds:
+          ((Array.isArray(row.audio_files) ? row.audio_files : [row.audio_files]).find(
+            (audio) => audio?.is_current,
+          )?.duration_seconds as number | null | undefined) ?? null,
+        sequence_num: row.sequence_num ?? null,
+      } satisfies AdminLeadSingerKirtanSummary;
+    },
+  );
+
+  const totalCount = count ?? mappedKirtans.length;
+  const nextOffset =
+    safeOffset + mappedKirtans.length < totalCount
+      ? safeOffset + mappedKirtans.length
+      : null;
+
+  return {
+    kirtans: mappedKirtans,
+    total_count: totalCount,
+    has_more: nextOffset !== null,
+    next_offset: nextOffset,
+  };
 }
 
 export function getDisplayListTitle(

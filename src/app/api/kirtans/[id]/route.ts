@@ -67,6 +67,8 @@ export async function GET(
     lead_singer_id: data.lead_singer_id ?? null,
     lead_singer_image_url: leadSingerImage?.url ?? null,
     lead_singer_image_alt: leadSingerImage?.alt_text ?? data.lead_singer,
+    lead_singer_image_focus_x: leadSingerImage?.focus_x ?? null,
+    lead_singer_image_focus_y: leadSingerImage?.focus_y ?? null,
     recorded_date: data.recorded_date,
     recorded_date_precision: data.recorded_date_precision ?? null,
     sanga: data.sanga,

@@ -51,6 +51,8 @@ export default function OccasionDetailClient({
                 name={k.lead_singer}
                 imageUrl={k.lead_singer_image_url}
                 alt={k.lead_singer_image_alt}
+                focusX={k.lead_singer_image_focus_x}
+                focusY={k.lead_singer_image_focus_y}
               />
             }
             {...getMixedListItemDisplayProps(k)}

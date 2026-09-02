@@ -68,6 +68,8 @@ function mapFeaturedKirtan(
   leadSingerImage?: {
     url: string;
     alt_text: string | null;
+    focus_x?: number | null;
+    focus_y?: number | null;
   } | null,
 ): KirtanSummary | null {
   if (!featuredData) return null;
@@ -81,6 +83,8 @@ function mapFeaturedKirtan(
     lead_singer_id: featuredData.lead_singer_id ?? null,
     lead_singer_image_url: leadSingerImage?.url ?? null,
     lead_singer_image_alt: leadSingerImage?.alt_text ?? featuredData.lead_singer,
+    lead_singer_image_focus_x: leadSingerImage?.focus_x ?? null,
+    lead_singer_image_focus_y: leadSingerImage?.focus_y ?? null,
     recorded_date: featuredData.recorded_date,
     recorded_date_precision: normalizeRecordedDatePrecision(
       featuredData.recorded_date_precision,
@@ -95,7 +99,14 @@ function mapFeaturedKirtan(
 
 type LeadSingerImageMap = Map<
   string,
-  { url: string; alt_text: string | null; width: number | null; height: number | null }
+  {
+    url: string;
+    alt_text: string | null;
+    focus_x: number | null;
+    focus_y: number | null;
+    width: number | null;
+    height: number | null;
+  }
 >;
 
 function mapLeadKirtans(
@@ -118,6 +129,8 @@ function mapLeadKirtans(
       lead_singer_id: k.lead_singer_id ?? null,
       lead_singer_image_url: leadSingerImage?.url ?? null,
       lead_singer_image_alt: leadSingerImage?.alt_text ?? k.lead_singer,
+      lead_singer_image_focus_x: leadSingerImage?.focus_x ?? null,
+      lead_singer_image_focus_y: leadSingerImage?.focus_y ?? null,
       recorded_date: k.recorded_date,
       recorded_date_precision: normalizeRecordedDatePrecision(
         k.recorded_date_precision,
@@ -204,6 +217,8 @@ const getCachedOtherLeadPageData = unstable_cache(
       lead: {
         id: OTHER_LEAD_ID,
         display_name: OTHER_LEAD_LABEL,
+        image_focus_x: null,
+        image_focus_y: null,
       },
       counts: otherCounts,
       active_type: activeType,
@@ -301,6 +316,8 @@ const getCachedSingleLeadPageData = unstable_cache(
         image_url: safeImagesByLeadSingerId.get(leadId)?.url ?? null,
         image_alt:
           safeImagesByLeadSingerId.get(leadId)?.alt_text ?? displayName,
+        image_focus_x: safeImagesByLeadSingerId.get(leadId)?.focus_x ?? null,
+        image_focus_y: safeImagesByLeadSingerId.get(leadId)?.focus_y ?? null,
         home_sanga_name: homeSangaName,
       },
       counts,

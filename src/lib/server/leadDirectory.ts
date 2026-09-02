@@ -118,6 +118,8 @@ export async function fetchLeadDirectory() {
       image_url: imagesByLeadSingerId.get(lead.id)?.url ?? null,
       image_alt:
         imagesByLeadSingerId.get(lead.id)?.alt_text ?? lead.display_name,
+      image_focus_x: imagesByLeadSingerId.get(lead.id)?.focus_x ?? null,
+      image_focus_y: imagesByLeadSingerId.get(lead.id)?.focus_y ?? null,
     }));
 
   const others = aggregates.filter(
@@ -152,6 +154,8 @@ export async function fetchLeadDirectory() {
       count: otherTotal,
       image_url: appendImageVersion(otherLeadImageUrl, "1"),
       image_alt: OTHER_LEAD_LABEL,
+      image_focus_x: null,
+      image_focus_y: null,
     });
   }
 

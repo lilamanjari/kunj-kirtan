@@ -910,6 +910,8 @@ export default function BhajansPageClient({
                             name={row.bhajan.lead_singer}
                             imageUrl={row.bhajan.lead_singer_image_url}
                             alt={row.bhajan.lead_singer_image_alt}
+                            focusX={row.bhajan.lead_singer_image_focus_x}
+                            focusY={row.bhajan.lead_singer_image_focus_y}
                           />
                         }
                         isActive={isActive(row.bhajan)}

@@ -13,6 +13,8 @@ export type LeadResponse = {
     display_name: string;
     image_url?: string | null;
     image_alt?: string | null;
+    image_focus_x?: number | null;
+    image_focus_y?: number | null;
     home_sanga_name?: string | null;
   };
   counts: LeadCounts;

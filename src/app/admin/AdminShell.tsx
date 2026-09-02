@@ -67,6 +67,26 @@ function SangasIcon() {
   );
 }
 
+function LeadSingersIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      className="h-4.5 w-4.5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <circle cx="12" cy="7.75" r="2.25" />
+      <path d="M7.6 18.2c.9-2.45 2.5-3.85 4.4-3.85s3.5 1.4 4.4 3.85" />
+      <path d="M4.6 15.2h1.7" />
+      <path d="M17.7 15.2h1.7" />
+    </svg>
+  );
+}
+
 export function AdminShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
 
@@ -117,6 +137,18 @@ export function AdminShell({ children }: { children: ReactNode }) {
                 >
                   <TagsIcon />
                   <span className="font-display text-[1.14rem]">Tags</span>
+                </Link>
+                <Link
+                  href="/admin/lead-singers"
+                  className={navLinkClassName(
+                    pathname.startsWith("/admin/lead-singers"),
+                  )}
+                  style={{ marginLeft: "-1px" }}
+                >
+                  <LeadSingersIcon />
+                  <span className="font-display text-[1.14rem]">
+                    Lead Singers
+                  </span>
                 </Link>
                 <Link
                   href="/admin/sangas"

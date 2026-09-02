@@ -8,6 +8,7 @@ import {
   useState,
   useTransition,
 } from "react";
+import { useSearchParams } from "next/navigation";
 import type {
   AdminKirtanDetail,
   AdminKirtanListItem,
@@ -94,7 +95,14 @@ function getListCardTitle(
   return kirtan.title;
 }
 
-export function KirtansCmsPage() {
+export function KirtansCmsPage({
+  initialSelectedId = null,
+}: {
+  initialSelectedId?: string | null;
+}) {
+  const searchParams = useSearchParams();
+  const requestedSelectedId =
+    searchParams.get("selected") ?? initialSelectedId ?? null;
   const [search, setSearch] = useState("");
   const [type, setType] = useState<TypeFilter>("all");
   const [status, setStatus] = useState<StatusFilter>("all");
@@ -140,6 +148,19 @@ export function KirtansCmsPage() {
   const statusLabel = hasActiveFilters
     ? `${filteredCount}/${totalCount}`
     : `${totalCount}`;
+  const orderedKirtans = useMemo(() => {
+    if (!selectedId) return kirtans;
+
+    const selectedIndex = kirtans.findIndex((kirtan) => kirtan.id === selectedId);
+    if (selectedIndex <= 0) return kirtans;
+
+    const selectedKirtan = kirtans[selectedIndex];
+    return [
+      selectedKirtan,
+      ...kirtans.slice(0, selectedIndex),
+      ...kirtans.slice(selectedIndex + 1),
+    ];
+  }, [kirtans, selectedId]);
 
   const loadKirtans = useCallback(
     async (options?: {
@@ -153,10 +174,13 @@ export function KirtansCmsPage() {
       const searchValue = options?.search ?? deferredSearch;
       const typeValue = options?.type ?? type;
       const statusValue = options?.status ?? status;
+      const selectedTarget =
+        options?.nextSelectedId ?? requestedSelectedId ?? selectedId;
 
       if (searchValue.trim()) params.set("search", searchValue.trim());
       if (typeValue !== "all") params.set("type", typeValue);
       if (statusValue !== "all") params.set("status", statusValue);
+      if (selectedTarget) params.set("selected", selectedTarget);
 
       const response = await fetch(`/api/admin/kirtans?${params.toString()}`, {
         cache: "no-store",
@@ -173,15 +197,22 @@ export function KirtansCmsPage() {
       setFilteredCount(Number(json.filteredCount ?? nextKirtans.length));
       setHasActiveFilters(Boolean(json.hasActiveFilters));
       setSelectedId((current) => {
-        const target = options?.nextSelectedId ?? current;
+        const target =
+          options?.nextSelectedId ?? requestedSelectedId ?? current;
         if (target && nextKirtans.some((item) => item.id === target)) {
           return target;
         }
         return nextKirtans[0]?.id ?? null;
       });
     },
-    [deferredSearch, status, type],
+    [deferredSearch, requestedSelectedId, selectedId, status, type],
   );
+
+  useEffect(() => {
+    if (requestedSelectedId) {
+      setSelectedId(requestedSelectedId);
+    }
+  }, [requestedSelectedId]);
 
   useEffect(() => {
     let cancelled = false;
@@ -842,7 +873,7 @@ export function KirtansCmsPage() {
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto px-2 py-2">
-          {kirtans.map((kirtan) => {
+          {orderedKirtans.map((kirtan) => {
             const selectedItem = kirtan.id === selectedId;
             return (
               <button
@@ -867,6 +898,8 @@ export function KirtansCmsPage() {
                         name={kirtan.lead_singer}
                         imageUrl={kirtan.lead_singer_image_url}
                         alt={kirtan.lead_singer_image_alt}
+                        focusX={kirtan.lead_singer_image_focus_x}
+                        focusY={kirtan.lead_singer_image_focus_y}
                         className="h-full w-full"
                         imageClassName="h-full w-full object-cover"
                         textClassName="absolute inset-0 flex items-center justify-center text-sm font-semibold uppercase tracking-[0.02em] text-[#8e6254]"
@@ -916,6 +949,8 @@ export function KirtansCmsPage() {
                         name={selected.lead_singer}
                         imageUrl={selected.lead_singer_image_url}
                         alt={selected.lead_singer_image_alt}
+                        focusX={selected.lead_singer_image_focus_x}
+                        focusY={selected.lead_singer_image_focus_y}
                         className="h-full w-full"
                         imageClassName="h-full min-h-[124px] w-full object-cover"
                       />

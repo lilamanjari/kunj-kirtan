@@ -91,6 +91,10 @@ const getCachedBhajansPageData = unstable_cache(
       lead_singer_image_url: imagesByKirtanId.get(k.kirtan_id)?.url ?? null,
       lead_singer_image_alt:
         imagesByKirtanId.get(k.kirtan_id)?.alt_text ?? k.lead_singer,
+      lead_singer_image_focus_x:
+        imagesByKirtanId.get(k.kirtan_id)?.focus_x ?? null,
+      lead_singer_image_focus_y:
+        imagesByKirtanId.get(k.kirtan_id)?.focus_y ?? null,
       recorded_date: k.recorded_date,
       recorded_date_precision: k.recorded_date_precision ?? null,
       sanga: k.sanga,
@@ -113,6 +117,10 @@ const getCachedBhajansPageData = unstable_cache(
           lead_singer_image_alt:
             imagesByKirtanId.get(featured.kirtan.id)?.alt_text ??
             featured.kirtan.lead_singer,
+          lead_singer_image_focus_x:
+            imagesByKirtanId.get(featured.kirtan.id)?.focus_x ?? null,
+          lead_singer_image_focus_y:
+            imagesByKirtanId.get(featured.kirtan.id)?.focus_y ?? null,
           recorded_date: featured.kirtan.recorded_date,
           recorded_date_precision: featured.kirtan.recorded_date_precision ?? null,
           sanga: featured.kirtan.sanga,

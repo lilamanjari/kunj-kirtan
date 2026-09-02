@@ -414,6 +414,8 @@ export default function MahaMantrasPageClient({
                     name={m.lead_singer}
                     imageUrl={m.lead_singer_image_url}
                     alt={m.lead_singer_image_alt}
+                    focusX={m.lead_singer_image_focus_x}
+                    focusY={m.lead_singer_image_focus_y}
                   />
                 }
                 isActive={isActive(m)}

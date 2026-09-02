@@ -300,6 +300,8 @@ export default function LeadPageClient({
                   name={initialData.lead.display_name}
                   imageUrl={otherLeadHeroImageSrc ?? initialData.lead.image_url}
                   alt={initialData.lead.image_alt}
+                  focusX={initialData.lead.image_focus_x}
+                  focusY={initialData.lead.image_focus_y}
                   size="featured"
                   className="h-full w-full bg-[radial-gradient(circle_at_top,_rgba(255,251,247,0.96),rgba(244,230,221,0.86))]"
                   imageClassName="h-full w-full object-cover"
@@ -496,6 +498,8 @@ export default function LeadPageClient({
                               name={k.lead_singer}
                               imageUrl={k.lead_singer_image_url}
                               alt={k.lead_singer_image_alt}
+                              focusX={k.lead_singer_image_focus_x}
+                              focusY={k.lead_singer_image_focus_y}
                               size="list"
                               className="h-full w-full bg-[radial-gradient(circle_at_top,_rgba(255,251,247,0.96),rgba(244,230,221,0.86))]"
                               imageClassName="h-full w-full object-cover"

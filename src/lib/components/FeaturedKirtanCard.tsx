@@ -88,6 +88,8 @@ export default function FeaturedKirtanCard({
         name={kirtan.lead_singer}
         imageUrl={kirtan.lead_singer_image_url}
         alt={kirtan.lead_singer_image_alt}
+        focusX={kirtan.lead_singer_image_focus_x}
+        focusY={kirtan.lead_singer_image_focus_y}
         size="featured"
         className="h-full w-full bg-[radial-gradient(circle_at_top,_rgba(255,251,247,0.96),rgba(244,230,221,0.86))]"
         imageClassName="h-full w-full object-cover opacity-90"

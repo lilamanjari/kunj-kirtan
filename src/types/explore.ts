@@ -5,6 +5,8 @@ export type LeadItem = {
   count: number;
   image_url?: string | null;
   image_alt?: string | null;
+  image_focus_x?: number | null;
+  image_focus_y?: number | null;
 };
 
 export type LeadGroup = {

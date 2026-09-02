@@ -22,7 +22,14 @@ function toKirtanSummary(
   rareGemIds: Set<string>,
   imagesByLeadSingerId: Map<
     string,
-    { url: string; alt_text: string | null; width: number | null; height: number | null }
+    {
+      url: string;
+      alt_text: string | null;
+      focus_x: number | null;
+      focus_y: number | null;
+      width: number | null;
+      height: number | null;
+    }
   >,
 ): KirtanSummary {
   const leadSingerImage = kirtan.lead_singer_id
@@ -38,6 +45,8 @@ function toKirtanSummary(
     lead_singer_id: kirtan.lead_singer_id ?? null,
     lead_singer_image_url: leadSingerImage?.url ?? null,
     lead_singer_image_alt: leadSingerImage?.alt_text ?? kirtan.lead_singer,
+    lead_singer_image_focus_x: leadSingerImage?.focus_x ?? null,
+    lead_singer_image_focus_y: leadSingerImage?.focus_y ?? null,
     recorded_date: kirtan.recorded_date,
     recorded_date_precision: kirtan.recorded_date_precision ?? null,
     sanga: kirtan.sanga,
@@ -341,6 +350,8 @@ async function buildHomePageData() {
     featuredKirtan.lead_singer_image_url = leadSingerImage?.url ?? null;
     featuredKirtan.lead_singer_image_alt =
       leadSingerImage?.alt_text ?? featured.kirtan.lead_singer;
+    featuredKirtan.lead_singer_image_focus_x = leadSingerImage?.focus_x ?? null;
+    featuredKirtan.lead_singer_image_focus_y = leadSingerImage?.focus_y ?? null;
     featuredKirtan.has_harmonium = harmoniumIds.has(featuredId);
     featuredKirtan.is_rare_gem = rareGemIds.has(featuredId);
   }

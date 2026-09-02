@@ -107,6 +107,12 @@ const getCachedOccasionPageData = unstable_cache(
         lead_singer_image_alt: k.lead_singer_id
           ? imagesByLeadSingerId.get(k.lead_singer_id)?.alt_text ?? k.lead_singer
           : k.lead_singer,
+        lead_singer_image_focus_x: k.lead_singer_id
+          ? imagesByLeadSingerId.get(k.lead_singer_id)?.focus_x ?? null
+          : null,
+        lead_singer_image_focus_y: k.lead_singer_id
+          ? imagesByLeadSingerId.get(k.lead_singer_id)?.focus_y ?? null
+          : null,
         recorded_date: k.recorded_date,
         recorded_date_precision: k.recorded_date_precision ?? null,
         sanga: k.sanga,
@@ -132,6 +138,12 @@ const getCachedOccasionPageData = unstable_cache(
             ? imagesByLeadSingerId.get(featured.kirtan.lead_singer_id)?.alt_text ??
               featured.kirtan.lead_singer
             : featured.kirtan.lead_singer,
+          lead_singer_image_focus_x: featured.kirtan.lead_singer_id
+            ? imagesByLeadSingerId.get(featured.kirtan.lead_singer_id)?.focus_x ?? null
+            : null,
+          lead_singer_image_focus_y: featured.kirtan.lead_singer_id
+            ? imagesByLeadSingerId.get(featured.kirtan.lead_singer_id)?.focus_y ?? null
+            : null,
           recorded_date: featured.kirtan.recorded_date,
           recorded_date_precision:
             featured.kirtan.recorded_date_precision ?? null,

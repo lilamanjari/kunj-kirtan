@@ -11,6 +11,8 @@ export type AdminKirtanListItem = {
   lead_singer: string | null;
   lead_singer_image_url: string | null;
   lead_singer_image_alt: string | null;
+  lead_singer_image_focus_x: number | null;
+  lead_singer_image_focus_y: number | null;
   duration_seconds: number | null;
   sequence_num: number | null;
 };
@@ -50,6 +52,8 @@ export type AdminKirtanDetail = {
   lead_singer_id: string | null;
   lead_singer_image_url: string | null;
   lead_singer_image_alt: string | null;
+  lead_singer_image_focus_x: number | null;
+  lead_singer_image_focus_y: number | null;
   sanga: string | null;
   audio_url: string | null;
   audio_file_name: string | null;
@@ -66,6 +70,49 @@ export type AdminTagDetail = AdminTagSummary & {
 export type AdminLeadSingerOption = {
   id: string;
   display_name: string;
+};
+
+export type AdminLeadSingerKirtanSummary = {
+  id: string;
+  title: string;
+  type: KirtanType;
+  published: boolean;
+  recorded_date: string | null;
+  recorded_date_precision: RecordedDatePrecision | null;
+  duration_seconds: number | null;
+  sequence_num: number | null;
+};
+
+export type AdminLeadSingerKirtanListState = {
+  kirtans: AdminLeadSingerKirtanSummary[];
+  total_count: number;
+  has_more: boolean;
+  next_offset: number | null;
+};
+
+export type AdminLeadSingerSummary = {
+  id: string;
+  canonical_name: string;
+  display_name: string;
+  slug: string;
+  description: string | null;
+  priority: number;
+  is_identified: boolean;
+  home_sanga_id: string | null;
+  home_sanga_name: string | null;
+  image_url: string | null;
+  image_alt: string | null;
+  image_key: string | null;
+  image_focus_x: number | null;
+  image_focus_y: number | null;
+  kirtan_count: number;
+};
+
+export type AdminLeadSingerDetail = AdminLeadSingerSummary & {
+  kirtans: AdminLeadSingerKirtanSummary[];
+  kirtans_total_count: number;
+  kirtans_has_more: boolean;
+  kirtans_next_offset: number | null;
 };
 
 export type AdminSangaOption = {

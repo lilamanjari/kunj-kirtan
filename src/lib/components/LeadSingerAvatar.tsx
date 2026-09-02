@@ -6,6 +6,8 @@ type LeadSingerAvatarProps = {
   name: string | null;
   imageUrl?: string | null;
   alt?: string | null;
+  focusX?: number | null;
+  focusY?: number | null;
   size?: "list" | "featured";
   className?: string;
   imageClassName?: string;
@@ -27,15 +29,17 @@ export default function LeadSingerAvatar({
   name,
   imageUrl,
   alt,
+  focusX,
+  focusY,
   size = "list",
   className,
   imageClassName,
   textClassName,
 }: LeadSingerAvatarProps) {
   const transformedImageUrl = buildTransformedImageUrl(imageUrl, {
+    // Keep the original aspect ratio so CSS object-position can control
+    // the live crop in circular and portrait frames.
     width: size === "featured" ? 320 : 160,
-    height: size === "featured" ? 320 : 160,
-    fit: "cover",
     format: "auto",
   });
 
@@ -48,6 +52,9 @@ export default function LeadSingerAvatar({
         src={transformedImageUrl ?? imageUrl}
         alt={alt ?? name ?? ""}
         className={imageClassName ?? `h-full w-full object-cover ${className ?? ""}`}
+        style={{
+          objectPosition: `${focusX ?? 50}% ${focusY ?? 35}%`,
+        }}
       />
     );
   }
