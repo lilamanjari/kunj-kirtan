@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useRef, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { usePlayback } from "./usePlayback";
 import { useQueue } from "./useQueue";
 import { useFavorites } from "./useFavorites";
@@ -65,7 +65,11 @@ function useAudioPlayerInternal(locale: string) {
   const lastCurrentRef = useRef<KirtanSummary | null>(null);
   // Audio event listeners are attached once, so they read this ref instead of a possibly stale playback.state closure.
   const playbackStateRef = useRef(playback.state);
+  const playbackApiRef = useRef(playback);
+  const queueApiRef = useRef(queueApi);
   const manualPauseRef = useRef(false);
+  const offlineApiRef = useRef(offlineApi);
+  const sourceRequestRef = useRef(0);
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
@@ -98,6 +102,18 @@ function useAudioPlayerInternal(locale: string) {
   }, [playback.state]);
 
   useEffect(() => {
+    playbackApiRef.current = playback;
+  }, [playback]);
+
+  useEffect(() => {
+    queueApiRef.current = queueApi;
+  }, [queueApi]);
+
+  useEffect(() => {
+    offlineApiRef.current = offlineApi;
+  }, [offlineApi]);
+
+  useEffect(() => {
     if (typeof window === "undefined") return;
     const update = () => {
       setNetworkOnline(navigator.onLine);
@@ -119,6 +135,82 @@ function useAudioPlayerInternal(locale: string) {
       }
     };
   }, []);
+
+  const syncTrackToAudioElement = useCallback(
+    async (
+      track: KirtanSummary,
+      options?: { autoplay?: boolean },
+    ) => {
+      const audio = audioRef.current;
+      if (!audio) return;
+
+      const currentOfflineApi = offlineApiRef.current;
+      const isOfflineAvailable = currentOfflineApi.isOfflineAvailable(track.id);
+      if (
+        isOfflineAvailable &&
+        offlineBlobUrlRef.current &&
+        offlineBlobTrackIdRef.current === track.id &&
+        audio.src === offlineBlobUrlRef.current
+      ) {
+        return;
+      }
+
+      const requestId = ++sourceRequestRef.current;
+      const offlineSource = isOfflineAvailable
+        ? await currentOfflineApi.getOfflineAudioObjectUrl(track.id)
+        : null;
+
+      if (requestId !== sourceRequestRef.current) {
+        if (offlineSource) {
+          URL.revokeObjectURL(offlineSource);
+        }
+        return;
+      }
+
+      const nextSrc = offlineSource ?? track.audio_url;
+      if (!nextSrc) {
+        playbackApiRef.current.setState("paused");
+        return;
+      }
+
+      if (audio.src !== nextSrc) {
+        if (offlineBlobUrlRef.current && offlineBlobUrlRef.current !== nextSrc) {
+          URL.revokeObjectURL(offlineBlobUrlRef.current);
+        }
+        offlineBlobUrlRef.current = offlineSource;
+        offlineBlobTrackIdRef.current = offlineSource ? track.id : null;
+        audio.src = nextSrc;
+        audio.currentTime = 0;
+        setCurrentTime(0);
+        setProgress(0);
+        setDuration(0);
+        audio.load();
+      } else if (offlineSource && offlineSource !== offlineBlobUrlRef.current) {
+        if (offlineBlobUrlRef.current) {
+          URL.revokeObjectURL(offlineBlobUrlRef.current);
+        }
+        offlineBlobUrlRef.current = offlineSource;
+        offlineBlobTrackIdRef.current = track.id;
+      }
+
+      const shouldAutoplay =
+        options?.autoplay ??
+        (playbackStateRef.current === "loading" ||
+          playbackStateRef.current === "playing");
+
+      if (!shouldAutoplay) {
+        return;
+      }
+
+      try {
+        await audio.play();
+        playbackApiRef.current.setState("playing");
+      } catch {
+        playbackApiRef.current.setState("paused");
+      }
+    },
+    [],
+  );
 
   // Initialize a single shared audio element and wire basic listeners.
   useEffect(() => {
@@ -156,7 +248,7 @@ function useAudioPlayerInternal(locale: string) {
       setIsBuffering(false);
       manualPauseRef.current = false;
       if (playbackStateRef.current !== "playing") {
-        playback.setState("playing");
+        playbackApiRef.current.setState("playing");
       }
       recordRequestSuccess();
     };
@@ -168,7 +260,7 @@ function useAudioPlayerInternal(locale: string) {
       manualPauseRef.current = false;
 
       if (playbackStateRef.current !== "paused") {
-        playback.setState("paused");
+        playbackApiRef.current.setState("paused");
       }
     };
     const onError = () => {
@@ -176,12 +268,13 @@ function useAudioPlayerInternal(locale: string) {
       markOffline();
     };
     const onEnded = () => {
-      const next = queueApi.dequeue();
+      const next = queueApiRef.current.dequeue();
       if (next) {
-        playback.play(next);
+        playbackApiRef.current.play(next);
+        void syncTrackToAudioElement(next, { autoplay: true });
         return;
       }
-      playback.onEnded?.();
+      playbackApiRef.current.onEnded?.();
     };
 
     audio.addEventListener("timeupdate", onTimeUpdate);
@@ -209,7 +302,7 @@ function useAudioPlayerInternal(locale: string) {
       audio.removeEventListener("pause", onPause);
       audio.removeEventListener("error", onError);
     };
-  }, []);
+  }, [syncTrackToAudioElement]);
 
   // Restore the last playback position once per session (after queue loads).
   useEffect(() => {
@@ -449,71 +542,8 @@ function useAudioPlayerInternal(locale: string) {
       });
     }
 
-    let cancelled = false;
-
-    const applyAudioSource = async () => {
-      const isCurrentTrackOfflineAvailable = offlineApi.isOfflineAvailable(
-        playback.current!.id,
-      );
-      if (
-        isCurrentTrackOfflineAvailable &&
-        offlineBlobUrlRef.current &&
-        offlineBlobTrackIdRef.current === playback.current!.id &&
-        audio.src === offlineBlobUrlRef.current
-      ) {
-        return;
-      }
-
-      const offlineSource = isCurrentTrackOfflineAvailable
-        ? await offlineApi.getOfflineAudioObjectUrl(playback.current!.id)
-        : null;
-
-      if (cancelled) {
-        if (offlineSource) {
-          URL.revokeObjectURL(offlineSource);
-        }
-        return;
-      }
-
-      const nextSrc = offlineSource ?? playback.current!.audio_url;
-      if (audio.src !== nextSrc) {
-        if (offlineBlobUrlRef.current && offlineBlobUrlRef.current !== nextSrc) {
-          URL.revokeObjectURL(offlineBlobUrlRef.current);
-        }
-        offlineBlobUrlRef.current = offlineSource;
-        offlineBlobTrackIdRef.current = offlineSource ? playback.current!.id : null;
-        audio.src = nextSrc;
-        audio.currentTime = 0;
-        audio.load();
-
-        if (
-          playbackStateRef.current === "loading" ||
-          playbackStateRef.current === "playing"
-        ) {
-          audio
-            .play()
-            .then(() => {
-              playback.setState("playing");
-            })
-            .catch(() => {
-              playback.setState("paused");
-            });
-        }
-      } else if (offlineSource && offlineSource !== offlineBlobUrlRef.current) {
-        if (offlineBlobUrlRef.current) {
-          URL.revokeObjectURL(offlineBlobUrlRef.current);
-        }
-        offlineBlobUrlRef.current = offlineSource;
-        offlineBlobTrackIdRef.current = playback.current!.id;
-      }
-    };
-
-    void applyAudioSource();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [offlineApi.downloadedIdsKey, playback.current?.id]);
+    void syncTrackToAudioElement(playback.current);
+  }, [offlineApi.downloadedIdsKey, playback.current?.id, syncTrackToAudioElement]);
 
   // Sync playback state to the underlying audio element.
   useEffect(() => {

@@ -9,6 +9,7 @@ const {
   enqueueOfflinePlayLogMock,
   flushOfflinePlayLogsMock,
   offlineFavoritesMockState,
+  dequeueMock,
 } = vi.hoisted(() => ({
   getOfflineAudioObjectUrlMock: vi.fn(),
   enqueueOfflinePlayLogMock: vi.fn(),
@@ -16,6 +17,7 @@ const {
   offlineFavoritesMockState: {
     downloadedIdsKey: "kirtan-1",
   },
+  dequeueMock: vi.fn(),
 }));
 
 const setQueueMock = vi.fn();
@@ -25,7 +27,7 @@ vi.mock("./useQueue", () => ({
     queue: [],
     enqueue: vi.fn(),
     setQueue: setQueueMock,
-    dequeue: vi.fn(),
+    dequeue: dequeueMock,
     dequeueById: vi.fn(),
     clearQueue: vi.fn(),
     isQueued: vi.fn(),
@@ -123,6 +125,7 @@ describe("AudioPlayerContext resume behavior", () => {
     getOfflineAudioObjectUrlMock.mockReset();
     getOfflineAudioObjectUrlMock.mockResolvedValue("blob:offline-kirtan-1");
     enqueueOfflinePlayLogMock.mockReset();
+    dequeueMock.mockReset();
     const store = new Map<string, string>();
     const mockStorage = {
       getItem: (key: string) => (store.has(key) ? store.get(key)! : null),
@@ -393,6 +396,32 @@ describe("AudioPlayerContext resume behavior", () => {
     fireEvent.click(screen.getByText("Play second"));
 
     await waitFor(() => {
+      expect(audioElement.src).toBe("blob:offline-kirtan-2");
+    });
+  });
+
+  it("starts the next queued track immediately when playback ends", async () => {
+    getOfflineAudioObjectUrlMock.mockImplementation(async (kirtanId: string) =>
+      kirtanId === "kirtan-2" ? "blob:offline-kirtan-2" : "blob:offline-kirtan-1",
+    );
+    dequeueMock.mockReturnValue(secondKirtan);
+
+    render(
+      <AudioPlayerProvider locale="en">
+        <TestHarness />
+      </AudioPlayerProvider>,
+    );
+
+    fireEvent.click(screen.getByText("Play"));
+
+    await waitFor(() => {
+      expect(audioElement.src).toBe("blob:offline-kirtan-1");
+    });
+
+    fireEvent(audioElement, new Event("ended"));
+
+    await waitFor(() => {
+      expect(screen.getByTestId("current-id").textContent).toBe("kirtan-2");
       expect(audioElement.src).toBe("blob:offline-kirtan-2");
     });
   });
