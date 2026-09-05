@@ -58,6 +58,17 @@ export const enDictionary: AppDictionary = {
     popular: "Popular",
     popularSubtitle: "Our most played tracks.",
   },
+  install: {
+    prompt: "Do you want to install this app to your home screen?",
+    description: "This will make the web page behave like an app on your phone.",
+    confirm: "OK",
+    cancel: "Cancel",
+    iosInstructions: "Tap the Share button, then choose Add to Home Screen.",
+    showHow: "Show me how",
+    previousStep: "Back",
+    nextStep: "Next",
+    stepOf: "Step {current} of {total}",
+  },
   player: {
     playQueue: "Play queue",
     nowPlaying: "Now playing",

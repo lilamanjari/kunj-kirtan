@@ -59,6 +59,17 @@ export const ruDictionary: AppDictionary = {
     popular: "Популярное",
     popularSubtitle: "Наши самые часто прослушиваемые треки.",
   },
+  install: {
+    prompt: "Добавить это приложение на главный экран?",
+    description: "Так веб-страница будет работать как приложение на вашем телефоне.",
+    confirm: "OK",
+    cancel: "Отмена",
+    iosInstructions: "Нажмите кнопку «Поделиться», затем выберите «На экран «Домой»».",
+    showHow: "Показать, как",
+    previousStep: "Назад",
+    nextStep: "Далее",
+    stepOf: "Шаг {current} из {total}",
+  },
   player: {
     playQueue: "Очередь воспроизведения",
     nowPlaying: "Сейчас играет",

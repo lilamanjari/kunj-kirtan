@@ -56,6 +56,17 @@ export type AppDictionary = {
     popular: string;
     popularSubtitle: string;
   };
+  install: {
+    prompt: string;
+    description: string;
+    confirm: string;
+    cancel: string;
+    iosInstructions: string;
+    showHow: string;
+    previousStep: string;
+    nextStep: string;
+    stepOf: string;
+  };
   player: {
     playQueue: string;
     nowPlaying: string;

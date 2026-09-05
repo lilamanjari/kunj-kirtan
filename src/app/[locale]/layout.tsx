@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { AudioPlayerProvider } from "@/lib/audio/AudioPlayerContext";
 import ClientAudioPlayerBar from "@/lib/components/ClientAudioPlayerBar";
+import AppInstallPrompt from "@/lib/components/AppInstallPrompt";
 import OfflineBanner from "@/lib/components/OfflineBanner";
 import QueueToast from "@/lib/components/QueueToast";
 import ServiceWorkerRegistrar from "@/lib/components/ServiceWorkerRegistrar";
@@ -33,6 +34,7 @@ export default async function LocaleLayout({
       <AudioPlayerProvider locale={locale}>
         {children}
         <ServiceWorkerRegistrar />
+        <AppInstallPrompt />
         <OfflineBanner />
         <QueueToast />
         <Suspense fallback={null}>
