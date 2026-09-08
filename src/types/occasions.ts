@@ -5,6 +5,7 @@ export type OccasionResponse = {
     id: string;
     name: string;
     slug: string;
+    description: string | null;
   };
   featured?: KirtanSummary | null;
   kirtans: KirtanSummary[];

@@ -12,7 +12,7 @@ const getCachedOccasionPageData = unstable_cache(
   async (slug: string) => {
     const { data: tag, error: tagError } = await supabase
       .from("tags")
-      .select("id, name, slug")
+      .select("id, name, slug, description")
       .eq("slug", slug)
       .eq("category", "occasion")
       .eq("published", true)

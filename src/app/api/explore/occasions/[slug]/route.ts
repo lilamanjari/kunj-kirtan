@@ -17,7 +17,7 @@ export async function GET(
   const { data: tag, error: tagError } = await timing.measure("tag", async () =>
     await supabase
       .from("tags")
-      .select("id, name, slug")
+      .select("id, name, slug, description")
       .eq("slug", slug)
       .eq("category", "occasion")
       .eq("published", true)

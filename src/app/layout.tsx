@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { Cormorant_Garamond, Inter } from "next/font/google";
+import { Cormorant_Garamond, Dancing_Script, Inter } from "next/font/google";
 import "./globals.css";
 import { Analytics } from "@vercel/analytics/react";
 import JsonLd from "@/lib/components/JsonLd";
@@ -18,6 +18,12 @@ const cormorantGaramond = Cormorant_Garamond({
   variable: "--font-cormorant-garamond",
   subsets: ["latin"],
   weight: ["600"],
+});
+
+const dancingScript = Dancing_Script({
+  variable: "--font-dancing-script",
+  subsets: ["latin"],
+  weight: ["500", "600"],
 });
 
 export const metadata: Metadata = {
@@ -60,7 +66,7 @@ export default async function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${inter.variable} ${cormorantGaramond.variable} antialiased`}
+        className={`${inter.variable} ${cormorantGaramond.variable} ${dancingScript.variable} antialiased`}
       >
         <JsonLd data={[buildWebSiteJsonLd(), buildOrganizationJsonLd()]} />
         <Suspense fallback={null}>{children}</Suspense>
