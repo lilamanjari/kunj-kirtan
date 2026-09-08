@@ -192,6 +192,11 @@ export function useOfflineFavorites({
   }, [locale, offlineSupported, state.enabled]);
 
   useEffect(() => {
+    if (!offlineSupported || !state.enabled) return;
+    void requestPersistentOfflineStorage();
+  }, [offlineSupported, state.enabled]);
+
+  useEffect(() => {
     if (!offlineSupported) return;
     if (!state.enabled) return;
     if (downloadingIdRef.current) return;
@@ -307,7 +312,6 @@ export function useOfflineFavorites({
 
   function enableOfflineFavorites() {
     if (!offlineSupported) return;
-    void requestPersistentOfflineStorage();
     const favoriteIds = favorites.map((item) => item.id);
     setState((prev) => ({
       ...prev,

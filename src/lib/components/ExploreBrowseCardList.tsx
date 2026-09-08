@@ -16,14 +16,20 @@ export type ExploreBrowseCardItem = {
   href: string;
   countText: string;
   imageSrc?: string | null;
+  imageFocusX?: number | null;
+  imageFocusY?: number | null;
   fallbackText?: string | null;
 };
 
 function BrowseCardImage({
   imageSrc,
+  imageFocusX,
+  imageFocusY,
   fallbackText,
 }: {
   imageSrc?: string | null;
+  imageFocusX?: number | null;
+  imageFocusY?: number | null;
   fallbackText?: string | null;
 }) {
   const [imageFailed, setImageFailed] = useState(false);
@@ -55,6 +61,9 @@ function BrowseCardImage({
       loading="lazy"
       decoding="async"
       className="h-full w-full object-cover"
+      style={{
+        objectPosition: `${imageFocusX ?? 50}% ${imageFocusY ?? 35}%`,
+      }}
       onError={() => setImageFailed(true)}
     />
   );
@@ -88,6 +97,8 @@ export default function ExploreBrowseCardList({
             <div className="relative flex h-[4.5rem] w-[4.5rem] shrink-0 items-center justify-center overflow-hidden rounded-full bg-[linear-gradient(180deg,rgba(255,251,248,0.98)_0%,rgba(247,239,233,0.98)_100%)] shadow-[inset_0_0_0_1px_rgba(236,220,210,0.72)]">
               <BrowseCardImage
                 imageSrc={item.imageSrc}
+                imageFocusX={item.imageFocusX}
+                imageFocusY={item.imageFocusY}
                 fallbackText={item.fallbackText}
               />
             </div>

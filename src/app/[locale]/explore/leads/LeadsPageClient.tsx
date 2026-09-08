@@ -18,10 +18,10 @@ export default function LeadsPageClient({
     countText: `${lead.count} kirtans`,
     imageSrc: buildTransformedImageUrl(lead.image_url, {
       width: 160,
-      height: 160,
-      fit: "cover",
       format: "auto",
     }),
+    imageFocusX: lead.image_focus_x,
+    imageFocusY: lead.image_focus_y,
     fallbackText:
       lead.display_name
         .split(/\s+/)
