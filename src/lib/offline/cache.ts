@@ -19,6 +19,55 @@ function getOfflineAudioDownloadUrl(kirtanId: string) {
   return `/api/offline/audio/${encodeURIComponent(kirtanId)}`;
 }
 
+function getShellAssetUrls(html: string) {
+  if (typeof window === "undefined" || typeof DOMParser === "undefined") {
+    return [];
+  }
+
+  const document = new DOMParser().parseFromString(html, "text/html");
+  const urls = new Set<string>();
+  document
+    .querySelectorAll<HTMLScriptElement | HTMLLinkElement | HTMLImageElement>(
+      "script[src], link[href], img[src]",
+    )
+    .forEach((element) => {
+      const value =
+        element instanceof HTMLLinkElement
+          ? element.href
+          : element.src;
+      if (!value) return;
+
+      const url = new URL(value, window.location.origin);
+      if (url.origin === window.location.origin) {
+        urls.add(url.href);
+      }
+    });
+
+  return [...urls];
+}
+
+async function cacheShellResponse(cache: Cache, url: string) {
+  const response = await fetch(url, { cache: "reload" });
+  if (!response.ok) return;
+
+  await cache.put(url, response.clone());
+  const html = await response.text();
+  const assets = getShellAssetUrls(html);
+
+  await Promise.all(
+    assets.map(async (assetUrl) => {
+      try {
+        const assetResponse = await fetch(assetUrl, { cache: "reload" });
+        if (assetResponse.ok || assetResponse.type === "opaque") {
+          await cache.put(assetUrl, assetResponse);
+        }
+      } catch {
+        // The page document is still useful if a non-critical asset fails.
+      }
+    }),
+  );
+}
+
 export async function cacheOfflineKirtanMedia(kirtan: KirtanSummary) {
   if (!supportsCaches()) {
     throw new Error("Offline cache is unavailable");
@@ -102,10 +151,25 @@ export async function warmOfflineShell(urls: string[]) {
   await Promise.all(
     urls.map(async (url) => {
       try {
-        await shellCache.add(url);
+        await cacheShellResponse(shellCache, url);
       } catch {
         // ignore shell warm failures
       }
     }),
   );
+}
+
+export async function requestPersistentOfflineStorage() {
+  if (typeof navigator === "undefined" || !navigator.storage?.persist) {
+    return false;
+  }
+
+  try {
+    if (await navigator.storage.persisted?.()) {
+      return true;
+    }
+    return await navigator.storage.persist();
+  } catch {
+    return false;
+  }
 }

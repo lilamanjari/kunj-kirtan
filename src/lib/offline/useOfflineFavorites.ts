@@ -13,6 +13,7 @@ import {
   clearOfflineMediaCache,
   getOfflineAudioObjectUrl,
   removeOfflineKirtanMedia,
+  requestPersistentOfflineStorage,
   warmOfflineShell,
 } from "./cache";
 import {
@@ -306,6 +307,7 @@ export function useOfflineFavorites({
 
   function enableOfflineFavorites() {
     if (!offlineSupported) return;
+    void requestPersistentOfflineStorage();
     const favoriteIds = favorites.map((item) => item.id);
     setState((prev) => ({
       ...prev,

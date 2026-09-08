@@ -1,4 +1,4 @@
-const SHELL_CACHE = "kirtan-oasis-shell-v1";
+const SHELL_CACHE = "kirtan-oasis-shell-v2";
 const MEDIA_CACHE = "kirtan-oasis-media-v1";
 
 self.addEventListener("install", (event) => {
