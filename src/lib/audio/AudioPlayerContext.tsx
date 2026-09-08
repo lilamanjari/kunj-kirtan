@@ -4,6 +4,7 @@ import { createContext, useCallback, useContext, useEffect, useRef, useState } f
 import { usePlayback } from "./usePlayback";
 import { useQueue } from "./useQueue";
 import { useFavorites } from "./useFavorites";
+import { useListeningHistory } from "./useListeningHistory";
 import { KirtanSummary } from "@/types/kirtan";
 import { formatKirtanTitle } from "@/lib/kirtanTitle";
 import {
@@ -54,6 +55,7 @@ function useAudioPlayerInternal(locale: string) {
   const playback = usePlayback();
   const queueApi = useQueue();
   const favoritesApi = useFavorites();
+  const listeningHistoryApi = useListeningHistory();
   const offlineApi = useOfflineFavorites({
     favorites: favoritesApi.favorites,
     locale,
@@ -69,6 +71,7 @@ function useAudioPlayerInternal(locale: string) {
   const queueApiRef = useRef(queueApi);
   const manualPauseRef = useRef(false);
   const offlineApiRef = useRef(offlineApi);
+  const historyTrackedKirtanIdRef = useRef<string | null>(null);
   const sourceRequestRef = useRef(0);
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -435,12 +438,17 @@ function useAudioPlayerInternal(locale: string) {
     return () => controller.abort();
   }, [networkOnline, playback.current?.id]);
 
-  // Record one qualified play per playback session once the listener reaches 15 seconds.
+  // Record a local history entry and one qualified play once the listener reaches 15 seconds.
   useEffect(() => {
     const current = playback.current;
     if (!current) return;
     if (playback.state !== "playing") return;
     if (currentTime < 15) return;
+
+    if (historyTrackedKirtanIdRef.current !== current.id) {
+      listeningHistoryApi.recordListening(current);
+      historyTrackedKirtanIdRef.current = current.id;
+    }
 
     if (trackedPlayRef.current.kirtanId !== current.id) {
       trackedPlayRef.current = { kirtanId: current.id, sent: false };
@@ -584,6 +592,10 @@ function useAudioPlayerInternal(locale: string) {
     }
   }, [playback.current?.id]);
 
+  useEffect(() => {
+    historyTrackedKirtanIdRef.current = null;
+  }, [playback.current?.id]);
+
   // Track playback history for the "previous" button.
   useEffect(() => {
     const current = playback.current;
@@ -672,6 +684,8 @@ function useAudioPlayerInternal(locale: string) {
     clearFavorites: favoritesApi.clearFavorites,
     isFavorited: favoritesApi.isFavorited,
     favoritesNotice: favoritesApi.notice,
+    listeningHistory: listeningHistoryApi.listeningHistory,
+    listeningHistoryLoaded: listeningHistoryApi.loaded,
     offlineLoaded: offlineApi.offlineLoaded,
     offlineSupported: offlineApi.offlineSupported,
     offlineEnabled: offlineApi.offlineEnabled,

@@ -4,6 +4,7 @@ import type { HomeData } from "@/types/home";
 import FeaturedKirtanCard from "@/lib/components/FeaturedKirtanCard";
 import HomeFavoritesStrip from "@/lib/components/HomeFavoritesStrip";
 import HomePopularStrip from "@/lib/components/HomePopularStrip";
+import HomeListeningHistoryStrip from "@/lib/components/HomeListeningHistoryStrip";
 import HomeRecommendedStrip from "@/lib/components/HomeRecommendedStrip";
 import KirtanListItem from "@/lib/components/KirtanListItem";
 import {
@@ -379,6 +380,7 @@ export default function HomeClient({ data }: { data: HomeData }) {
             />
             <HomeRecommendedStrip kirtans={data.recommended ?? []} />
             <HomePopularStrip kirtans={data.popular ?? []} />
+            <HomeListeningHistoryStrip />
           </div>
 
           <section>

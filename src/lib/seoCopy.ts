@@ -15,6 +15,8 @@ type SeoCopy = {
   occasionsDescription: string;
   favoritesTitle: string;
   favoritesDescription: string;
+  historyTitle: string;
+  historyDescription: string;
   rareGemLabTitle: string;
   rareGemLabDescription: string;
   leadFallbackTitle: string;
@@ -48,6 +50,8 @@ const seoCopyByLocale: Record<Locale, SeoCopy> = {
       "Find devotional music curated around festivals, observances, and sacred tithis in the Kunj Kirtans archive.",
     favoritesTitle: "Favorites",
     favoritesDescription: "Your saved Kunj Kirtans recordings.",
+    historyTitle: "Listening History",
+    historyDescription: "Your recently listened Kunj Kirtans recordings.",
     rareGemLabTitle: "Rare Gem Lab",
     rareGemLabDescription:
       "Experimental rare gem curation tools for Kunj Kirtans.",
@@ -84,6 +88,8 @@ const seoCopyByLocale: Record<Locale, SeoCopy> = {
       "Найдите преданную музыку, собранную по праздникам, памятным дням и священным событиям в архиве Kunj Kirtans.",
     favoritesTitle: "Избранное",
     favoritesDescription: "Ваши сохраненные записи Kunj Kirtans.",
+    historyTitle: "История прослушивания",
+    historyDescription: "Ваши недавно прослушанные записи Kunj Kirtans.",
     rareGemLabTitle: "Лаборатория редких жемчужин",
     rareGemLabDescription:
       "Экспериментальные инструменты для отбора редких жемчужин Kunj Kirtans.",

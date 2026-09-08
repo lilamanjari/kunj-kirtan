@@ -17,6 +17,9 @@ export type AppDictionary = {
     offlineAvailable: string;
     offlineStorageLimitReached: string;
     noFavoritesYet: string;
+    listeningHistory: string;
+    noListeningHistory: string;
+    more: string;
   };
   explore: {
     bhajans: string;

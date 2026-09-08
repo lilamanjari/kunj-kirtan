@@ -20,6 +20,9 @@ export const ruDictionary: AppDictionary = {
     offlineStorageLimitReached: "Достигнут лимит офлайн-хранилища",
     noFavoritesYet:
       "Пока нет избранного. Нажмите на сердечко у любого киртана, чтобы сохранить его здесь.",
+    listeningHistory: "История прослушивания",
+    noListeningHistory: "Здесь появятся недавно прослушанные киртаны.",
+    more: "Еще",
   },
   explore: {
     bhajans: "Бхаджаны",

@@ -105,6 +105,9 @@ function TestHarness() {
         Play collection
       </button>
       <div data-testid="current-id">{player.current?.id ?? "none"}</div>
+      <div data-testid="listening-history">
+        {player.listeningHistory.map((kirtan) => kirtan.id).join(",")}
+      </div>
     </div>
   );
 }
@@ -374,6 +377,34 @@ describe("AudioPlayerContext resume behavior", () => {
     });
     expect(getOfflineAudioObjectUrlMock).toHaveBeenCalledTimes(1);
     expect(HTMLMediaElement.prototype.load).toHaveBeenCalledTimes(1);
+  });
+
+  it("adds a track to listening history after 15 seconds of playback", async () => {
+    render(
+      <AudioPlayerProvider locale="en">
+        <TestHarness />
+      </AudioPlayerProvider>,
+    );
+
+    fireEvent.click(screen.getByText("Play"));
+
+    await waitFor(() => {
+      expect(audioElement.src).toBe("blob:offline-kirtan-1");
+    });
+    expect(screen.getByTestId("listening-history").textContent).toBe("");
+
+    Object.defineProperty(audioElement, "currentTime", {
+      configurable: true,
+      writable: true,
+      value: 15,
+    });
+    fireEvent(audioElement, new Event("timeupdate"));
+
+    await waitFor(() => {
+      expect(screen.getByTestId("listening-history").textContent).toBe(
+        "kirtan-1",
+      );
+    });
   });
 
   it("switches audio sources when moving from one downloaded track to another", async () => {

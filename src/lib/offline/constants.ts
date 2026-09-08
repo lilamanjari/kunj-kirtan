@@ -12,5 +12,5 @@ export function buildOfflineAudioCacheUrl(kirtanId: string) {
 }
 
 export function buildOfflineShellUrls(locale: string) {
-  return [`/${locale}`, `/${locale}/favorites`];
+  return [`/${locale}`, `/${locale}/favorites`, `/${locale}/history`];
 }

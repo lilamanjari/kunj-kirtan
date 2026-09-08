@@ -91,6 +91,10 @@ vi.mock("@/lib/components/HomePopularStrip", () => ({
   default: () => <div>Popular strip</div>,
 }));
 
+vi.mock("@/lib/components/HomeListeningHistoryStrip", () => ({
+  default: () => <div>Listening history strip</div>,
+}));
+
 vi.mock("@/lib/components/HomeRecommendedStrip", () => ({
   default: () => <div>Recommended strip</div>,
 }));

@@ -19,6 +19,9 @@ export const enDictionary: AppDictionary = {
     offlineAvailable: "Available offline",
     offlineStorageLimitReached: "Offline storage limit reached",
     noFavoritesYet: "No favorites yet. Tap the heart on any kirtan to save it here.",
+    listeningHistory: "Listening History",
+    noListeningHistory: "Your recently listened kirtans will appear here.",
+    more: "More",
   },
   explore: {
     bhajans: "Bhajan",

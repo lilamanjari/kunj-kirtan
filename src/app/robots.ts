@@ -11,6 +11,8 @@ export default function robots(): MetadataRoute.Robots {
           "/api",
           "/en/favorites",
           "/ru/favorites",
+          "/en/history",
+          "/ru/history",
           "/en/rare-gem-lab",
           "/ru/rare-gem-lab",
         ],
@@ -19,4 +21,3 @@ export default function robots(): MetadataRoute.Robots {
     sitemap: "https://www.kunjkirtans.com/sitemap.xml",
   };
 }
-
