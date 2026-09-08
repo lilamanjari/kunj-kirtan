@@ -173,7 +173,10 @@ export function selectWeeklyRecommendedRareGems(
 }
 
 async function buildHomePageData() {
-  const featured = await getDailyRareGem({ types: ["MM", "BHJ"] });
+  const featured = await getDailyRareGem({
+    types: ["MM", "BHJ"],
+    rotationScope: "home-rare-gems",
+  });
 
   if (featured.error) {
     return { data: null, error: featured.error, status: 500 };
