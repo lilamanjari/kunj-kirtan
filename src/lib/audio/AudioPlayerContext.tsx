@@ -1,6 +1,14 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useEffectEvent,
+  useRef,
+  useState,
+} from "react";
 import { usePlayback } from "./usePlayback";
 import { useQueue } from "./useQueue";
 import { useFavorites } from "./useFavorites";
@@ -645,6 +653,56 @@ function useAudioPlayerInternal(locale: string) {
       setCurrentTime(0);
     }
   };
+
+  const handleMediaSessionPlay = useEffectEvent(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    void audio.play().catch(() => {
+      playbackApiRef.current.setState("paused");
+    });
+  });
+
+  const handleMediaSessionPause = useEffectEvent(() => {
+    audioRef.current?.pause();
+  });
+
+  const handleMediaSessionNext = useEffectEvent(() => {
+    playNext();
+  });
+
+  const handleMediaSessionPrevious = useEffectEvent(() => {
+    playPrev();
+  });
+
+  useEffect(() => {
+    if (!("mediaSession" in navigator)) return;
+
+    const handlers: Array<[MediaSessionAction, MediaSessionActionHandler]> = [
+      ["play", handleMediaSessionPlay],
+      ["pause", handleMediaSessionPause],
+      ["nexttrack", handleMediaSessionNext],
+      ["previoustrack", handleMediaSessionPrevious],
+    ];
+
+    for (const [action, handler] of handlers) {
+      try {
+        navigator.mediaSession.setActionHandler(action, handler);
+      } catch {
+        // Some browsers expose Media Session without supporting every action.
+      }
+    }
+
+    return () => {
+      for (const [action] of handlers) {
+        try {
+          navigator.mediaSession.setActionHandler(action, null);
+        } catch {
+          // Ignore unsupported action cleanup.
+        }
+      }
+    };
+  }, []);
 
   const playCollection = (
     items: KirtanSummary[],
