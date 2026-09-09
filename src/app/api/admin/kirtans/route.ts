@@ -67,6 +67,7 @@ export async function GET(req: Request) {
     const search = searchParams.get("search");
     const type = searchParams.get("type");
     const status = searchParams.get("status");
+    const recordedDate = searchParams.get("recordedDate");
     const selectedId = searchParams.get("selected");
 
     const result = await listAdminKirtans({
@@ -76,6 +77,7 @@ export async function GET(req: Request) {
         status === "published" || status === "hidden" || status === "all"
           ? status
           : "all",
+      recordedDate,
       selectedId,
     });
 

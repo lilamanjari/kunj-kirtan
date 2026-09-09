@@ -29,6 +29,7 @@ type AdminKirtanAudioPlayerProps = {
   fileName: string | null;
   durationSeconds: number | null;
   onAudioReplaced: (kirtan: AdminKirtanDetail) => void;
+  onTrimSavedAsNew: (kirtanId: string) => Promise<void> | void;
 };
 
 const WAVEFORM_BAR_COUNT = 1800;
@@ -149,6 +150,7 @@ export function AdminKirtanAudioPlayer({
   fileName,
   durationSeconds,
   onAudioReplaced,
+  onTrimSavedAsNew,
 }: AdminKirtanAudioPlayerProps) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -167,7 +169,10 @@ export function AdminKirtanAudioPlayer({
   const [replaceState, setReplaceState] = useState<"idle" | "uploading">(
     "idle",
   );
-  const [trimState, setTrimState] = useState<"idle" | "trimming">("idle");
+  const [isNormalizing, setIsNormalizing] = useState(false);
+  const [trimState, setTrimState] = useState<
+    "idle" | "applying" | "removing-selection" | "saving-as-new"
+  >("idle");
   const [trimModeOpen, setTrimModeOpen] = useState(false);
   const [replaceMessage, setReplaceMessage] = useState<string | null>(null);
   const [trimStart, setTrimStart] = useState<number | null>(null);
@@ -175,6 +180,7 @@ export function AdminKirtanAudioPlayer({
   const [zoomLevel, setZoomLevel] = useState<ZoomLevel>(
     durationSeconds && durationSeconds > 900 ? "detail" : "focus",
   );
+  const isTrimSaving = trimState !== "idle";
 
   useEffect(() => {
     const audio = new Audio();
@@ -510,6 +516,21 @@ export function AdminKirtanAudioPlayer({
       return;
     }
 
+    const target = event.target as HTMLElement;
+    if (
+      target.closest(
+        "button, input, select, textarea, [contenteditable='true']",
+      )
+    ) {
+      return;
+    }
+
+    if (event.code === "Space") {
+      event.preventDefault();
+      void togglePlayback();
+      return;
+    }
+
     if (event.key === "ArrowLeft") {
       event.preventDefault();
       seekBy(event.shiftKey ? -1 : -0.05);
@@ -555,7 +576,7 @@ export function AdminKirtanAudioPlayer({
   }
 
   function openReplacePicker() {
-    if (replaceState === "uploading" || trimState === "trimming") {
+    if (replaceState === "uploading" || isTrimSaving || isNormalizing) {
       return;
     }
 
@@ -575,6 +596,55 @@ export function AdminKirtanAudioPlayer({
     });
     setError(null);
     setReplaceMessage(null);
+  }
+
+  async function normalizeAudio() {
+    if (
+      !audioUrl ||
+      replaceState === "uploading" ||
+      isTrimSaving ||
+      isNormalizing
+    ) {
+      return;
+    }
+
+    const confirmed = window.confirm(
+      "Normalize this track to -16 LUFS? This creates a normalized M4A replacement for the current audio.",
+    );
+    if (!confirmed) {
+      return;
+    }
+
+    setIsNormalizing(true);
+    setError(null);
+    setReplaceMessage(null);
+
+    try {
+      const response = await fetch(
+        `/api/admin/kirtans/${kirtanId}/audio/normalize`,
+        { method: "POST" },
+      );
+      const json = await response.json();
+      if (!response.ok) {
+        throw new Error(json.error ?? "Failed to normalize audio");
+      }
+
+      onAudioReplaced(json.kirtan as AdminKirtanDetail);
+      setReplaceMessage(
+        typeof json.cleanupWarning === "string" &&
+          json.cleanupWarning.trim().length > 0
+          ? json.cleanupWarning
+          : "Audio normalized to -16 LUFS.",
+      );
+    } catch (normalizationError) {
+      setError(
+        normalizationError instanceof Error
+          ? normalizationError.message
+          : "Failed to normalize audio.",
+      );
+    } finally {
+      setIsNormalizing(false);
+    }
   }
 
   function readAudioDuration(file: File) {
@@ -726,7 +796,7 @@ export function AdminKirtanAudioPlayer({
       return;
     }
 
-    setTrimState("trimming");
+    setTrimState("applying");
     setError(null);
     setReplaceMessage(null);
 
@@ -764,6 +834,96 @@ export function AdminKirtanAudioPlayer({
         trimError instanceof Error
           ? trimError.message
           : "Failed to trim audio.",
+      );
+    } finally {
+      setTrimState("idle");
+    }
+  }
+
+  async function saveTrimAsNew() {
+    if (!audioUrl || !trimSelectionIsValid) {
+      return;
+    }
+
+    setTrimState("saving-as-new");
+    setError(null);
+    setReplaceMessage(null);
+
+    try {
+      const response = await fetch(
+        `/api/admin/kirtans/${kirtanId}/audio/trim`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            startSeconds: effectiveTrimStart,
+            endSeconds: effectiveTrimEnd,
+            saveAsNew: true,
+          }),
+        },
+      );
+      const json = await response.json();
+
+      if (!response.ok || typeof json.id !== "string") {
+        throw new Error(json.error ?? "Failed to save trimmed audio as new");
+      }
+
+      setTrimStart(null);
+      setTrimEnd(null);
+      await onTrimSavedAsNew(json.id);
+    } catch (trimError) {
+      setError(
+        trimError instanceof Error
+          ? trimError.message
+          : "Failed to save trimmed audio as new.",
+      );
+    } finally {
+      setTrimState("idle");
+    }
+  }
+
+  async function removeTrimSelection() {
+    if (!audioUrl || !trimSelectionIsValid) {
+      return;
+    }
+
+    setTrimState("removing-selection");
+    setError(null);
+    setReplaceMessage(null);
+
+    try {
+      const response = await fetch(
+        `/api/admin/kirtans/${kirtanId}/audio/trim`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            startSeconds: effectiveTrimStart,
+            endSeconds: effectiveTrimEnd,
+            removeSelection: true,
+          }),
+        },
+      );
+      const json = await response.json();
+
+      if (!response.ok) {
+        throw new Error(json.error ?? "Failed to remove selected audio");
+      }
+
+      onAudioReplaced(json.kirtan as AdminKirtanDetail);
+      setReplaceMessage(
+        typeof json.cleanupWarning === "string" &&
+          json.cleanupWarning.trim().length > 0
+          ? json.cleanupWarning
+          : "Selected audio removed.",
+      );
+      setTrimStart(null);
+      setTrimEnd(null);
+    } catch (trimError) {
+      setError(
+        trimError instanceof Error
+          ? trimError.message
+          : "Failed to remove selected audio.",
       );
     } finally {
       setTrimState("idle");
@@ -816,35 +976,55 @@ export function AdminKirtanAudioPlayer({
                 </button>
               ))}
             </div>
-            <button
-              type="button"
-              onClick={openReplacePicker}
-              disabled={
-                !audioUrl ||
-                replaceState === "uploading" ||
-                trimState === "trimming"
-              }
-              className="rounded-[0.7rem] border border-[#e6cfc4] bg-white/90 px-3 py-1.5 text-xs font-semibold text-[#87675d] transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {replaceState === "uploading" ? "Replacing..." : "Replace Audio"}
-            </button>
-            <button
-              type="button"
-              onClick={toggleTrimMode}
-              disabled={
-                !audioUrl ||
-                replaceState === "uploading" ||
-                trimState === "trimming"
-              }
-              className={[
-                "rounded-[0.7rem] border px-3 py-1.5 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-50",
-                trimModeOpen
-                  ? "border-[color:var(--theme-player-green)] bg-[color:var(--theme-player-green-soft)] text-[color:var(--theme-player-green)]"
-                  : "border-[#e6cfc4] bg-white/90 text-[#87675d] hover:bg-white",
-              ].join(" ")}
-            >
-              {trimModeOpen ? "Close Trim" : "Trim"}
-            </button>
+            <details className="group relative">
+              <summary className="flex cursor-pointer list-none items-center gap-1.5 rounded-[0.7rem] border border-[#e6cfc4] bg-white/90 px-3 py-1.5 text-xs font-semibold text-[#87675d] transition hover:bg-white [&::-webkit-details-marker]:hidden">
+                Audio Actions
+                <svg
+                  aria-hidden="true"
+                  viewBox="0 0 16 16"
+                  className="h-3.5 w-3.5 transition-transform duration-200 group-open:rotate-180"
+                >
+                  <path
+                    d="m3.25 5.75 4.75 4.5 4.75-4.5"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="1.8"
+                  />
+                </svg>
+              </summary>
+              <div className="absolute right-0 z-20 mt-1 grid min-w-44 gap-1 rounded-[0.75rem] border border-[#e6cfc4] bg-white p-1.5 shadow-[0_12px_28px_rgba(101,71,58,0.16)]">
+                <button
+                  type="button"
+                  onClick={openReplacePicker}
+                  disabled={
+                    !audioUrl ||
+                    replaceState === "uploading" ||
+                    isTrimSaving ||
+                    isNormalizing
+                  }
+                  className="rounded-[0.55rem] px-2.5 py-2 text-left text-xs font-semibold text-[#87675d] transition hover:bg-[#fff5f0] disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {replaceState === "uploading"
+                    ? "Replacing..."
+                    : "Replace Audio"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void normalizeAudio()}
+                  disabled={
+                    !audioUrl ||
+                    replaceState === "uploading" ||
+                    isTrimSaving ||
+                    isNormalizing
+                  }
+                  className="rounded-[0.55rem] px-2.5 py-2 text-left text-xs font-semibold text-[#87675d] transition hover:bg-[#fff5f0] disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {isNormalizing ? "Normalizing..." : "Normalize Loudness"}
+                </button>
+              </div>
+            </details>
             <p className="min-w-[7rem] shrink-0 text-right text-xs font-medium tabular-nums text-[#9a776c]">
               {formatTime(currentTime)} / {formatTime(duration)}
             </p>
@@ -1056,18 +1236,21 @@ export function AdminKirtanAudioPlayer({
               {formatTime(zoomLevel === "fit" ? duration : visibleEndTime)}
             </span>
           </div>
+
         </div>
 
-        <div className="flex flex-wrap items-center justify-center gap-2">
-          <button
+        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+          <div />
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            <button
             type="button"
             onClick={() => seekBy(-10)}
             disabled={!audioUrl}
             className="rounded-full border border-[#e7d0c6] bg-white/90 px-3 py-2 text-xs font-semibold text-[#87675d] disabled:cursor-not-allowed disabled:opacity-50"
           >
             -10s
-          </button>
-          <button
+            </button>
+            <button
             type="button"
             onClick={() => void togglePlayback()}
             disabled={!audioUrl}
@@ -1094,77 +1277,147 @@ export function AdminKirtanAudioPlayer({
                 <path d="M8 5.5v13a1 1 0 0 0 1.53.848l10-6.5a1 1 0 0 0 0-1.696l-10-6.5A1 1 0 0 0 8 5.5Z" />
               </svg>
             )}
-          </button>
-          <button
+            </button>
+            <button
             type="button"
             onClick={() => seekBy(10)}
             disabled={!audioUrl}
             className="rounded-full border border-[#e7d0c6] bg-white/90 px-3 py-2 text-xs font-semibold text-[#87675d] disabled:cursor-not-allowed disabled:opacity-50"
           >
             +10s
-          </button>
+            </button>
+          </div>
+          <div className="flex justify-end">
+            <button
+            type="button"
+            onClick={toggleTrimMode}
+            disabled={
+              !audioUrl ||
+              replaceState === "uploading" ||
+              isTrimSaving ||
+              isNormalizing
+            }
+            aria-expanded={trimModeOpen}
+            aria-controls="audio-trim-panel"
+            className={[
+              "inline-flex items-center gap-1.5 rounded-[0.7rem] border px-3 py-1.5 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-50",
+              trimModeOpen
+                ? "border-[color:var(--theme-player-green)] bg-[color:var(--theme-player-green-soft)] text-[color:var(--theme-player-green)]"
+                : "border-[#e6cfc4] bg-white/90 text-[#87675d] hover:bg-white",
+            ].join(" ")}
+          >
+            Trim
+            <svg
+              aria-hidden="true"
+              viewBox="0 0 16 16"
+              className={[
+                "h-3.5 w-3.5 transition-transform duration-300",
+                trimModeOpen ? "rotate-180" : "rotate-0",
+              ].join(" ")}
+            >
+              <path
+                d="m3.25 5.75 4.75 4.5 4.75-4.5"
+                fill="none"
+                stroke="currentColor"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="1.8"
+              />
+            </svg>
+            </button>
+          </div>
         </div>
 
-        {trimModeOpen ? (
-          <div className="rounded-[var(--theme-radius-card)] border border-[#ead6cd] bg-white/75 px-3 py-3">
-            <div className="grid gap-2 lg:grid-cols-[1fr_auto_1fr] lg:items-center">
-              <div />
-              <div className="flex flex-wrap items-center justify-center gap-2 text-xs text-[#87675d]">
-                <span className="inline-flex min-w-[6.5rem] justify-end text-right">
-                  {trimStart !== null ? `In: ${formatTime(trimStart)}` : ""}
-                </span>
-                <button
-                  type="button"
-                  onClick={captureTrimStart}
-                  disabled={!audioUrl || trimState === "trimming"}
-                  className="w-[5.75rem] rounded-[0.7rem] border border-[#e7d0c6] bg-white/90 px-3 py-2 text-xs font-semibold text-[#87675d] disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  Set In
-                </button>
-                <button
-                  type="button"
-                  onClick={captureTrimEnd}
-                  disabled={!audioUrl || trimState === "trimming"}
-                  className="w-[5.75rem] rounded-[0.7rem] border border-[#e7d0c6] bg-white/90 px-3 py-2 text-xs font-semibold text-[#87675d] disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  Set Out
-                </button>
-                <span className="inline-flex min-w-[6.75rem] justify-start text-left">
-                  {trimEnd !== null ? `Out: ${formatTime(trimEnd)}` : ""}
-                </span>
+        <div
+          id="audio-trim-panel"
+          className={[
+            "grid transition-[grid-template-rows,opacity,transform] duration-300 ease-out motion-reduce:transition-none",
+            trimModeOpen
+              ? "grid-rows-[1fr] translate-y-0 opacity-100"
+              : "pointer-events-none grid-rows-[0fr] -translate-y-2 opacity-0",
+          ].join(" ")}
+        >
+          <div className="min-h-0 overflow-hidden">
+            <div className="rounded-[var(--theme-radius-card)] border border-[#ead6cd] bg-white/75 px-3 py-3">
+              <div className="grid gap-2 text-xs text-[#87675d] lg:grid-cols-[1fr_auto_1fr] lg:items-center">
+                <div className="hidden lg:block" />
+                <div className="flex flex-wrap items-center justify-center gap-2">
+                  <span className="inline-flex min-w-[4.75rem] justify-end text-right">
+                    {trimStart !== null ? `In: ${formatTime(trimStart)}` : ""}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={captureTrimStart}
+                    disabled={!audioUrl || isTrimSaving}
+                    className="shrink-0 whitespace-nowrap rounded-[0.7rem] border border-[#e7d0c6] bg-white/90 px-2 py-2 text-xs font-semibold text-[#87675d] disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    Set In
+                  </button>
+                  <button
+                    type="button"
+                    onClick={captureTrimEnd}
+                    disabled={!audioUrl || isTrimSaving}
+                    className="shrink-0 whitespace-nowrap rounded-[0.7rem] border border-[#e7d0c6] bg-white/90 px-2 py-2 text-xs font-semibold text-[#87675d] disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    Set Out
+                  </button>
+                  <span className="inline-flex min-w-[4.75rem] justify-start text-left">
+                    {trimEnd !== null ? `Out: ${formatTime(trimEnd)}` : ""}
+                  </span>
+                </div>
+                <div className="flex flex-nowrap items-center justify-center gap-2 lg:justify-end">
+                  <button
+                    type="button"
+                    onClick={resetTrimSelection}
+                    disabled={
+                      isTrimSaving ||
+                      (trimStart === null && trimEnd === null)
+                    }
+                    className="shrink-0 whitespace-nowrap rounded-[0.7rem] border border-[#e7d0c6] bg-white/90 px-2.5 py-2 text-xs font-semibold text-[#87675d] disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    Reset
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void applyTrim()}
+                    disabled={
+                      !audioUrl ||
+                      !trimSelectionIsValid ||
+                      isTrimSaving
+                    }
+                    className="shrink-0 whitespace-nowrap rounded-[0.7rem] bg-gradient-to-r from-[color:var(--theme-player-green)] to-[color:var(--theme-player-green-mid)] px-2.5 py-2 text-xs font-semibold text-white shadow-[0_10px_22px_rgba(121,161,79,0.22)] disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {trimState === "applying" ? "Applying Trim..." : "Apply"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void saveTrimAsNew()}
+                    disabled={!audioUrl || !trimSelectionIsValid || isTrimSaving}
+                    className="shrink-0 whitespace-nowrap rounded-[0.7rem] border border-[color:var(--theme-player-green)] bg-white/90 px-2.5 py-2 text-xs font-semibold text-[color:var(--theme-player-green)] shadow-sm hover:bg-[color:var(--theme-player-green-soft)] disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {trimState === "saving-as-new"
+                      ? "Saving New..."
+                      : "Save as New"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void removeTrimSelection()}
+                    disabled={!audioUrl || !trimSelectionIsValid || isTrimSaving}
+                    className="shrink-0 whitespace-nowrap rounded-[0.7rem] border border-[#c98276] bg-[#fff8f6] px-2.5 py-2 text-xs font-semibold text-[#a45e5a] shadow-sm hover:bg-[#fff0ec] disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {trimState === "removing-selection"
+                      ? "Deleting..."
+                      : "Delete Selection"}
+                  </button>
+                </div>
               </div>
-              <div className="flex flex-wrap items-center justify-end gap-2 text-xs text-[#87675d]">
-                <button
-                  type="button"
-                  onClick={resetTrimSelection}
-                  disabled={
-                    trimState === "trimming" ||
-                    (trimStart === null && trimEnd === null)
-                  }
-                  className="rounded-[0.7rem] border border-[#e7d0c6] bg-white/90 px-3 py-2 text-xs font-semibold text-[#87675d] disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  Reset
-                </button>
-                <button
-                  type="button"
-                  onClick={() => void applyTrim()}
-                  disabled={
-                    !audioUrl ||
-                    !trimSelectionIsValid ||
-                    trimState === "trimming"
-                  }
-                  className="rounded-[0.7rem] bg-gradient-to-r from-[color:var(--theme-player-green)] to-[color:var(--theme-player-green-mid)] px-3 py-2 text-xs font-semibold text-white shadow-[0_10px_22px_rgba(121,161,79,0.22)] disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  {trimState === "trimming" ? "Applying Trim..." : "Apply"}
-                </button>
-              </div>
+              <p className="mt-3 text-center text-[11px] text-[#9a776c]">
+                Space plays or pauses. Use left/right arrows for fine nudging.
+                Hold Shift for 1-second steps. Press `I` for In and `O` for Out.
+              </p>
             </div>
-            <p className="mt-3 text-center text-[11px] text-[#9a776c]">
-              Use left/right arrows for fine nudging. Hold Shift for 1-second
-              steps. Press `I` for In and `O` for Out.
-            </p>
           </div>
-        ) : null}
+        </div>
 
         {error ? (
           <p className="text-sm text-[#a45e5a]">{error}</p>

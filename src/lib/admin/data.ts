@@ -103,6 +103,10 @@ type AdminListSearchRow = {
     | { duration_seconds?: number | null; is_current?: boolean | null }
     | Array<{ duration_seconds?: number | null; is_current?: boolean | null }>
     | null;
+  kirtan_titles:
+    | { kind?: string | null; title?: string | null }
+    | Array<{ kind?: string | null; title?: string | null }>
+    | null;
 };
 
 function rankAdminSearchResults(
@@ -330,6 +334,34 @@ function mapTitleRows(
     );
 }
 
+function getAdminListDisplayTitle(
+  row: Pick<AdminListSearchRow, "type" | "title" | "kirtan_titles">,
+) {
+  const titleRows = Array.isArray(row.kirtan_titles)
+    ? row.kirtan_titles
+    : row.kirtan_titles
+      ? [row.kirtan_titles]
+      : [];
+  const titles = mapTitleRows(
+    titleRows.map((title) => ({
+      kind: title.kind ?? null,
+      title: title.title ?? null,
+    })),
+  );
+  const officialTitle =
+    titles.find((title) => title.kind === "official")?.title ?? null;
+  const firstLineTitle =
+    titles.find((title) => title.kind === "first_line")?.title ?? null;
+
+  return getDisplayKirtanTitle({
+    type: row.type,
+    title: row.title ?? "",
+    display_title: null,
+    official_title: officialTitle,
+    first_line_title: firstLineTitle,
+  });
+}
+
 function mapJoinedName(
   relation: { display_name?: string | null; name?: string | null } | Array<{ display_name?: string | null; name?: string | null }> | null | undefined,
 ) {
@@ -345,17 +377,21 @@ export async function listAdminKirtans({
   search,
   type,
   status,
+  recordedDate,
   selectedId,
 }: {
   search?: string | null;
   type?: KirtanType | "all" | null;
   status?: KirtanStatusFilter | null;
+  recordedDate?: string | null;
   selectedId?: string | null;
 }) {
   const normalizedSearch = search?.trim() ?? "";
+  const normalizedRecordedDate = recordedDate?.trim() ?? "";
   const hasSearch = normalizedSearch.length > 0;
   const hasTypeFilter = Boolean(type && type !== "all");
   const hasStatusFilter = Boolean(status && status !== "all");
+  const hasRecordedDateFilter = normalizedRecordedDate.length > 0;
   const searchTokens = normalizedSearch ? tokenizeSearch(normalizedSearch) : [];
   const searchMatches = searchTokens.length
     ? await collectAdminKirtanSearchMatches(searchTokens)
@@ -377,7 +413,8 @@ export async function listAdminKirtans({
       lead_singer_id,
       lead_singers(display_name),
       sangas(name),
-      audio_files!left(duration_seconds, is_current)
+      audio_files!left(duration_seconds, is_current),
+      kirtan_titles!left(kind, title)
     `,
         withCount ? { count: "exact" } : undefined,
       );
@@ -409,6 +446,14 @@ export async function listAdminKirtans({
     filteredCountQuery = filteredCountQuery.eq("published", false);
   }
 
+  if (normalizedRecordedDate) {
+    query = query.eq("recorded_date", normalizedRecordedDate);
+    filteredCountQuery = filteredCountQuery.eq(
+      "recorded_date",
+      normalizedRecordedDate,
+    );
+  }
+
   if (normalizedSearch) {
     const matchingKirtanIds = Array.from(searchMatches.keys());
 
@@ -437,6 +482,14 @@ export async function listAdminKirtans({
     } else if (status === "hidden") {
       query = query.eq("published", false);
       filteredCountQuery = filteredCountQuery.eq("published", false);
+    }
+
+    if (normalizedRecordedDate) {
+      query = query.eq("recorded_date", normalizedRecordedDate);
+      filteredCountQuery = filteredCountQuery.eq(
+        "recorded_date",
+        normalizedRecordedDate,
+      );
     }
   }
 
@@ -487,7 +540,7 @@ export async function listAdminKirtans({
 
     return {
       id: String(row.id),
-      title: String(row.title ?? ""),
+      title: getAdminListDisplayTitle(row),
       type: row.type as KirtanType,
       published: Boolean(row.published),
       created_at: (row.created_at as string | null) ?? null,
@@ -551,7 +604,7 @@ export async function listAdminKirtans({
 
       kirtans.unshift({
         id: String(typedSelectedRow.id),
-        title: String(typedSelectedRow.title ?? ""),
+        title: getAdminListDisplayTitle(typedSelectedRow),
         type: typedSelectedRow.type as KirtanType,
         published: Boolean(typedSelectedRow.published),
         created_at: (typedSelectedRow.created_at as string | null) ?? null,
@@ -590,7 +643,8 @@ export async function listAdminKirtans({
     kirtans,
     filteredCount: filteredCount ?? kirtans.length,
     totalCount: totalCount ?? kirtans.length,
-    hasActiveFilters: hasSearch || hasTypeFilter || hasStatusFilter,
+    hasActiveFilters:
+      hasSearch || hasTypeFilter || hasStatusFilter || hasRecordedDateFilter,
   };
 }
 

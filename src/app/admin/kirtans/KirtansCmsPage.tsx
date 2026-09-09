@@ -8,7 +8,7 @@ import {
   useState,
   useTransition,
 } from "react";
-import { useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type {
   AdminKirtanDetail,
   AdminKirtanListItem,
@@ -101,17 +101,22 @@ export function KirtansCmsPage({
   initialSelectedId?: string | null;
 }) {
   const searchParams = useSearchParams();
+  const pathname = usePathname();
+  const router = useRouter();
   const requestedSelectedId =
     searchParams.get("selected") ?? initialSelectedId ?? null;
   const [search, setSearch] = useState("");
   const [type, setType] = useState<TypeFilter>("all");
   const [status, setStatus] = useState<StatusFilter>("all");
+  const [recordedDate, setRecordedDate] = useState("");
   const deferredSearch = useDeferredValue(search);
   const [kirtans, setKirtans] = useState<AdminKirtanListItem[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [filteredCount, setFilteredCount] = useState(0);
   const [hasActiveFilters, setHasActiveFilters] = useState(false);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(
+    requestedSelectedId,
+  );
   const [selected, setSelected] = useState<AdminKirtanDetail | null>(null);
   const [tagSearch, setTagSearch] = useState("");
   const deferredTagSearch = useDeferredValue(tagSearch);
@@ -167,6 +172,7 @@ export function KirtansCmsPage({
       search?: string;
       type?: TypeFilter;
       status?: StatusFilter;
+      recordedDate?: string;
       nextSelectedId?: string | null;
     }) => {
       setListError(null);
@@ -174,12 +180,14 @@ export function KirtansCmsPage({
       const searchValue = options?.search ?? deferredSearch;
       const typeValue = options?.type ?? type;
       const statusValue = options?.status ?? status;
+      const recordedDateValue = options?.recordedDate ?? recordedDate;
       const selectedTarget =
-        options?.nextSelectedId ?? requestedSelectedId ?? selectedId;
+        options?.nextSelectedId ?? selectedId;
 
       if (searchValue.trim()) params.set("search", searchValue.trim());
       if (typeValue !== "all") params.set("type", typeValue);
       if (statusValue !== "all") params.set("status", statusValue);
+      if (recordedDateValue) params.set("recordedDate", recordedDateValue);
       if (selectedTarget) params.set("selected", selectedTarget);
 
       const response = await fetch(`/api/admin/kirtans?${params.toString()}`, {
@@ -198,21 +206,34 @@ export function KirtansCmsPage({
       setHasActiveFilters(Boolean(json.hasActiveFilters));
       setSelectedId((current) => {
         const target =
-          options?.nextSelectedId ?? requestedSelectedId ?? current;
+          options?.nextSelectedId ?? current;
         if (target && nextKirtans.some((item) => item.id === target)) {
           return target;
         }
         return nextKirtans[0]?.id ?? null;
       });
     },
-    [deferredSearch, requestedSelectedId, selectedId, status, type],
+    [deferredSearch, recordedDate, selectedId, status, type],
   );
 
   useEffect(() => {
-    if (requestedSelectedId) {
-      setSelectedId(requestedSelectedId);
-    }
+    setSelectedId(requestedSelectedId);
   }, [requestedSelectedId]);
+
+  useEffect(() => {
+    if (searchParams.get("selected") === selectedId) return;
+
+    const nextParams = new URLSearchParams(searchParams.toString());
+    if (selectedId) {
+      nextParams.set("selected", selectedId);
+    } else {
+      nextParams.delete("selected");
+    }
+    const queryString = nextParams.toString();
+    router.replace(queryString ? `${pathname}?${queryString}` : pathname, {
+      scroll: false,
+    });
+  }, [pathname, router, searchParams, selectedId]);
 
   useEffect(() => {
     let cancelled = false;
@@ -408,6 +429,30 @@ export function KirtansCmsPage({
           : item,
       ),
     );
+  }
+
+  async function handleTrimSavedAsNew(kirtanId: string) {
+    const sourceKirtan = selected
+      ? kirtans.find((item) => item.id === selected.id) ?? null
+      : null;
+    setSearch("");
+    setType("all");
+    setStatus("all");
+    setRecordedDate("");
+    setDetailError(null);
+    await loadKirtans({
+      search: "",
+      type: "all",
+      status: "all",
+      recordedDate: "",
+      nextSelectedId: kirtanId,
+    });
+    if (sourceKirtan) {
+      setKirtans((current) => [
+        sourceKirtan,
+        ...current.filter((item) => item.id !== sourceKirtan.id),
+      ]);
+    }
   }
 
   async function deleteKirtan() {
@@ -786,10 +831,12 @@ export function KirtansCmsPage({
       setSearch("");
       setType("all");
       setStatus("all");
+      setRecordedDate("");
       await loadKirtans({
         search: "",
         type: "all",
         status: "all",
+        recordedDate: "",
         nextSelectedId: json.id as string,
       });
       setIsCreateModalOpen(false);
@@ -862,6 +909,13 @@ export function KirtansCmsPage({
                 <option value="published">Published</option>
                 <option value="hidden">Hidden</option>
               </select>
+              <input
+                type="date"
+                value={recordedDate}
+                onChange={(event) => setRecordedDate(event.target.value)}
+                aria-label="Filter by recorded date"
+                className={fieldClassName()}
+              />
             </div>
             <p className="text-xs text-[#8f6c65]">Count: {statusLabel}</p>
             {listError ? (
@@ -1019,6 +1073,7 @@ export function KirtansCmsPage({
                   fileName={selected.audio_file_name}
                   durationSeconds={selected.duration_seconds}
                   onAudioReplaced={handleAudioReplaced}
+                  onTrimSavedAsNew={handleTrimSavedAsNew}
                 />
               </div>
             </div>
