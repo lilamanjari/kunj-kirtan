@@ -37,6 +37,7 @@ export type KirtanSummary = {
   sequence_num?: number | null;
   has_harmonium?: boolean;
   is_rare_gem?: boolean;
+  occasion_tags?: string[];
   person_tag?: string | null;
 };
 

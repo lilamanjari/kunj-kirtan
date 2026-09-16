@@ -82,6 +82,11 @@ export default function FeaturedKirtanCard({
   const subtitleText =
     subtitleOverride ??
     `${sequenceLabel ? `${sequenceLabel} by ` : ""}${kirtan.lead_singer ?? ""}`;
+  const occasionTags = kirtan.occasion_tags?.slice(0, 3) ?? [];
+  const personTag = kirtan.person_tag ?? null;
+  const hasTagContext = occasionTags.length > 0 || Boolean(personTag);
+  const shouldCompactFeatureText =
+    hasTagContext && (titleText.length > 24 || subtitleText.length > 25);
   const defaultArtwork =
     !artwork && (kirtan.lead_singer_image_url || kirtan.lead_singer) ? (
       <LeadSingerAvatar
@@ -179,9 +184,13 @@ export default function FeaturedKirtanCard({
               {artwork ?? defaultArtwork}
             </div>
           ) : null}
-          <div className="min-w-0 flex-1 pt-2 sm:pt-4">
+          <div className="min-w-0 flex-1 pt-0">
             <h1
-              className={`${displayHeadingClassName} max-w-[13ch] pr-1 text-[1.35rem] leading-[0.98] sm:max-w-[11ch] sm:pr-4 sm:text-[2.1rem]`}
+              className={`${displayHeadingClassName} max-w-[13ch] pr-1 leading-[0.98] sm:max-w-[11ch] sm:pr-4 ${
+                shouldCompactFeatureText
+                  ? "text-[1.25rem] sm:text-[1.85rem]"
+                  : "text-[1.35rem] sm:text-[2.1rem]"
+              }`}
             >
               {titleText}
             </h1>
@@ -194,6 +203,32 @@ export default function FeaturedKirtanCard({
                 {subtitleText}
               </p>
             </div>
+            {hasTagContext ? (
+              <div className="mt-2 space-y-1.5">
+                {occasionTags.length > 0 ? (
+                  <div className="flex flex-wrap gap-1.5">
+                    {occasionTags.map((tag) => (
+                      <span
+                        key={tag}
+                        className="rounded-full border border-[#dcae9d]/65 bg-[#fff5ef]/72 px-2 py-0.5 text-[9px] font-semibold tracking-[0.02em] text-[#a56350] shadow-[0_1px_0_rgba(255,255,255,0.7)] sm:text-[10px]"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
+                {personTag ? (
+                  <div className="flex max-w-full items-center gap-1.5 text-[10px] font-medium text-[#8c6a51] sm:text-[11px]">
+                    <span className="shrink-0 uppercase tracking-[0.12em] text-[8px] text-[#aa8870] sm:text-[9px]">
+                      With
+                    </span>
+                    <span className="min-w-0 truncate rounded-full border border-[#c8b88a]/55 bg-[#fbf7e8]/70 px-2 py-0.5">
+                      {personTag}
+                    </span>
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
           </div>
         </div>
 

@@ -1,5 +1,85 @@
 import { supabase } from "@/lib/supabase";
 
+export type KirtanFeatureTagContext = {
+  occasionTags: string[];
+  personTag: string | null;
+};
+
+export async function fetchKirtanFeatureTagContext(ids: string[]) {
+  const uniqueIds = Array.from(new Set(ids.filter(Boolean)));
+  if (!uniqueIds.length) {
+    return {
+      tagContextById: new Map<string, KirtanFeatureTagContext>(),
+    };
+  }
+
+  const { data: tags, error: tagsError } = await supabase
+    .from("tags")
+    .select("slug, name, category")
+    .in("category", ["occasion", "person"])
+    .eq("published", true);
+
+  if (tagsError) {
+    return {
+      error: tagsError.message,
+      tagContextById: new Map<string, KirtanFeatureTagContext>(),
+    };
+  }
+
+  const tagsBySlug = new Map(
+    (tags ?? [])
+      .filter((tag) => tag.slug && tag.name)
+      .map((tag) => [
+        tag.slug!,
+        { name: tag.name, category: tag.category },
+      ]),
+  );
+  const tagSlugs = Array.from(tagsBySlug.keys());
+  if (!tagSlugs.length) {
+    return {
+      tagContextById: new Map<string, KirtanFeatureTagContext>(),
+    };
+  }
+
+  const { data: links, error: linksError } = await supabase
+    .from("kirtan_tag_slugs")
+    .select("kirtan_id, slug")
+    .in("kirtan_id", uniqueIds)
+    .in("slug", tagSlugs);
+
+  if (linksError) {
+    return {
+      error: linksError.message,
+      tagContextById: new Map<string, KirtanFeatureTagContext>(),
+    };
+  }
+
+  const tagContextById = new Map<string, KirtanFeatureTagContext>();
+  for (const link of links ?? []) {
+    const tag = tagsBySlug.get(link.slug);
+    if (!tag) continue;
+
+    const context = tagContextById.get(link.kirtan_id) ?? {
+      occasionTags: [],
+      personTag: null,
+    };
+
+    if (tag.category === "occasion") {
+      context.occasionTags.push(tag.name);
+    } else if (tag.category === "person" && !context.personTag) {
+      context.personTag = tag.name;
+    }
+
+    tagContextById.set(link.kirtan_id, context);
+  }
+
+  for (const context of tagContextById.values()) {
+    context.occasionTags.sort((left, right) => left.localeCompare(right));
+  }
+
+  return { tagContextById };
+}
+
 export async function fetchKirtanTagFlags(ids: string[]) {
   if (!ids.length) {
     return {

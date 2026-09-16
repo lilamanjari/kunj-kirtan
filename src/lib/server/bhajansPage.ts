@@ -1,7 +1,10 @@
 import { supabase } from "@/lib/supabase";
 import type { KirtanSummary, PlayableBhajanTitleRow } from "@/types/kirtan";
 import type { BhajanAlphabetIndex, BhajansResponse } from "@/types/bhajans";
-import { fetchKirtanTagFlags } from "@/lib/server/kirtanTags";
+import {
+  fetchKirtanFeatureTagContext,
+  fetchKirtanTagFlags,
+} from "@/lib/server/kirtanTags";
 import { getDailyRareGem } from "@/lib/server/featured";
 import { unstable_cache } from "next/cache";
 import { buildBhajanAlphabetIndex } from "@/lib/server/bhajanAlphabet";
@@ -72,13 +75,22 @@ const getCachedBhajansPageData = unstable_cache(
     if (featured.kirtan?.id) {
       ids.unshift(featured.kirtan.id);
     }
-    const { harmoniumIds, rareGemIds, error: tagError } =
-      await fetchKirtanTagFlags(ids);
+    const [
+      { harmoniumIds, rareGemIds, error: tagError },
+      { tagContextById, error: tagContextError },
+    ] = await Promise.all([
+      fetchKirtanTagFlags(ids),
+      fetchKirtanFeatureTagContext(ids),
+    ]);
     const { imagesByKirtanId, error: imageError } =
       await fetchBhajanLeadSingerImagesByKirtanId(ids);
 
-    if (tagError || imageError) {
-      return { data: null, error: tagError ?? imageError ?? "Unknown error", status: 500 };
+    if (tagError || tagContextError || imageError) {
+      return {
+        data: null,
+        error: tagError ?? tagContextError ?? imageError ?? "Unknown error",
+        status: 500,
+      };
     }
 
     const bhajans: KirtanSummary[] = rows.map((k) => ({
@@ -102,6 +114,8 @@ const getCachedBhajansPageData = unstable_cache(
       sequence_num: k.sequence_num ?? null,
       has_harmonium: harmoniumIds.has(k.kirtan_id),
       is_rare_gem: rareGemIds.has(k.kirtan_id),
+      occasion_tags: tagContextById.get(k.kirtan_id)?.occasionTags ?? [],
+      person_tag: tagContextById.get(k.kirtan_id)?.personTag ?? null,
     }));
 
     const featuredKirtan: KirtanSummary | null = featured.kirtan
@@ -128,6 +142,10 @@ const getCachedBhajansPageData = unstable_cache(
           sequence_num: featured.kirtan.sequence_num ?? null,
           has_harmonium: harmoniumIds.has(featured.kirtan.id),
           is_rare_gem: rareGemIds.has(featured.kirtan.id),
+          occasion_tags:
+            tagContextById.get(featured.kirtan.id)?.occasionTags ?? [],
+          person_tag:
+            tagContextById.get(featured.kirtan.id)?.personTag ?? null,
         }
       : null;
 

@@ -5,16 +5,26 @@ import {
   fetchPrimaryLeadSingerImages,
   type LeadSingerImage,
 } from "@/lib/server/leadSingerImages";
-import { fetchKirtanTagFlags } from "@/lib/server/kirtanTags";
+import {
+  fetchKirtanFeatureTagContext,
+  fetchKirtanTagFlags,
+  type KirtanFeatureTagContext,
+} from "@/lib/server/kirtanTags";
 import type { KirtanSummary, PlayableKirtanRow } from "@/types/kirtan";
 
 type TagFlagsResult = Awaited<ReturnType<typeof fetchKirtanTagFlags>>;
+type FeatureTagContextResult = Awaited<
+  ReturnType<typeof fetchKirtanFeatureTagContext>
+>;
 type LeadSingerImagesResult = Awaited<
   ReturnType<typeof fetchPrimaryLeadSingerImages>
 >;
 
 type MahaMantraPresentationDeps = {
   fetchTagFlags?: (ids: string[]) => Promise<TagFlagsResult>;
+  fetchFeatureTagContext?: (
+    ids: string[],
+  ) => Promise<FeatureTagContextResult>;
   fetchLeadSingerImages?: (
     leadSingerIds: string[],
   ) => Promise<LeadSingerImagesResult>;
@@ -42,10 +52,12 @@ function mapSummary(
   harmoniumIds: Set<string>,
   rareGemIds: Set<string>,
   imagesByLeadSingerId: Map<string, LeadSingerImage>,
+  tagContextById: Map<string, KirtanFeatureTagContext>,
 ): KirtanSummary {
   const leadSingerImage = kirtan.lead_singer_id
     ? imagesByLeadSingerId.get(kirtan.lead_singer_id)
     : null;
+  const tagContext = tagContextById.get(kirtan.id);
 
   return {
     id: kirtan.id,
@@ -65,6 +77,8 @@ function mapSummary(
     sequence_num: kirtan.sequence_num ?? null,
     has_harmonium: harmoniumIds.has(kirtan.id),
     is_rare_gem: rareGemIds.has(kirtan.id),
+    occasion_tags: tagContext?.occasionTags ?? [],
+    person_tag: tagContext?.personTag ?? null,
   };
 }
 
@@ -75,22 +89,26 @@ export async function buildMahaMantraPresentation(
 ) {
   const { kirtanIds, leadSingerIds } = collectIds(page, featured);
   const fetchTagFlags = deps.fetchTagFlags ?? fetchKirtanTagFlags;
+  const fetchFeatureTagContext =
+    deps.fetchFeatureTagContext ?? fetchKirtanFeatureTagContext;
   const fetchLeadSingerImages =
     deps.fetchLeadSingerImages ?? fetchPrimaryLeadSingerImages;
 
   const [
     { harmoniumIds, rareGemIds, error: tagError },
+    { tagContextById, error: tagContextError },
     { imagesByLeadSingerId, error: imageError },
   ] = await Promise.all([
     fetchTagFlags(kirtanIds),
+    fetchFeatureTagContext(kirtanIds),
     fetchLeadSingerImages(leadSingerIds),
   ]);
 
-  if (tagError) {
+  if (tagError || tagContextError) {
     return {
       mantras: [] as KirtanSummary[],
       featuredKirtan: null as KirtanSummary | null,
-      error: tagError,
+      error: tagError ?? tagContextError,
     };
   }
 
@@ -104,10 +122,22 @@ export async function buildMahaMantraPresentation(
 
   return {
     mantras: page.map((kirtan) =>
-      mapSummary(kirtan, harmoniumIds, rareGemIds, imagesByLeadSingerId),
+      mapSummary(
+        kirtan,
+        harmoniumIds,
+        rareGemIds,
+        imagesByLeadSingerId,
+        tagContextById,
+      ),
     ),
     featuredKirtan: featured
-      ? mapSummary(featured, harmoniumIds, rareGemIds, imagesByLeadSingerId)
+      ? mapSummary(
+          featured,
+          harmoniumIds,
+          rareGemIds,
+          imagesByLeadSingerId,
+          tagContextById,
+        )
       : null,
     error: null,
   };

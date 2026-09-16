@@ -1,6 +1,10 @@
 import { unstable_cache } from "next/cache";
 import { supabase } from "@/lib/supabase";
-import { fetchKirtanTagFlags } from "@/lib/server/kirtanTags";
+import {
+  fetchKirtanFeatureTagContext,
+  fetchKirtanTagFlags,
+  type KirtanFeatureTagContext,
+} from "@/lib/server/kirtanTags";
 import { getDailyRareGem } from "@/lib/server/featured";
 import { getDisplayKirtanTitle } from "@/lib/server/bhajanDisplayTitle";
 import { fetchHomeCurrentOccasion } from "@/lib/server/homeFeaturedItem";
@@ -31,10 +35,12 @@ function toKirtanSummary(
       height: number | null;
     }
   >,
+  tagContextById: Map<string, KirtanFeatureTagContext>,
 ): KirtanSummary {
   const leadSingerImage = kirtan.lead_singer_id
     ? imagesByLeadSingerId.get(kirtan.lead_singer_id)
     : null;
+  const tagContext = tagContextById.get(kirtan.id);
 
   return {
     id: kirtan.id,
@@ -54,6 +60,8 @@ function toKirtanSummary(
     sequence_num: kirtan.sequence_num ?? null,
     has_harmonium: harmoniumIds.has(kirtan.id),
     is_rare_gem: rareGemIds.has(kirtan.id),
+    occasion_tags: tagContext?.occasionTags ?? [],
+    person_tag: tagContext?.personTag ?? null,
   };
 }
 
@@ -318,14 +326,16 @@ async function buildHomePageData() {
     ),
   );
 
-  const {
-    harmoniumIds,
-    rareGemIds,
-    error: tagError,
-  } = await fetchKirtanTagFlags(harmoniumLookupIds);
+  const [
+    { harmoniumIds, rareGemIds, error: tagError },
+    { tagContextById, error: tagContextError },
+  ] = await Promise.all([
+    fetchKirtanTagFlags(harmoniumLookupIds),
+    fetchKirtanFeatureTagContext(harmoniumLookupIds),
+  ]);
 
-  if (tagError) {
-    return { data: null, error: tagError, status: 500 };
+  if (tagError || tagContextError) {
+    return { data: null, error: tagError ?? tagContextError, status: 500 };
   }
 
   const leadSingerIds = Array.from(
@@ -357,16 +367,37 @@ async function buildHomePageData() {
     featuredKirtan.lead_singer_image_focus_y = leadSingerImage?.focus_y ?? null;
     featuredKirtan.has_harmonium = harmoniumIds.has(featuredId);
     featuredKirtan.is_rare_gem = rareGemIds.has(featuredId);
+    featuredKirtan.occasion_tags =
+      tagContextById.get(featuredId)?.occasionTags ?? [];
+    featuredKirtan.person_tag = tagContextById.get(featuredId)?.personTag ?? null;
   }
 
   const recentlyAddedKirtans: KirtanSummary[] = recentRows.map((k) =>
-    toKirtanSummary(k, harmoniumIds, rareGemIds, imagesByLeadSingerId),
+    toKirtanSummary(
+      k,
+      harmoniumIds,
+      rareGemIds,
+      imagesByLeadSingerId,
+      tagContextById,
+    ),
   );
   const popularSummaries: KirtanSummary[] = popularRows.map((k) =>
-    toKirtanSummary(k, harmoniumIds, rareGemIds, imagesByLeadSingerId),
+    toKirtanSummary(
+      k,
+      harmoniumIds,
+      rareGemIds,
+      imagesByLeadSingerId,
+      tagContextById,
+    ),
   );
   const recommendedSummaries: KirtanSummary[] = recommendedRows.map((k) =>
-    toKirtanSummary(k, harmoniumIds, rareGemIds, imagesByLeadSingerId),
+    toKirtanSummary(
+      k,
+      harmoniumIds,
+      rareGemIds,
+      imagesByLeadSingerId,
+      tagContextById,
+    ),
   );
 
   const data = {

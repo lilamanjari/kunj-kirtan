@@ -1,7 +1,10 @@
 import { unstable_cache } from "next/cache";
 import { supabase } from "@/lib/supabase";
 import type { KirtanSummary, KirtanType } from "@/types/kirtan";
-import { fetchKirtanPersonNames, fetchKirtanTagFlags } from "@/lib/server/kirtanTags";
+import {
+  fetchKirtanFeatureTagContext,
+  fetchKirtanTagFlags,
+} from "@/lib/server/kirtanTags";
 import { getDailyRareGem } from "@/lib/server/featured";
 import { getDisplayKirtanTitle } from "@/lib/server/bhajanDisplayTitle";
 import { compareOccasionKirtans } from "@/lib/server/occasionCurations";
@@ -86,11 +89,11 @@ const getCachedOccasionPageData = unstable_cache(
       return { data: null, error: flagsError ?? imageError ?? "Unknown error", status: 500 };
     }
 
-    const { personNamesById, error: personError } =
-      await fetchKirtanPersonNames(kirtanIds);
+    const { tagContextById, error: tagContextError } =
+      await fetchKirtanFeatureTagContext(kirtanIds);
 
-    if (personError) {
-      return { data: null, error: personError, status: 500 };
+    if (tagContextError) {
+      return { data: null, error: tagContextError, status: 500 };
     }
 
     const payload: KirtanSummary[] =
@@ -120,7 +123,8 @@ const getCachedOccasionPageData = unstable_cache(
         sequence_num: k.sequence_num ?? null,
         has_harmonium: harmoniumIds.has(k.id),
         is_rare_gem: rareGemIds.has(k.id),
-        person_tag: personNamesById.get(k.id) ?? null,
+        occasion_tags: tagContextById.get(k.id)?.occasionTags ?? [],
+        person_tag: tagContextById.get(k.id)?.personTag ?? null,
       })).sort(compareOccasionKirtans) ?? [];
 
     const featuredKirtan: KirtanSummary | null = featured.kirtan
@@ -152,7 +156,10 @@ const getCachedOccasionPageData = unstable_cache(
           sequence_num: featured.kirtan.sequence_num ?? null,
           has_harmonium: harmoniumIds.has(featured.kirtan.id),
           is_rare_gem: rareGemIds.has(featured.kirtan.id),
-          person_tag: personNamesById.get(featured.kirtan.id) ?? null,
+          occasion_tags:
+            tagContextById.get(featured.kirtan.id)?.occasionTags ?? [],
+          person_tag:
+            tagContextById.get(featured.kirtan.id)?.personTag ?? null,
         }
       : null;
 
