@@ -34,6 +34,7 @@ function getUtcDate() {
 type RareGemFeatureRotationRow = {
   kirtan_id: string;
   cycle_number: number;
+  feature_slot: number;
 };
 
 type FeaturedFilters = {
@@ -42,6 +43,8 @@ type FeaturedFilters = {
   leadSingerIds?: string[];
   kirtanIds?: string[];
   rotationScope?: string;
+  limit?: number;
+  excludeKirtanIds?: string[];
 };
 
 export function selectNextRareGemInCycle(
@@ -60,42 +63,102 @@ export function selectNextRareGemInCycle(
     })[0] ?? null;
 }
 
-async function getRotatingRareGem(
+export function selectRareGemCycleBatch(
+  candidates: PlayableKirtanRow[],
+  featuredIds: Set<string>,
+  selectedTodayIds: Set<string>,
+  scope: string,
+  cycleNumber: number,
+  limit: number,
+) {
+  const selected: PlayableKirtanRow[] = [];
+  let activeCycleNumber = cycleNumber;
+  let activeCycleIds = new Set(featuredIds);
+
+  while (selected.length < limit) {
+    const unavailableIds = new Set([
+      ...activeCycleIds,
+      ...selectedTodayIds,
+    ]);
+    let next = selectNextRareGemInCycle(
+      candidates,
+      unavailableIds,
+      scope,
+      activeCycleNumber,
+    );
+
+    if (!next) {
+      activeCycleNumber += 1;
+      activeCycleIds = new Set();
+      next = selectNextRareGemInCycle(
+        candidates,
+        selectedTodayIds,
+        scope,
+        activeCycleNumber,
+      );
+    }
+
+    // The rail should not repeat a kirtan on the same day, even when it
+    // crosses a cycle boundary or there are fewer candidates than slots.
+    if (!next) {
+      break;
+    }
+
+    selected.push(next);
+    activeCycleIds.add(next.id);
+    selectedTodayIds.add(next.id);
+  }
+
+  return { selected, cycleNumber: activeCycleNumber };
+}
+
+async function getRotatingRareGems(
   candidates: PlayableKirtanRow[],
   scope: string,
-): Promise<FeaturedResult<PlayableKirtanRow>> {
+  limit: number,
+): Promise<{ kirtans: PlayableKirtanRow[]; error: string | null }> {
+  if (limit <= 0 || candidates.length === 0) {
+    return { kirtans: [], error: null };
+  }
+
   if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    const index = dailyIndex(candidates.length, scope);
-    return { kirtan: candidates[index] ?? null, error: null };
+    const date = getUtcDate();
+    const kirtans = [...candidates]
+      .sort((left, right) => {
+        const difference =
+          seededSortValue(left.id, `${scope}:${date}`) -
+          seededSortValue(right.id, `${scope}:${date}`);
+        return difference || left.id.localeCompare(right.id);
+      })
+      .slice(0, limit);
+    return { kirtans, error: null };
   }
 
   const featureDate = getUtcDate();
   const { data: existing, error: existingError } = await supabaseAdmin
     .from("rare_gem_feature_rotations")
-    .select("kirtan_id, cycle_number")
+    .select("kirtan_id, cycle_number, feature_slot")
     .eq("feature_scope", scope)
     .eq("feature_date", featureDate)
-    .maybeSingle();
+    .order("feature_slot", { ascending: true });
 
   if (existingError) {
-    return { kirtan: null, error: existingError.message };
+    return { kirtans: [], error: existingError.message };
   }
 
-  if (existing) {
-    const selected = candidates.find((candidate) => candidate.id === existing.kirtan_id);
-    if (selected) {
-      return { kirtan: selected, error: null };
-    }
-  }
+  const existingRows = (existing ?? []) as RareGemFeatureRotationRow[];
+  const existingBySlot = new Map(
+    existingRows.map((row) => [row.feature_slot, row]),
+  );
 
   const { data: history, error: historyError } = await supabaseAdmin
     .from("rare_gem_feature_rotations")
-    .select("kirtan_id, cycle_number")
+    .select("kirtan_id, cycle_number, feature_slot")
     .eq("feature_scope", scope)
     .order("cycle_number", { ascending: false });
 
   if (historyError) {
-    return { kirtan: null, error: historyError.message };
+    return { kirtans: [], error: historyError.message };
   }
 
   const rotationHistory = (history ?? []) as RareGemFeatureRotationRow[];
@@ -105,66 +168,69 @@ async function getRotatingRareGem(
       .filter((row) => row.cycle_number === cycleNumber)
       .map((row) => row.kirtan_id),
   );
-  let selected = selectNextRareGemInCycle(
-    candidates,
-    featuredIds,
-    scope,
-    cycleNumber,
-  );
+  const selectedTodayIds = new Set<string>();
+  const selected: PlayableKirtanRow[] = [];
 
-  if (!selected) {
-    cycleNumber += 1;
-    featuredIds = new Set();
-    selected = selectNextRareGemInCycle(
+  for (let featureSlot = 0; featureSlot < limit; featureSlot += 1) {
+    const existingRow = existingBySlot.get(featureSlot);
+    const existingKirtan = existingRow
+      ? candidates.find((candidate) => candidate.id === existingRow.kirtan_id)
+      : null;
+    if (existingKirtan) {
+      selected.push(existingKirtan);
+      selectedTodayIds.add(existingKirtan.id);
+      continue;
+    }
+
+    const next = selectRareGemCycleBatch(
       candidates,
       featuredIds,
+      selectedTodayIds,
       scope,
       cycleNumber,
+      1,
     );
-  }
-
-  if (!selected) {
-    return { kirtan: null, error: null };
-  }
-
-  const rotationRow = {
-    feature_scope: scope,
-    feature_date: featureDate,
-    cycle_number: cycleNumber,
-    kirtan_id: selected.id,
-  };
-  const { error: insertError } = existing
-    ? await supabaseAdmin
-        .from("rare_gem_feature_rotations")
-        .update(rotationRow)
-        .eq("feature_scope", scope)
-        .eq("feature_date", featureDate)
-    : await supabaseAdmin.from("rare_gem_feature_rotations").insert(rotationRow);
-
-  if (!insertError) {
-    return { kirtan: selected, error: null };
-  }
-
-  if (insertError.code === "23505") {
-    const { data: concurrentSelection, error: concurrentError } =
-      await supabaseAdmin
-        .from("rare_gem_feature_rotations")
-        .select("kirtan_id")
-        .eq("feature_scope", scope)
-        .eq("feature_date", featureDate)
-        .maybeSingle();
-    if (concurrentError) {
-      return { kirtan: null, error: concurrentError.message };
+    const selectedKirtan = next.selected[0];
+    if (!selectedKirtan) {
+      break;
     }
-    const concurrentKirtan = candidates.find(
-      (candidate) => candidate.id === concurrentSelection?.kirtan_id,
-    );
-    if (concurrentKirtan) {
-      return { kirtan: concurrentKirtan, error: null };
+
+    const previousCycleNumber = cycleNumber;
+    cycleNumber = next.cycleNumber;
+    if (cycleNumber !== previousCycleNumber) {
+      featuredIds = new Set();
     }
+    featuredIds.add(selectedKirtan.id);
+
+    const rotationRow = {
+      feature_scope: scope,
+      feature_date: featureDate,
+      feature_slot: featureSlot,
+      cycle_number: cycleNumber,
+      kirtan_id: selectedKirtan.id,
+    };
+    const { error: writeError } = existingRow
+      ? await supabaseAdmin
+          .from("rare_gem_feature_rotations")
+          .update(rotationRow)
+          .eq("feature_scope", scope)
+          .eq("feature_date", featureDate)
+          .eq("feature_slot", featureSlot)
+      : await supabaseAdmin.from("rare_gem_feature_rotations").insert(rotationRow);
+
+    if (writeError) {
+      // A simultaneous request may have reserved this slot or kirtan. Read
+      // the settled daily selection instead of returning a duplicate rail.
+      if (writeError.code === "23505") {
+        return getRotatingRareGems(candidates, scope, limit);
+      }
+      return { kirtans: [], error: writeError.message };
+    }
+
+    selected.push(selectedKirtan);
   }
 
-  return { kirtan: null, error: insertError.message };
+  return { kirtans: selected, error: null };
 }
 
 const getRareGemCandidates = unstable_cache(
@@ -208,18 +274,33 @@ const getRareGemCandidates = unstable_cache(
 export async function getDailyRareGem(
   filters: FeaturedFilters = {},
 ): Promise<FeaturedResult<PlayableKirtanRow>> {
-  const { types, leadSingerId, leadSingerIds, kirtanIds, rotationScope } =
-    filters;
+  const result = await getDailyRareGems({ ...filters, limit: 1 });
+  return { kirtan: result.kirtans[0] ?? null, error: result.error };
+}
+
+export async function getDailyRareGems(
+  filters: FeaturedFilters = {},
+): Promise<{ kirtans: PlayableKirtanRow[]; error: string | null }> {
+  const {
+    types,
+    leadSingerId,
+    leadSingerIds,
+    kirtanIds,
+    rotationScope,
+    limit = 1,
+    excludeKirtanIds,
+  } = filters;
   const { rows, error } = await getRareGemCandidates();
   if (error) {
-    return { kirtan: null, error };
+    return { kirtans: [], error };
   }
   if (!rows || rows.length === 0) {
-    return { kirtan: null, error: null };
+    return { kirtans: [], error: null };
   }
 
   const allowedKirtanIds = kirtanIds ? new Set(kirtanIds) : null;
   const allowedTypes = types ? new Set(types) : null;
+  const excludedKirtanIds = new Set(excludeKirtanIds ?? []);
 
   const filteredRows = rows.filter((row) => {
     if (allowedTypes && !allowedTypes.has(row.type)) {
@@ -234,6 +315,9 @@ export async function getDailyRareGem(
     if (allowedKirtanIds && !allowedKirtanIds.has(row.id)) {
       return false;
     }
+    if (excludedKirtanIds.has(row.id)) {
+      return false;
+    }
     return true;
   });
 
@@ -244,8 +328,11 @@ export async function getDailyRareGem(
     kirtanIds?.slice().sort().join(",") ?? "ANY_KIRTANS",
   ].join("-");
   if (rotationScope) {
-    return getRotatingRareGem(filteredRows, rotationScope);
+    return getRotatingRareGems(filteredRows, rotationScope, limit);
   }
   const index = dailyIndex(filteredRows.length, salt);
-  return { kirtan: filteredRows[index] ?? null, error: null };
+  const kirtans = Array.from({ length: Math.min(limit, filteredRows.length) }, (_, offset) =>
+    filteredRows[(index + offset) % filteredRows.length],
+  );
+  return { kirtans, error: null };
 }

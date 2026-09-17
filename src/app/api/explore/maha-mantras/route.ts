@@ -99,7 +99,10 @@ export async function GET(req: Request) {
   }
 
   const featured = await timing.measure("featured", () =>
-    getDailyRareGem({ types: ["MM"] }),
+    getDailyRareGem({
+      types: ["MM"],
+      rotationScope: "explore-maha-mantras-rare-gems",
+    }),
   );
 
   if (featured.error) {

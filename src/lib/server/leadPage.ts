@@ -173,7 +173,11 @@ const getCachedOtherLeadPageData = unstable_cache(
 
     const activeType = firstAvailableLeadType(otherCounts);
     const { kirtan: featuredData, error: featuredError } =
-      await getDailyRareGem({ leadSingerIds: otherLeadIds });
+      await getDailyRareGem({
+        leadSingerIds: otherLeadIds,
+        types: ["MM", "BHJ"],
+        rotationScope: "explore-leads-others-rare-gems",
+      });
     if (featuredError) {
       console.error("Lead page featured lookup failed for others:", featuredError);
     }
@@ -280,7 +284,11 @@ const getCachedSingleLeadPageData = unstable_cache(
 
     const activeType = firstAvailableLeadType(counts);
     const { kirtan: featuredData, error: featuredError } =
-      await getDailyRareGem({ leadSingerId: leadId });
+      await getDailyRareGem({
+        leadSingerId: leadId,
+        types: ["MM", "BHJ"],
+        rotationScope: `explore-lead-${leadId}-rare-gems`,
+      });
 
     if (featuredError) {
       console.error(`Lead page featured lookup failed for ${leadId}:`, featuredError);

@@ -4,7 +4,7 @@ import {
   fetchKirtanTagContext,
   fetchKirtanTagFlags,
 } from "@/lib/server/kirtanTags";
-import { getDailyRareGem } from "@/lib/server/featured";
+import { getDailyRareGem, getDailyRareGems } from "@/lib/server/featured";
 import { getDisplayKirtanTitle } from "@/lib/server/bhajanDisplayTitle";
 import { fetchHomeCurrentOccasion } from "@/lib/server/homeFeaturedItem";
 import { fetchLeadDirectory } from "@/lib/server/leadDirectory";
@@ -60,121 +60,6 @@ function toKirtanSummary(
   };
 }
 
-function getIsoWeekInfo(date = new Date()) {
-  const utcDate = new Date(
-    Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()),
-  );
-  const day = utcDate.getUTCDay() || 7;
-  utcDate.setUTCDate(utcDate.getUTCDate() + 4 - day);
-
-  const weekYear = utcDate.getUTCFullYear();
-  const yearStart = new Date(Date.UTC(weekYear, 0, 1));
-  const weekNumber = Math.ceil(
-    ((utcDate.getTime() - yearStart.getTime()) / 86400000 + 1) / 7,
-  );
-
-  return {
-    key: `${weekYear}-W${String(weekNumber).padStart(2, "0")}`,
-    sequence: weekYear * 100 + weekNumber,
-  };
-}
-
-function getSeededSortValue(value: string, seed: string) {
-  const input = `${seed}:${value}`;
-  let hash = 0;
-
-  for (let i = 0; i < input.length; i += 1) {
-    hash = (hash * 31 + input.charCodeAt(i)) % 2147483647;
-  }
-
-  return hash;
-}
-
-function getLeadSingerBucket(kirtan: PlayableKirtanRow) {
-  if (kirtan.lead_singer_id) {
-    return `id:${kirtan.lead_singer_id}`;
-  }
-
-  if (kirtan.lead_singer) {
-    return `name:${kirtan.lead_singer.trim().toLowerCase()}`;
-  }
-
-  return `unknown:${kirtan.id}`;
-}
-
-export function selectWeeklyRecommendedRareGems(
-  candidates: PlayableKirtanRow[],
-  limit = HOME_RECOMMENDED_LIMIT,
-  date = new Date(),
-) {
-  if (limit <= 0 || candidates.length === 0) {
-    return [];
-  }
-
-  const week = getIsoWeekInfo(date);
-  const groupedByLeadSinger = new Map<string, PlayableKirtanRow[]>();
-  const orderedGroupKeys = Array.from(
-    new Set(candidates.map((candidate) => getLeadSingerBucket(candidate))),
-  ).sort((left, right) => left.localeCompare(right));
-
-  for (const candidate of candidates) {
-    const bucket = getLeadSingerBucket(candidate);
-    if (!groupedByLeadSinger.has(bucket)) {
-      groupedByLeadSinger.set(bucket, []);
-    }
-    groupedByLeadSinger.get(bucket)?.push(candidate);
-  }
-
-  for (const groupKey of orderedGroupKeys) {
-    groupedByLeadSinger.get(groupKey)?.sort((left, right) => {
-      const scoreDiff =
-        getSeededSortValue(left.id, week.key) -
-        getSeededSortValue(right.id, week.key);
-
-      if (scoreDiff !== 0) {
-        return scoreDiff;
-      }
-
-      return left.id.localeCompare(right.id);
-    });
-  }
-
-  const rotationOffset =
-    orderedGroupKeys.length > 0 ? week.sequence % orderedGroupKeys.length : 0;
-  const rotatedGroupKeys = orderedGroupKeys.map(
-    (_, index) =>
-      orderedGroupKeys[(index + rotationOffset) % orderedGroupKeys.length],
-  );
-
-  const selected: PlayableKirtanRow[] = [];
-
-  while (selected.length < limit) {
-    let addedThisRound = false;
-
-    for (const groupKey of rotatedGroupKeys) {
-      const group = groupedByLeadSinger.get(groupKey);
-      const nextCandidate = group?.shift();
-
-      if (!nextCandidate) {
-        continue;
-      }
-
-      selected.push(nextCandidate);
-      addedThisRound = true;
-
-      if (selected.length >= limit) {
-        break;
-      }
-    }
-
-    if (!addedThisRound) {
-      break;
-    }
-  }
-
-  return selected;
-}
-
 async function buildHomePageData() {
   const featured = await getDailyRareGem({
     types: ["MM", "BHJ"],
@@ -183,6 +68,16 @@ async function buildHomePageData() {
 
   if (featured.error) {
     return { data: null, error: featured.error, status: 500 };
+  }
+
+  const recommended = await getDailyRareGems({
+    types: ["MM", "BHJ"],
+    excludeKirtanIds: featured.kirtan?.id ? [featured.kirtan.id] : [],
+    rotationScope: "home-recommended-rare-gems",
+    limit: HOME_RECOMMENDED_LIMIT,
+  });
+  if (recommended.error) {
+    return { data: null, error: recommended.error, status: 500 };
   }
 
   const featuredKirtan: KirtanSummary | null = featured.kirtan
@@ -225,15 +120,6 @@ async function buildHomePageData() {
 
   if (popularError) {
     return { data: null, error: popularError.message, status: 500 };
-  }
-
-  const { data: rareGemTags, error: rareGemTagsError } = await supabase
-    .from("kirtan_tag_slugs")
-    .select("kirtan_id")
-    .eq("slug", "rare-gem");
-
-  if (rareGemTagsError) {
-    return { data: null, error: rareGemTagsError.message, status: 500 };
   }
 
   const featuredOccasion = await fetchHomeCurrentOccasion();
@@ -283,29 +169,7 @@ async function buildHomePageData() {
     (lead) => lead.id !== OTHER_LEAD_ID,
   ).length;
 
-  const rareGemCandidateIds =
-    rareGemTags?.map((row) => row.kirtan_id).filter(Boolean) ?? [];
-  let recommendedRows: PlayableKirtanRow[] = [];
-
-  if (rareGemCandidateIds.length > 0) {
-    const { data: recommendedCandidates, error: recommendedError } =
-      await supabase
-        .from("playable_kirtans_with_titles")
-        .select("*")
-        .in("id", rareGemCandidateIds)
-        .in("type", ["MM", "BHJ"])
-        .order("id", { ascending: true });
-
-    if (recommendedError) {
-      return { data: null, error: recommendedError.message, status: 500 };
-    }
-
-    recommendedRows = selectWeeklyRecommendedRareGems(
-      (recommendedCandidates ?? []).filter(
-        (candidate) => candidate.id !== featured.kirtan?.id,
-      ),
-    );
-  }
+  const recommendedRows = recommended.kirtans;
 
   const recentRows: PlayableKirtanRow[] = recentlyAdded ?? [];
   const popularRows: PopularPlayableKirtanRow[] = popularKirtans ?? [];

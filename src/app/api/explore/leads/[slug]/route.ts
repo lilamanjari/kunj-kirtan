@@ -77,10 +77,18 @@ export async function GET(
   const { kirtan: featuredData, error: featuredError } =
     target.kind === "single"
       ? await timing.measure("featured", () =>
-          getDailyRareGem({ leadSingerId: target.leadSingerId }),
+          getDailyRareGem({
+            leadSingerId: target.leadSingerId,
+            types: ["MM", "BHJ"],
+            rotationScope: `explore-lead-${target.leadSingerId}-rare-gems`,
+          }),
         )
       : await timing.measure("featured", () =>
-          getDailyRareGem({ leadSingerIds: target.leadSingerIds }),
+          getDailyRareGem({
+            leadSingerIds: target.leadSingerIds,
+            types: ["MM", "BHJ"],
+            rotationScope: "explore-leads-others-rare-gems",
+          }),
         );
 
   if (featuredError) {

@@ -29,6 +29,22 @@ vi.mock("@/lib/server/featured", () => ({
     },
     error: null,
   }),
+  getDailyRareGems: vi.fn().mockResolvedValue({
+    kirtans: [
+      {
+        id: "k4",
+        audio_url: "a4",
+        type: "BHJ",
+        title: "Rare Gem One",
+        lead_singer: "S4",
+        lead_singer_id: "lead-4",
+        recorded_date: "2020-04-01",
+        sanga: "Q",
+        duration_seconds: 210,
+      },
+    ],
+    error: null,
+  }),
 }));
 
 vi.mock("@/lib/server/homeFeaturedItem", () => ({
@@ -267,21 +283,11 @@ describe("GET /api/home", () => {
     expect(json.error).toBe("Popular error");
   });
 
-  it("returns error when recommended candidate lookup fails", async () => {
-    const sequence: MockResult[] = [
-      { data: [], error: null },
-      { data: [], error: null },
-      { data: [{ kirtan_id: "k4" }], error: null },
-      { data: [], count: 10, error: null },
-      { data: [], count: 20, error: null },
-      { data: [], count: 5, error: null },
-      { data: null, error: { message: "Recommended error" } },
-    ];
-
-    fromMock.mockImplementation(() => {
-      const result = sequence.shift() ?? { data: [], error: null };
-      builder = createMockBuilder(result);
-      return builder;
+  it("returns an error when the Recommended rotation lookup fails", async () => {
+    const { getDailyRareGems } = await import("@/lib/server/featured");
+    (getDailyRareGems as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      kirtans: [],
+      error: "Recommended error",
     });
 
     const res = await GET();

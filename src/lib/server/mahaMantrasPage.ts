@@ -10,7 +10,10 @@ import type { MahaMantrasResponse } from "@/types/maha-mantras";
 
 const getCachedMahaMantrasPageData = unstable_cache(
   async () => {
-    const featured = await getDailyRareGem({ types: ["MM"] });
+    const featured = await getDailyRareGem({
+      types: ["MM"],
+      rotationScope: "explore-maha-mantras-rare-gems",
+    });
     if (featured.error) {
       return { data: null, error: featured.error, status: 500 };
     }

@@ -50,6 +50,7 @@ const getCachedOccasionPageData = unstable_cache(
     const featured = await getDailyRareGem({
       kirtanIds: ids,
       types: ["MM", "BHJ"],
+      rotationScope: `explore-occasion-${slug}-rare-gems`,
     });
     if (featured.error) {
       return { data: null, error: featured.error, status: 500 };

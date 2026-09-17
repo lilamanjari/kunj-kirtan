@@ -51,7 +51,10 @@ export async function GET(req: Request) {
     !cursorTitle && !cursorId && !startTitle && !startId && !beforeTitle && !beforeId;
 
   const featured = await timing.measure("featured", () =>
-    getDailyRareGem({ types: ["BHJ"] }),
+    getDailyRareGem({
+      types: ["BHJ"],
+      rotationScope: "explore-bhajans-rare-gems",
+    }),
   );
 
   if (featured.error) {

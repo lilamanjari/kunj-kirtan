@@ -23,7 +23,10 @@ const getCachedBhajanAlphabetIndex = unstable_cache(
 
 const getCachedBhajansPageData = unstable_cache(
   async () => {
-    const featured = await getDailyRareGem({ types: ["BHJ"] });
+    const featured = await getDailyRareGem({
+      types: ["BHJ"],
+      rotationScope: "explore-bhajans-rare-gems",
+    });
     if (featured.error) {
       return { data: null, error: featured.error, status: 500 };
     }
