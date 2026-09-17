@@ -7,6 +7,12 @@ vi.mock("@/lib/server/kirtanTags", () => ({
     rareGemIds: new Set<string>(),
     error: null,
   }),
+  fetchKirtanTagContext: vi.fn().mockResolvedValue({
+    harmoniumIds: new Set<string>(),
+    rareGemIds: new Set<string>(),
+    tagContextById: new Map<string, never>(),
+    error: null,
+  }),
 }));
 
 vi.mock("@/lib/server/featured", () => ({

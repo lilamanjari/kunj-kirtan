@@ -6,25 +6,21 @@ import {
   type LeadSingerImage,
 } from "@/lib/server/leadSingerImages";
 import {
-  fetchKirtanFeatureTagContext,
+  fetchKirtanTagContext,
   fetchKirtanTagFlags,
   type KirtanFeatureTagContext,
 } from "@/lib/server/kirtanTags";
 import type { KirtanSummary, PlayableKirtanRow } from "@/types/kirtan";
 
 type TagFlagsResult = Awaited<ReturnType<typeof fetchKirtanTagFlags>>;
-type FeatureTagContextResult = Awaited<
-  ReturnType<typeof fetchKirtanFeatureTagContext>
->;
+type TagContextResult = Awaited<ReturnType<typeof fetchKirtanTagContext>>;
 type LeadSingerImagesResult = Awaited<
   ReturnType<typeof fetchPrimaryLeadSingerImages>
 >;
 
 type MahaMantraPresentationDeps = {
   fetchTagFlags?: (ids: string[]) => Promise<TagFlagsResult>;
-  fetchFeatureTagContext?: (
-    ids: string[],
-  ) => Promise<FeatureTagContextResult>;
+  fetchTagContext?: (ids: string[]) => Promise<TagContextResult>;
   fetchLeadSingerImages?: (
     leadSingerIds: string[],
   ) => Promise<LeadSingerImagesResult>;
@@ -77,8 +73,12 @@ function mapSummary(
     sequence_num: kirtan.sequence_num ?? null,
     has_harmonium: harmoniumIds.has(kirtan.id),
     is_rare_gem: rareGemIds.has(kirtan.id),
-    occasion_tags: tagContext?.occasionTags ?? [],
-    person_tag: tagContext?.personTag ?? null,
+    ...(tagContext
+      ? {
+          occasion_tags: tagContext.occasionTags,
+          person_tag: tagContext.personTag,
+        }
+      : {}),
   };
 }
 
@@ -89,8 +89,7 @@ export async function buildMahaMantraPresentation(
 ) {
   const { kirtanIds, leadSingerIds } = collectIds(page, featured);
   const fetchTagFlags = deps.fetchTagFlags ?? fetchKirtanTagFlags;
-  const fetchFeatureTagContext =
-    deps.fetchFeatureTagContext ?? fetchKirtanFeatureTagContext;
+  const fetchTagContext = deps.fetchTagContext ?? fetchKirtanTagContext;
   const fetchLeadSingerImages =
     deps.fetchLeadSingerImages ?? fetchPrimaryLeadSingerImages;
 
@@ -100,7 +99,7 @@ export async function buildMahaMantraPresentation(
     { imagesByLeadSingerId, error: imageError },
   ] = await Promise.all([
     fetchTagFlags(kirtanIds),
-    fetchFeatureTagContext(kirtanIds),
+    fetchTagContext(featured?.id ? [featured.id] : []),
     fetchLeadSingerImages(leadSingerIds),
   ]);
 

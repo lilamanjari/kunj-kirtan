@@ -2,7 +2,7 @@ import { supabase } from "@/lib/supabase";
 import type { KirtanSummary, PlayableBhajanTitleRow } from "@/types/kirtan";
 import type { BhajanAlphabetIndex, BhajansResponse } from "@/types/bhajans";
 import {
-  fetchKirtanFeatureTagContext,
+  fetchKirtanTagContext,
   fetchKirtanTagFlags,
 } from "@/lib/server/kirtanTags";
 import { getDailyRareGem } from "@/lib/server/featured";
@@ -80,7 +80,9 @@ const getCachedBhajansPageData = unstable_cache(
       { tagContextById, error: tagContextError },
     ] = await Promise.all([
       fetchKirtanTagFlags(ids),
-      fetchKirtanFeatureTagContext(ids),
+      fetchKirtanTagContext(
+        featured.kirtan?.id ? [featured.kirtan.id] : [],
+      ),
     ]);
     const { imagesByKirtanId, error: imageError } =
       await fetchBhajanLeadSingerImagesByKirtanId(ids);
@@ -114,8 +116,6 @@ const getCachedBhajansPageData = unstable_cache(
       sequence_num: k.sequence_num ?? null,
       has_harmonium: harmoniumIds.has(k.kirtan_id),
       is_rare_gem: rareGemIds.has(k.kirtan_id),
-      occasion_tags: tagContextById.get(k.kirtan_id)?.occasionTags ?? [],
-      person_tag: tagContextById.get(k.kirtan_id)?.personTag ?? null,
     }));
 
     const featuredKirtan: KirtanSummary | null = featured.kirtan

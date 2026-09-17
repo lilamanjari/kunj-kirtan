@@ -2,12 +2,14 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { GET } from "./route";
 
 const fetchKirtanTagFlagsMock = vi.fn();
+const fetchKirtanTagContextMock = vi.fn();
 const fetchBhajanLeadSingerImagesByKirtanIdMock = vi.fn();
 const fetchBhajanCollectionCountsMock = vi.fn();
 const fetchBhajanCollectionKirtanIdsMock = vi.fn();
 
 vi.mock("@/lib/server/kirtanTags", () => ({
   fetchKirtanTagFlags: (...args: unknown[]) => fetchKirtanTagFlagsMock(...args),
+  fetchKirtanTagContext: (...args: unknown[]) => fetchKirtanTagContextMock(...args),
 }));
 
 vi.mock("@/lib/server/featured", () => ({
@@ -71,12 +73,19 @@ function createMockBuilder(result: MockResult): MockBuilder {
 beforeEach(() => {
   fromMock.mockClear();
   fetchKirtanTagFlagsMock.mockReset();
+  fetchKirtanTagContextMock.mockReset();
   fetchBhajanLeadSingerImagesByKirtanIdMock.mockReset();
   fetchBhajanCollectionCountsMock.mockReset();
   fetchBhajanCollectionKirtanIdsMock.mockReset();
   fetchKirtanTagFlagsMock.mockResolvedValue({
     harmoniumIds: new Set<string>(),
     rareGemIds: new Set<string>(),
+    error: null,
+  });
+  fetchKirtanTagContextMock.mockResolvedValue({
+    harmoniumIds: new Set<string>(),
+    rareGemIds: new Set<string>(),
+    tagContextById: new Map<string, never>(),
     error: null,
   });
   fetchBhajanLeadSingerImagesByKirtanIdMock.mockResolvedValue({

@@ -5,79 +5,78 @@ export type KirtanFeatureTagContext = {
   personTag: string | null;
 };
 
-export async function fetchKirtanFeatureTagContext(ids: string[]) {
+export async function fetchKirtanTagContext(ids: string[]) {
   const uniqueIds = Array.from(new Set(ids.filter(Boolean)));
   if (!uniqueIds.length) {
     return {
+      harmoniumIds: new Set<string>(),
+      rareGemIds: new Set<string>(),
       tagContextById: new Map<string, KirtanFeatureTagContext>(),
     };
   }
 
-  const { data: tags, error: tagsError } = await supabase
-    .from("tags")
-    .select("slug, name, category")
-    .in("category", ["occasion", "person"])
-    .eq("published", true);
-
-  if (tagsError) {
-    return {
-      error: tagsError.message,
-      tagContextById: new Map<string, KirtanFeatureTagContext>(),
-    };
-  }
-
-  const tagsBySlug = new Map(
-    (tags ?? [])
-      .filter((tag) => tag.slug && tag.name)
-      .map((tag) => [
-        tag.slug!,
-        { name: tag.name, category: tag.category },
-      ]),
-  );
-  const tagSlugs = Array.from(tagsBySlug.keys());
-  if (!tagSlugs.length) {
-    return {
-      tagContextById: new Map<string, KirtanFeatureTagContext>(),
-    };
-  }
-
-  const { data: links, error: linksError } = await supabase
-    .from("kirtan_tag_slugs")
-    .select("kirtan_id, slug")
+  const { data, error } = await supabase
+    .from("kirtan_tags")
+    .select("kirtan_id, tags!inner(slug, name, category)")
     .in("kirtan_id", uniqueIds)
-    .in("slug", tagSlugs);
+    .eq("tags.published", true);
 
-  if (linksError) {
+  if (error) {
     return {
-      error: linksError.message,
+      error: error.message,
+      harmoniumIds: new Set<string>(),
+      rareGemIds: new Set<string>(),
       tagContextById: new Map<string, KirtanFeatureTagContext>(),
     };
+  }
+
+  const harmoniumIds = new Set<string>();
+  const rareGemIds = new Set<string>();
+  const occasionTagsById = new Map<string, Set<string>>();
+  const personTagsById = new Map<string, Set<string>>();
+
+  for (const row of data ?? []) {
+    const joinedTag = Array.isArray(row.tags) ? row.tags[0] : row.tags;
+    if (!joinedTag?.slug) continue;
+
+    if (joinedTag.slug === "harmonium") {
+      harmoniumIds.add(row.kirtan_id);
+      continue;
+    }
+    if (joinedTag.slug === "rare-gem") {
+      rareGemIds.add(row.kirtan_id);
+      continue;
+    }
+    if (!joinedTag.name) continue;
+
+    if (joinedTag.category === "occasion") {
+      const names = occasionTagsById.get(row.kirtan_id) ?? new Set<string>();
+      names.add(joinedTag.name);
+      occasionTagsById.set(row.kirtan_id, names);
+    }
+    if (joinedTag.category === "person") {
+      const names = personTagsById.get(row.kirtan_id) ?? new Set<string>();
+      names.add(joinedTag.name);
+      personTagsById.set(row.kirtan_id, names);
+    }
   }
 
   const tagContextById = new Map<string, KirtanFeatureTagContext>();
-  for (const link of links ?? []) {
-    const tag = tagsBySlug.get(link.slug);
-    if (!tag) continue;
-
-    const context = tagContextById.get(link.kirtan_id) ?? {
-      occasionTags: [],
-      personTag: null,
-    };
-
-    if (tag.category === "occasion") {
-      context.occasionTags.push(tag.name);
-    } else if (tag.category === "person" && !context.personTag) {
-      context.personTag = tag.name;
-    }
-
-    tagContextById.set(link.kirtan_id, context);
+  const contextIds = new Set([
+    ...occasionTagsById.keys(),
+    ...personTagsById.keys(),
+  ]);
+  for (const id of contextIds) {
+    const occasionTags = Array.from(occasionTagsById.get(id) ?? []).sort(
+      (left, right) => left.localeCompare(right),
+    );
+    const personTag = Array.from(personTagsById.get(id) ?? []).sort(
+      (left, right) => left.localeCompare(right),
+    )[0] ?? null;
+    tagContextById.set(id, { occasionTags, personTag });
   }
 
-  for (const context of tagContextById.values()) {
-    context.occasionTags.sort((left, right) => left.localeCompare(right));
-  }
-
-  return { tagContextById };
+  return { harmoniumIds, rareGemIds, tagContextById };
 }
 
 export async function fetchKirtanTagFlags(ids: string[]) {
@@ -114,65 +113,5 @@ export async function fetchKirtanTagFlags(ids: string[]) {
     }
   }
 
-  return {
-    harmoniumIds,
-    rareGemIds,
-  };
-}
-
-export async function fetchKirtanPersonNames(ids: string[]) {
-  if (!ids.length) {
-    return {
-      personNamesById: new Map<string, string>(),
-    };
-  }
-
-  const { data: personTags, error: tagsError } = await supabase
-    .from("tags")
-    .select("slug, name")
-    .eq("category", "person");
-
-  if (tagsError) {
-    return {
-      error: tagsError.message,
-      personNamesById: new Map<string, string>(),
-    };
-  }
-
-  const slugs = (personTags ?? []).map((tag) => tag.slug);
-  if (!slugs.length) {
-    return {
-      personNamesById: new Map<string, string>(),
-    };
-  }
-
-  const { data: links, error: linksError } = await supabase
-    .from("kirtan_tag_slugs")
-    .select("kirtan_id, slug")
-    .in("kirtan_id", ids)
-    .in("slug", slugs);
-
-  if (linksError) {
-    return {
-      error: linksError.message,
-      personNamesById: new Map<string, string>(),
-    };
-  }
-
-  const tagNamesBySlug = new Map<string, string>(
-    (personTags ?? []).map((tag) => [tag.slug, tag.name]),
-  );
-  const personNamesById = new Map<string, string>();
-
-  for (const row of links ?? []) {
-    if (personNamesById.has(row.kirtan_id)) continue;
-    const name = tagNamesBySlug.get(row.slug);
-    if (name) {
-      personNamesById.set(row.kirtan_id, name);
-    }
-  }
-
-  return {
-    personNamesById,
-  };
+  return { harmoniumIds, rareGemIds };
 }

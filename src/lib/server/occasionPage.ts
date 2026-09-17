@@ -2,7 +2,7 @@ import { unstable_cache } from "next/cache";
 import { supabase } from "@/lib/supabase";
 import type { KirtanSummary, KirtanType } from "@/types/kirtan";
 import {
-  fetchKirtanFeatureTagContext,
+  fetchKirtanTagContext,
   fetchKirtanTagFlags,
 } from "@/lib/server/kirtanTags";
 import { getDailyRareGem } from "@/lib/server/featured";
@@ -80,20 +80,24 @@ const getCachedOccasionPageData = unstable_cache(
         ].filter((value): value is string => Boolean(value)),
       ),
     );
-    const { harmoniumIds, rareGemIds, error: flagsError } =
-      await fetchKirtanTagFlags(kirtanIds);
+    const [
+      { harmoniumIds, rareGemIds, error: flagsError },
+      { tagContextById, error: tagContextError },
+    ] = await Promise.all([
+      fetchKirtanTagFlags(kirtanIds),
+      fetchKirtanTagContext(
+        featured.kirtan?.id ? [featured.kirtan.id] : [],
+      ),
+    ]);
     const { imagesByLeadSingerId, error: imageError } =
       await fetchPrimaryLeadSingerImages(leadSingerIds);
 
-    if (flagsError || imageError) {
-      return { data: null, error: flagsError ?? imageError ?? "Unknown error", status: 500 };
-    }
-
-    const { tagContextById, error: tagContextError } =
-      await fetchKirtanFeatureTagContext(kirtanIds);
-
-    if (tagContextError) {
-      return { data: null, error: tagContextError, status: 500 };
+    if (flagsError || tagContextError || imageError) {
+      return {
+        data: null,
+        error: flagsError ?? tagContextError ?? imageError ?? "Unknown error",
+        status: 500,
+      };
     }
 
     const payload: KirtanSummary[] =
@@ -123,8 +127,6 @@ const getCachedOccasionPageData = unstable_cache(
         sequence_num: k.sequence_num ?? null,
         has_harmonium: harmoniumIds.has(k.id),
         is_rare_gem: rareGemIds.has(k.id),
-        occasion_tags: tagContextById.get(k.id)?.occasionTags ?? [],
-        person_tag: tagContextById.get(k.id)?.personTag ?? null,
       })).sort(compareOccasionKirtans) ?? [];
 
     const featuredKirtan: KirtanSummary | null = featured.kirtan
