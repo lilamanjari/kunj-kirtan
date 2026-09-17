@@ -1,6 +1,10 @@
 import { unstable_cache } from "next/cache";
 import { supabase } from "@/lib/supabase";
-import { fetchKirtanTagFlags } from "@/lib/server/kirtanTags";
+import {
+  fetchKirtanTagContext,
+  fetchKirtanTagFlags,
+  type KirtanFeatureTagContext,
+} from "@/lib/server/kirtanTags";
 import { getDailyRareGem } from "@/lib/server/featured";
 import { fetchPrimaryLeadSingerImages } from "@/lib/server/leadSingerImages";
 import type {
@@ -71,6 +75,7 @@ function mapFeaturedKirtan(
     focus_x?: number | null;
     focus_y?: number | null;
   } | null,
+  tagContext?: KirtanFeatureTagContext | null,
 ): KirtanSummary | null {
   if (!featuredData) return null;
 
@@ -94,6 +99,12 @@ function mapFeaturedKirtan(
     sequence_num: featuredData.sequence_num ?? null,
     has_harmonium: harmoniumIds.has(featuredData.id),
     is_rare_gem: rareGemIds.has(featuredData.id),
+    ...(tagContext
+      ? {
+          occasion_tags: tagContext.occasionTags,
+          person_tag: tagContext.personTag,
+        }
+      : {}),
   };
 }
 
@@ -190,28 +201,38 @@ const getCachedOtherLeadPageData = unstable_cache(
       ids.unshift(featuredData.id);
     }
 
-    const {
-      harmoniumIds,
-      rareGemIds,
-      error: tagError,
-    } = await fetchKirtanTagFlags(ids);
     const leadSingerIds = [
       ...otherLeadIds,
       ...rows.map((k) => k.lead_singer_id).filter(Boolean),
       featuredData?.lead_singer_id,
     ].filter((value): value is string => Boolean(value));
-    const {
-      imagesByLeadSingerId,
-      error: imageError,
-    } = await fetchPrimaryLeadSingerImages(leadSingerIds);
+    const [
+      { harmoniumIds, rareGemIds, error: tagError },
+      { tagContextById, error: tagContextError },
+      { imagesByLeadSingerId, error: imageError },
+    ] = await Promise.all([
+      fetchKirtanTagFlags(ids),
+      fetchKirtanTagContext(featuredData?.id ? [featuredData.id] : []),
+      fetchPrimaryLeadSingerImages(leadSingerIds),
+    ]);
     if (tagError) {
       console.error("Lead page tag flag lookup failed for others:", tagError);
+    }
+    if (tagContextError) {
+      console.error(
+        "Lead page feature tag context lookup failed for others:",
+        tagContextError,
+      );
     }
     if (imageError) {
       console.error("Lead page image lookup failed for others:", imageError);
     }
     const safeImagesByLeadSingerId =
       imageError ? new Map<string, never>() : imagesByLeadSingerId;
+    const safeTagContextById =
+      tagContextError
+        ? new Map<string, KirtanFeatureTagContext>()
+        : tagContextById;
 
     const data: LeadResponse = {
       lead: {
@@ -237,6 +258,7 @@ const getCachedOtherLeadPageData = unstable_cache(
         featuredData?.lead_singer_id
           ? safeImagesByLeadSingerId.get(featuredData.lead_singer_id)
           : null,
+        featuredData?.id ? safeTagContextById.get(featuredData.id) : null,
       ),
     };
 
@@ -287,27 +309,37 @@ const getCachedSingleLeadPageData = unstable_cache(
       ids.unshift(featuredData.id);
     }
 
-    const {
-      harmoniumIds,
-      rareGemIds,
-      error: tagError,
-    } = await fetchKirtanTagFlags(ids);
     const leadSingerIds = [
       ...rows.map((k) => k.lead_singer_id).filter(Boolean),
       featuredData?.lead_singer_id,
     ].filter((value): value is string => Boolean(value));
-    const {
-      imagesByLeadSingerId,
-      error: imageError,
-    } = await fetchPrimaryLeadSingerImages(leadSingerIds);
+    const [
+      { harmoniumIds, rareGemIds, error: tagError },
+      { tagContextById, error: tagContextError },
+      { imagesByLeadSingerId, error: imageError },
+    ] = await Promise.all([
+      fetchKirtanTagFlags(ids),
+      fetchKirtanTagContext(featuredData?.id ? [featuredData.id] : []),
+      fetchPrimaryLeadSingerImages(leadSingerIds),
+    ]);
     if (tagError) {
       console.error(`Lead page tag flag lookup failed for ${leadId}:`, tagError);
+    }
+    if (tagContextError) {
+      console.error(
+        `Lead page feature tag context lookup failed for ${leadId}:`,
+        tagContextError,
+      );
     }
     if (imageError) {
       console.error(`Lead page image lookup failed for ${leadId}:`, imageError);
     }
     const safeImagesByLeadSingerId =
       imageError ? new Map<string, never>() : imagesByLeadSingerId;
+    const safeTagContextById =
+      tagContextError
+        ? new Map<string, KirtanFeatureTagContext>()
+        : tagContextById;
 
     const data: LeadResponse = {
       lead: {
@@ -337,6 +369,7 @@ const getCachedSingleLeadPageData = unstable_cache(
         featuredData?.lead_singer_id
           ? safeImagesByLeadSingerId.get(featuredData.lead_singer_id)
           : null,
+        featuredData?.id ? safeTagContextById.get(featuredData.id) : null,
       ),
     };
 

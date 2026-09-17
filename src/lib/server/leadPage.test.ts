@@ -6,6 +6,7 @@ const fetchLeadDirectoryMock = vi.fn();
 const fetchLeadCountsMock = vi.fn();
 const fetchLeadKirtansPageMock = vi.fn();
 const fetchKirtanTagFlagsMock = vi.fn();
+const fetchKirtanTagContextMock = vi.fn();
 const fetchPrimaryLeadSingerImagesMock = vi.fn();
 const getDailyRareGemMock = vi.fn();
 
@@ -62,6 +63,8 @@ vi.mock("@/lib/server/leadKirtans", () => ({
 
 vi.mock("@/lib/server/kirtanTags", () => ({
   fetchKirtanTagFlags: (...args: unknown[]) => fetchKirtanTagFlagsMock(...args),
+  fetchKirtanTagContext: (...args: unknown[]) =>
+    fetchKirtanTagContextMock(...args),
 }));
 
 vi.mock("@/lib/server/leadSingerImages", () => ({
@@ -94,6 +97,7 @@ describe("getLeadPageData", () => {
     fetchLeadCountsMock.mockReset();
     fetchLeadKirtansPageMock.mockReset();
     fetchKirtanTagFlagsMock.mockReset();
+    fetchKirtanTagContextMock.mockReset();
     fetchPrimaryLeadSingerImagesMock.mockReset();
     getDailyRareGemMock.mockReset();
 
@@ -117,6 +121,13 @@ describe("getLeadPageData", () => {
     fetchKirtanTagFlagsMock.mockResolvedValue({
       harmoniumIds: new Set<string>(),
       rareGemIds: new Set<string>(),
+      error: null,
+    });
+
+    fetchKirtanTagContextMock.mockResolvedValue({
+      harmoniumIds: new Set<string>(),
+      rareGemIds: new Set<string>(),
+      tagContextById: new Map(),
       error: null,
     });
 
@@ -152,6 +163,37 @@ describe("getLeadPageData", () => {
     expect(result.status).toBe(200);
     expect(result.error).toBeNull();
     expect(result.data?.featured).toBeNull();
+  });
+
+  it("adds display tags to the featured kirtan without adding them to list rows", async () => {
+    getDailyRareGemMock.mockResolvedValue({
+      kirtan: row,
+      error: null,
+    });
+    fetchKirtanTagContextMock.mockResolvedValue({
+      harmoniumIds: new Set<string>(),
+      rareGemIds: new Set<string>(),
+      tagContextById: new Map([
+        [
+          "k1",
+          {
+            occasionTags: ["Avirbhava"],
+            personTag: "Srila Prabhupada",
+          },
+        ],
+      ]),
+      error: null,
+    });
+
+    const { getLeadPageData } = await import("./leadPage");
+    const result = await getLeadPageData("lead-singer");
+
+    expect(result.data?.featured).toMatchObject({
+      occasion_tags: ["Avirbhava"],
+      person_tag: "Srila Prabhupada",
+    });
+    expect(result.data?.kirtans[0]).not.toHaveProperty("occasion_tags");
+    expect(result.data?.kirtans[0]).not.toHaveProperty("person_tag");
   });
 
   it("does not fail the page when tag lookup errors", async () => {

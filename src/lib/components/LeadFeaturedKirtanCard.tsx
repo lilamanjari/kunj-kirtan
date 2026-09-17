@@ -72,6 +72,9 @@ export default function LeadFeaturedKirtanCard({
     .filter(Boolean)
     .join(" • ");
   const subtitleText = subtitleOverride ?? computedSubtitleText;
+  const occasionTags = kirtan.occasion_tags?.slice(0, 3) ?? [];
+  const personTag = kirtan.person_tag ?? null;
+  const hasTagContext = occasionTags.length > 0 || Boolean(personTag);
   const artworkSrc = buildTransformedImageUrl(
     buildBucketImageUrl("page-art/leadsinger-featured.png"),
     {
@@ -125,6 +128,32 @@ export default function LeadFeaturedKirtanCard({
                 downloading={isOfflineDownloading(kirtan.id)}
                 className="shrink-0"
               />
+            </div>
+          ) : null}
+          {hasTagContext ? (
+            <div className="mt-2 space-y-1.5">
+              {occasionTags.length > 0 ? (
+                <div className="flex flex-wrap gap-1.5">
+                  {occasionTags.map((tag) => (
+                    <span
+                      key={tag}
+                      className="rounded-full border border-[#d9b38d]/70 bg-[#fff7ea]/75 px-2 py-0.5 text-[9px] font-semibold tracking-[0.02em] text-[#9a6348] shadow-[0_1px_0_rgba(255,255,255,0.7)]"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              ) : null}
+              {personTag ? (
+                <div className="flex max-w-full items-center gap-1.5 text-[10px] font-medium text-[#8b6956]">
+                  <span className="shrink-0 uppercase tracking-[0.12em] text-[8px] text-[#aa8870]">
+                    With
+                  </span>
+                  <span className="min-w-0 truncate rounded-full border border-[#c8b88a]/55 bg-[#fbf7e8]/70 px-2 py-0.5">
+                    {personTag}
+                  </span>
+                </div>
+              ) : null}
             </div>
           ) : null}
         </div>
