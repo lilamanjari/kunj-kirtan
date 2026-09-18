@@ -18,6 +18,18 @@ type PopularPlayableKirtanRow = PlayableKirtanRow & {
 };
 
 const HOME_RECOMMENDED_LIMIT = 6;
+const HOME_RECENTLY_ADDED_LIMIT = 10;
+const HOME_RECENTLY_ADDED_LOOKUP_LIMIT = 20;
+const HOME_NEW_THIS_WEEK_RAIL_MINIMUM = 3;
+
+export function getStartOfCurrentUtcWeek(date = new Date()) {
+  const start = new Date(
+    Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()),
+  );
+  const daysSinceMonday = (start.getUTCDay() + 6) % 7;
+  start.setUTCDate(start.getUTCDate() - daysSinceMonday);
+  return start.toISOString();
+}
 
 function toKirtanSummary(
   kirtan: PlayableKirtanRow,
@@ -98,16 +110,32 @@ async function buildHomePageData() {
       }
     : null;
 
-  const { data: recentlyAdded, error: recentlyAddedError } = await supabase
-    .from("playable_kirtans_with_titles")
-    .select("*")
-    .in("type", ["MM", "BHJ"])
-    .order("created_at", { ascending: false })
-    .order("recorded_date", { ascending: false })
-    .limit(10);
+  const [
+    { data: recentlyAdded, error: recentlyAddedError },
+    { data: newThisWeek, error: newThisWeekError },
+  ] = await Promise.all([
+    supabase
+      .from("playable_kirtans_with_titles")
+      .select("*")
+      .in("type", ["MM", "BHJ"])
+      .order("created_at", { ascending: false })
+      .order("recorded_date", { ascending: false })
+      .limit(HOME_RECENTLY_ADDED_LOOKUP_LIMIT),
+    supabase
+      .from("playable_kirtans_with_titles")
+      .select("*")
+      .in("type", ["MM", "BHJ"])
+      .gte("created_at", getStartOfCurrentUtcWeek())
+      .order("created_at", { ascending: false })
+      .order("recorded_date", { ascending: false }),
+  ]);
 
-  if (recentlyAddedError) {
-    return { data: null, error: recentlyAddedError.message, status: 500 };
+  if (recentlyAddedError || newThisWeekError) {
+    return {
+      data: null,
+      error: recentlyAddedError?.message ?? newThisWeekError?.message,
+      status: 500,
+    };
   }
 
   const { data: popularKirtans, error: popularError } = await supabase
@@ -171,17 +199,37 @@ async function buildHomePageData() {
 
   const recommendedRows = recommended.kirtans;
 
-  const recentRows: PlayableKirtanRow[] = recentlyAdded ?? [];
+  const newThisWeekRows: PlayableKirtanRow[] = (newThisWeek ?? []).filter(
+    (kirtan) => kirtan.id !== featured.kirtan?.id,
+  );
+  const shouldShowNewThisWeekRail =
+    newThisWeekRows.length >= HOME_NEW_THIS_WEEK_RAIL_MINIMUM;
+  const newThisWeekIds = new Set(newThisWeekRows.map((kirtan) => kirtan.id));
+  const recentRows: PlayableKirtanRow[] = (recentlyAdded ?? []).filter(
+    (kirtan) => !shouldShowNewThisWeekRail || !newThisWeekIds.has(kirtan.id),
+  ).slice(0, HOME_RECENTLY_ADDED_LIMIT);
   const popularRows: PopularPlayableKirtanRow[] = popularKirtans ?? [];
   const recommendedIds = recommendedRows.map((k) => k.id);
+  const newThisWeekKirtanIds = newThisWeekRows.map((k) => k.id);
   const recentIds = recentRows.map((k) => k.id);
   const popularIds = popularRows.map((k) => k.id);
   const featuredId = featured.kirtan?.id ?? null;
   const harmoniumLookupIds = Array.from(
     new Set(
       featuredId
-        ? [featuredId, ...recentIds, ...popularIds, ...recommendedIds]
-        : [...recentIds, ...popularIds, ...recommendedIds],
+        ? [
+            featuredId,
+            ...newThisWeekKirtanIds,
+            ...recentIds,
+            ...popularIds,
+            ...recommendedIds,
+          ]
+        : [
+            ...newThisWeekKirtanIds,
+            ...recentIds,
+            ...popularIds,
+            ...recommendedIds,
+          ],
     ),
   );
 
@@ -201,6 +249,7 @@ async function buildHomePageData() {
     new Set(
       [
         featured.kirtan?.lead_singer_id,
+        ...newThisWeekRows.map((k) => k.lead_singer_id),
         ...recentRows.map((k) => k.lead_singer_id),
         ...popularRows.map((k) => k.lead_singer_id),
         ...recommendedRows.map((k) => k.lead_singer_id),
@@ -232,6 +281,14 @@ async function buildHomePageData() {
   }
 
   const recentlyAddedKirtans: KirtanSummary[] = recentRows.map((k) =>
+    toKirtanSummary(
+      k,
+      harmoniumIds,
+      rareGemIds,
+      imagesByLeadSingerId,
+    ),
+  );
+  const newThisWeekKirtans: KirtanSummary[] = newThisWeekRows.map((k) =>
     toKirtanSummary(
       k,
       harmoniumIds,
@@ -288,6 +345,7 @@ async function buildHomePageData() {
     ],
     popular: popularSummaries.filter((k) => k.id !== featuredKirtan?.id),
     recommended: recommendedSummaries,
+    new_this_week: newThisWeekKirtans,
     recently_added: recentlyAddedKirtans.filter(
       (k) => k.id !== featuredKirtan?.id,
     ),

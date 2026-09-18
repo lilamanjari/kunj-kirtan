@@ -22,6 +22,7 @@ export const enDictionary: AppDictionary = {
     listeningHistory: "Listening History",
     noListeningHistory: "Your recently listened kirtans will appear here.",
     more: "More",
+    new: "New",
   },
   explore: {
     bhajans: "Bhajan",
@@ -60,6 +61,7 @@ export const enDictionary: AppDictionary = {
     recommendedSubtitle: "Rare gems refreshed weekly.",
     popular: "Popular",
     popularSubtitle: "Our most played tracks.",
+    newThisWeek: "New This Week",
   },
   install: {
     prompt: "Do you want to install this app to your home screen?",

@@ -5,6 +5,7 @@ import FeaturedKirtanCard from "@/lib/components/FeaturedKirtanCard";
 import HomeFavoritesStrip from "@/lib/components/HomeFavoritesStrip";
 import HomePopularStrip from "@/lib/components/HomePopularStrip";
 import HomeListeningHistoryStrip from "@/lib/components/HomeListeningHistoryStrip";
+import HomeNewThisWeekStrip from "@/lib/components/HomeNewThisWeekStrip";
 import HomeRecommendedStrip from "@/lib/components/HomeRecommendedStrip";
 import KirtanListItem from "@/lib/components/KirtanListItem";
 import {
@@ -128,6 +129,9 @@ export default function HomeClient({ data }: { data: HomeData }) {
   } = useAudioPlayer();
   const primaryAction = data.primary_action;
   const recentlyAdded = data.recently_added ?? [];
+  const newThisWeek = data.new_this_week ?? [];
+  const shouldUseNewPills = newThisWeek.length > 0 && newThisWeek.length < 3;
+  const newThisWeekIds = new Set(newThisWeek.map((kirtan) => kirtan.id));
   const entryPointLinks: Record<string, string> = {
     MM: "/explore/maha-mantras",
     BHJ: "/explore/bhajans",
@@ -380,6 +384,7 @@ export default function HomeClient({ data }: { data: HomeData }) {
             />
             <HomeRecommendedStrip kirtans={data.recommended ?? []} />
             <HomePopularStrip kirtans={data.popular ?? []} />
+            <HomeNewThisWeekStrip kirtans={newThisWeek} />
             <HomeListeningHistoryStrip />
           </div>
 
@@ -404,6 +409,13 @@ export default function HomeClient({ data }: { data: HomeData }) {
                       />
                     }
                     {...getMixedListItemDisplayProps(k)}
+                    titleBadge={
+                      shouldUseNewPills && newThisWeekIds.has(k.id) ? (
+                        <span className="rounded-full border border-[#d9bd83]/70 bg-[#fff5d6] px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.08em] text-[#93713c]">
+                          {dictionary.common.new}
+                        </span>
+                      ) : null
+                    }
                     isActive={isActive(k)}
                     isPlaying={isPlaying(k)}
                     isLoading={isLoading(k)}

@@ -26,5 +26,7 @@ export type HomeData = {
 
   recommended: KirtanSummary[];
 
+  new_this_week: KirtanSummary[];
+
   recently_added: KirtanSummary[];
 };

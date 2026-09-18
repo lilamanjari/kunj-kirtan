@@ -20,6 +20,7 @@ export type AppDictionary = {
     listeningHistory: string;
     noListeningHistory: string;
     more: string;
+    new: string;
   };
   explore: {
     bhajans: string;
@@ -58,6 +59,7 @@ export type AppDictionary = {
     recommendedSubtitle: string;
     popular: string;
     popularSubtitle: string;
+    newThisWeek: string;
   };
   install: {
     prompt: string;

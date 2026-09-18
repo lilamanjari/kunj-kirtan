@@ -13,6 +13,7 @@ const EMPTY_HOME_DATA: HomeData = {
   ],
   popular: [],
   recommended: [],
+  new_this_week: [],
   recently_added: [],
 };
 

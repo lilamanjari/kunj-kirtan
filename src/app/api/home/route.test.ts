@@ -75,11 +75,16 @@ vi.mock("@/lib/server/leadSingerImages", () => ({
   }),
 }));
 
-type MockResult = { data: unknown; error: null | { message: string } };
+type MockResult = {
+  data: unknown;
+  count?: number | null;
+  error: null | { message: string };
+};
 type MockBuilder = {
   select: ReturnType<typeof vi.fn>;
   in: ReturnType<typeof vi.fn>;
   eq: ReturnType<typeof vi.fn>;
+  gte: ReturnType<typeof vi.fn>;
   or: ReturnType<typeof vi.fn>;
   maybeSingle: ReturnType<typeof vi.fn>;
   limit: ReturnType<typeof vi.fn>;
@@ -106,6 +111,7 @@ function createMockBuilder(result: MockResult): MockBuilder {
   self.select = vi.fn(chain);
   self.in = vi.fn(chain);
   self.eq = vi.fn(chain);
+  self.gte = vi.fn(chain);
   self.or = vi.fn(chain);
   self.maybeSingle = vi.fn(chain);
   self.limit = vi.fn(chain);
@@ -141,6 +147,41 @@ describe("GET /api/home", () => {
       {
         data: [
           {
+            id: "new-1",
+            audio_url: "new-1.mp3",
+            type: "MM",
+            title: "New One",
+            lead_singer: "S5",
+            recorded_date: "2020-05-01",
+            sanga: "Kunj",
+            duration_seconds: 120,
+          },
+          {
+            id: "new-2",
+            audio_url: "new-2.mp3",
+            type: "BHJ",
+            title: "New Two",
+            lead_singer: "S6",
+            recorded_date: "2020-05-02",
+            sanga: "Kunj",
+            duration_seconds: 120,
+          },
+          {
+            id: "new-3",
+            audio_url: "new-3.mp3",
+            type: "MM",
+            title: "New Three",
+            lead_singer: "S7",
+            recorded_date: "2020-05-03",
+            sanga: "Kunj",
+            duration_seconds: 120,
+          },
+        ],
+        error: null,
+      },
+      {
+        data: [
+          {
             id: "k3",
             audio_url: "a3",
             type: "MM",
@@ -152,10 +193,6 @@ describe("GET /api/home", () => {
             play_count: 12,
           },
         ],
-        error: null,
-      },
-      {
-        data: [{ kirtan_id: "k4" }],
         error: null,
       },
       {
@@ -171,22 +208,6 @@ describe("GET /api/home", () => {
       {
         data: [],
         count: 5,
-        error: null,
-      },
-      {
-        data: [
-          {
-            id: "k4",
-            audio_url: "a4",
-            type: "BHJ",
-            title: "Rare Gem One",
-            lead_singer: "S4",
-            lead_singer_id: "lead-4",
-            recorded_date: "2020-04-01",
-            sanga: "Q",
-            duration_seconds: 210,
-          },
-        ],
         error: null,
       },
     ];
@@ -214,6 +235,10 @@ describe("GET /api/home", () => {
       duration_seconds: 210,
       is_rare_gem: false,
     });
+    expect(json.new_this_week).toHaveLength(3);
+    expect(json.recently_added.map((kirtan: { id: string }) => kirtan.id)).not.toContain(
+      "new-1",
+    );
     expect(json.recently_added).toHaveLength(1);
     expect(json.recently_added[0]).toMatchObject({
       id: "k2",
@@ -300,6 +325,7 @@ describe("GET /api/home", () => {
   it("filters the featured kirtan out of popular", async () => {
     const sequence: MockResult[] = [
       { data: [], error: null },
+      { data: [], error: null },
       {
         data: [
           {
@@ -327,40 +353,9 @@ describe("GET /api/home", () => {
         ],
         error: null,
       },
-      {
-        data: [{ kirtan_id: "k1" }, { kirtan_id: "k4" }],
-        error: null,
-      },
       { data: [], count: 10, error: null },
       { data: [], count: 20, error: null },
       { data: [], count: 5, error: null },
-      {
-        data: [
-          {
-            id: "k1",
-            audio_url: "a1",
-            type: "MM",
-            title: "Maha Mantra",
-            lead_singer: "S1",
-            lead_singer_id: "lead-1",
-            recorded_date: "2020-01-01",
-            sanga: "X",
-            duration_seconds: 120,
-          },
-          {
-            id: "k4",
-            audio_url: "a4",
-            type: "BHJ",
-            title: "Bhajan Two",
-            lead_singer: "S4",
-            lead_singer_id: "lead-4",
-            recorded_date: "2020-04-01",
-            sanga: "Q",
-            duration_seconds: 210,
-          },
-        ],
-        error: null,
-      },
     ];
 
     fromMock.mockImplementation(() => {

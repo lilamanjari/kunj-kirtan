@@ -49,6 +49,7 @@ vi.mock("@/lib/i18n/LocaleProvider", () => ({
     common: {
       discover: "Discover",
       recentlyAdded: "Recently Added",
+      new: "New",
       aboutKunjKirtan: "About Kunj Kirtan",
     },
     explore: {
@@ -60,6 +61,7 @@ vi.mock("@/lib/i18n/LocaleProvider", () => ({
     home: {
       currentVrata: "Current Vrata",
       currentVrataSubtitle: "Current Vrata Subtitle",
+      newThisWeek: "New This Week",
     },
     actions: {
       dismiss: "Dismiss",
@@ -95,12 +97,29 @@ vi.mock("@/lib/components/HomeListeningHistoryStrip", () => ({
   default: () => <div>Listening history strip</div>,
 }));
 
+vi.mock("@/lib/components/HomeNewThisWeekStrip", () => ({
+  default: ({ kirtans }: { kirtans: KirtanSummary[] }) => (
+    kirtans.length >= 3 ? <div>New this week strip ({kirtans.length})</div> : null
+  ),
+}));
+
 vi.mock("@/lib/components/HomeRecommendedStrip", () => ({
   default: () => <div>Recommended strip</div>,
 }));
 
 vi.mock("@/lib/components/KirtanListItem", () => ({
-  default: ({ kirtan }: { kirtan: KirtanSummary }) => <li>{kirtan.title}</li>,
+  default: ({
+    kirtan,
+    titleBadge,
+  }: {
+    kirtan: KirtanSummary;
+    titleBadge?: ReactNode;
+  }) => (
+    <li>
+      {kirtan.title}
+      {titleBadge}
+    </li>
+  ),
 }));
 
 vi.mock("@/lib/components/FeaturedKirtanCard", () => ({
@@ -128,6 +147,7 @@ describe("HomeClient", () => {
     entry_points: [],
     popular: [],
     recommended: [],
+    new_this_week: [],
     recently_added: [featuredKirtan],
   };
 
@@ -136,5 +156,37 @@ describe("HomeClient", () => {
 
     expect(screen.getByText("Featured")).toBeTruthy();
     expect(screen.getAllByText("Featured Kirtan").length).toBeGreaterThan(0);
+  });
+
+  it("passes this week's kirtans to the rail above listening history", () => {
+    render(
+      <HomeClient
+        data={{
+          ...data,
+          new_this_week: [
+            { ...featuredKirtan, id: "new-1" },
+            { ...featuredKirtan, id: "new-2" },
+            { ...featuredKirtan, id: "new-3" },
+          ],
+        }}
+      />,
+    );
+
+    expect(screen.getByText("New this week strip (3)")).toBeTruthy();
+  });
+
+  it("marks one or two new tracks in Recently Added instead of showing a sparse rail", () => {
+    render(
+      <HomeClient
+        data={{
+          ...data,
+          primary_action: null,
+          new_this_week: [featuredKirtan],
+        }}
+      />,
+    );
+
+    expect(screen.getByText("New")).toBeTruthy();
+    expect(screen.queryByText("New this week strip (1)")).toBeNull();
   });
 });

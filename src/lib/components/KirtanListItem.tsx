@@ -33,6 +33,7 @@ type KirtanListItemProps = {
   leadingVisual?: ReactNode;
   titleOverride?: string;
   subtitleOverride?: string;
+  titleBadge?: ReactNode;
   useShortDate?: boolean;
   stackActionsOnMobile?: boolean;
   isActive: boolean;
@@ -53,6 +54,7 @@ export default function KirtanListItem({
   leadingVisual,
   titleOverride,
   subtitleOverride,
+  titleBadge,
   useShortDate = false,
   stackActionsOnMobile = false,
   isActive,
@@ -141,12 +143,15 @@ export default function KirtanListItem({
       <div className="relative z-[2] min-w-0 flex-1">
         <div className="flex items-start justify-between gap-0">
           <div className="min-w-0 flex-1">
-            <p
-              className={`truncate text-[1.05rem] leading-snug text-(--theme-page-home-text) ${displayHeadingClassName}`}
-              title={titleText}
-            >
-              {titleText}
-            </p>
+            <div className="flex min-w-0 items-center gap-2">
+              <p
+                className={`truncate text-[1.05rem] leading-snug text-(--theme-page-home-text) ${displayHeadingClassName}`}
+                title={titleText}
+              >
+                {titleText}
+              </p>
+              {titleBadge ? <span className="shrink-0">{titleBadge}</span> : null}
+            </div>
           </div>
           {showCompactMobileMeta ? (
             <div className="ml-2 flex shrink-0 items-center gap-1 self-start">

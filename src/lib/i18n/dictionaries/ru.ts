@@ -23,6 +23,7 @@ export const ruDictionary: AppDictionary = {
     listeningHistory: "История прослушивания",
     noListeningHistory: "Здесь появятся недавно прослушанные киртаны.",
     more: "Еще",
+    new: "Новое",
   },
   explore: {
     bhajans: "Бхаджаны",
@@ -61,6 +62,7 @@ export const ruDictionary: AppDictionary = {
     recommendedSubtitle: "Редкие жемчужины, обновляемые еженедельно.",
     popular: "Популярное",
     popularSubtitle: "Наши самые часто прослушиваемые треки.",
+    newThisWeek: "Новое на этой неделе",
   },
   install: {
     prompt: "Добавить это приложение на главный экран?",
