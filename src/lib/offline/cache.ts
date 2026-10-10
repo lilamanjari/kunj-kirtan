@@ -43,6 +43,11 @@ function getShellAssetUrls(html: string) {
       }
     });
 
+  // Next embeds route chunks in its Flight payload as well as script tags.
+  // Those chunks must be available before the cached page can hydrate offline.
+  for (const match of html.matchAll(/(?:\/_next\/)?static\/[^"\\\s<>]+\.(?:js|css)/g)) {
+    urls.add(new URL(match[0].startsWith("/") ? match[0] : `/_next/${match[0]}`, window.location.origin).href);
+  }
   return [...urls];
 }
 

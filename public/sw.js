@@ -23,16 +23,29 @@ async function cacheFirst(request, cacheName) {
 
 async function networkFirst(request) {
   const cache = await caches.open(SHELL_CACHE);
+  const url = new URL(request.url);
+  const locale = /^\/(en|ru)(?:\/|$)/.exec(url.pathname)?.[1] || "en";
+  const favoritesUrl = new URL(`/${locale}/favorites`, url.origin).href;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 4000);
   try {
-    const response = await fetch(request);
-    if (response && response.ok) {
-      cache.put(request, response.clone());
-    }
+    const response = await fetch(request, { signal: controller.signal });
+    if (!response.ok) throw new Error("Navigation failed");
+    await cache.put(request, response.clone());
     return response;
   } catch {
-    const cached = await cache.match(request);
+    const favorites = await cache.match(favoritesUrl, { ignoreVary: true });
+    if (favorites) {
+      if (url.pathname.replace(/\/$/, "") !== `/${locale}/favorites`) {
+        return Response.redirect(favoritesUrl, 302);
+      }
+      return favorites;
+    }
+    const cached = await cache.match(request, { ignoreSearch: true, ignoreVary: true });
     if (cached) return cached;
     throw new Error("Offline");
+  } finally {
+    clearTimeout(timer);
   }
 }
 

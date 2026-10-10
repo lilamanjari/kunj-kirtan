@@ -1,4 +1,7 @@
 "use client";
+import { useState } from "react";
+import type { KirtanType } from "@/types/kirtan";
+import { selectFavorites } from "@/lib/offline/selectFavorites";
 import { SFIcon } from "@bradleyhodges/sfsymbols-react";
 import {
   sfPlaySquareStackFill,
@@ -35,6 +38,20 @@ export default function FavoritesPageClient() {
     toggleOfflineForKirtan,
   } = useAudioPlayer();
 
+  const [selectedType, setSelectedType] = useState<KirtanType | null>(null);
+  const filters: { key: KirtanType; label: string }[] = [
+    { key: "MM", label: dictionary.explore.mahaMantra },
+    { key: "BHJ", label: dictionary.explore.bhajans },
+    { key: "HK", label: dictionary.explore.hariKatha },
+  ];
+  const visibleFilters = filters.filter(({ key }) =>
+    favorites.some(item => item.type === key),
+  );
+  const activeType = visibleFilters.find(({ key }) => key === selectedType)?.key
+    ?? visibleFilters[0]?.key
+    ?? "MM";
+  const visibleFavorites = selectFavorites(favorites, activeType);
+
   return (
     <div className="relative min-h-screen overflow-hidden bg-[linear-gradient(180deg,_#f5d7d0_0%,_#f6e4de_18%,_#f7ece7_42%,_#f8f2ef_100%)] text-stone-900">
       <main className="relative z-10 mx-auto max-w-md px-5 py-6 space-y-6">
@@ -51,7 +68,7 @@ export default function FavoritesPageClient() {
                 <p
                   className={`truncate text-[0.95rem] tracking-[0.08em] text-(--theme-page-home-muted) ${displayHeadingClassName}`}
                 >
-                  {favorites.length} {dictionary.common.favorites}
+                  {visibleFavorites.length} {dictionary.common.favorites}
                 </p>
               ) : null}
             </div>
@@ -90,11 +107,11 @@ export default function FavoritesPageClient() {
                   </button>
                 </>
               ) : null}
-              {favorites.length > 1 ? (
+              {visibleFavorites.length > 1 ? (
                 <>
                   <button
                     type="button"
-                    onClick={() => playCollection(favorites)}
+                    onClick={() => playCollection(visibleFavorites)}
                     aria-label={dictionary.actions.playAll}
                     title={dictionary.actions.playAll}
                     className="flex h-8 w-8 items-center justify-center rounded-full border border-[#ead8d2] bg-white text-stone-700 shadow-sm hover:bg-[#fff7f3]"
@@ -103,7 +120,7 @@ export default function FavoritesPageClient() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => playCollection(favorites, { shuffle: true })}
+                    onClick={() => playCollection(visibleFavorites, { shuffle: true })}
                     aria-label={dictionary.actions.shuffle}
                     title={dictionary.actions.shuffle}
                     className="flex h-8 w-8 items-center justify-center rounded-full border border-[#ead8d2] bg-white text-stone-700 shadow-sm hover:bg-[#fff7f3]"
@@ -120,6 +137,20 @@ export default function FavoritesPageClient() {
             </p>
           ) : null}
 
+          {visibleFilters.length > 1 ? (
+            <div className="mt-4 flex flex-wrap gap-2" aria-label={dictionary.common.favorites}>
+              {visibleFilters.map(({ key, label }) => (
+                <button key={key} type="button" aria-pressed={activeType === key}
+                  onClick={() => setSelectedType(key)}
+                  className={`rounded-full px-4 py-1.5 text-xs font-medium transition ${activeType === key
+                    ? "bg-(--theme-player-green) text-white shadow-sm"
+                    : "border border-[#efd4cb] bg-white text-[#7e665c] hover:bg-[#fff8f4]"}`}>
+                  {label} ({favorites.filter(item => item.type === key).length})
+                </button>
+              ))}
+            </div>
+          ) : null}
+
           {!favoritesLoaded ? (
             <div className="mt-3 rounded-xl border border-dashed border-stone-200 bg-white px-4 py-6">
               <div className="space-y-3">
@@ -131,13 +162,13 @@ export default function FavoritesPageClient() {
                 ))}
               </div>
             </div>
-          ) : favorites.length === 0 ? (
+          ) : visibleFavorites.length === 0 ? (
             <div className="mt-3 rounded-xl border border-dashed border-stone-200 bg-white px-4 py-6 text-center text-sm text-stone-500">
-              {dictionary.common.noFavoritesYet}
+              {favorites.length === 0 ? dictionary.common.noFavoritesYet : dictionary.explore.noKirtansFound}
             </div>
           ) : (
             <ul className="mt-3 space-y-3">
-              {favorites.map((kirtan) => (
+              {visibleFavorites.map((kirtan) => (
                 <KirtanListItem
                   key={kirtan.id}
                   kirtan={kirtan}
