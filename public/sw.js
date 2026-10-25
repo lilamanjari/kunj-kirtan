@@ -1,4 +1,4 @@
-const SHELL_CACHE = "kirtan-oasis-shell-v2";
+const SHELL_CACHE = "kirtan-oasis-shell-v3";
 const MEDIA_CACHE = "kirtan-oasis-media-v1";
 
 self.addEventListener("install", (event) => {
@@ -6,17 +6,22 @@ self.addEventListener("install", (event) => {
 });
 
 self.addEventListener("activate", (event) => {
-  event.waitUntil(self.clients.claim());
+  event.waitUntil((async () => {
+    const names = await caches.keys();
+    await Promise.all(names.filter((name) => name.startsWith("kirtan-oasis-shell-") && name !== SHELL_CACHE)
+      .map((name) => caches.delete(name)));
+    await self.clients.claim();
+  })());
 });
 
 async function cacheFirst(request, cacheName) {
-  const cached = await caches.match(request);
+  const cache = await caches.open(cacheName);
+  const cached = await cache.match(request);
   if (cached) return cached;
 
   const response = await fetch(request);
   if (response && (response.ok || response.type === "opaque")) {
-    const cache = await caches.open(cacheName);
-    cache.put(request, response.clone());
+    await cache.put(request, response.clone());
   }
   return response;
 }
@@ -24,6 +29,7 @@ async function cacheFirst(request, cacheName) {
 async function networkFirst(request) {
   const cache = await caches.open(SHELL_CACHE);
   const url = new URL(request.url);
+
   const locale = /^\/(en|ru)(?:\/|$)/.exec(url.pathname)?.[1] || "en";
   const favoritesUrl = new URL(`/${locale}/favorites`, url.origin).href;
   const controller = new AbortController();
@@ -55,6 +61,14 @@ self.addEventListener("fetch", (event) => {
   if (request.headers.has("range")) return;
 
   const url = new URL(request.url);
+
+  // Dev chunk URLs are reused after edits. An old worker must not serve them.
+  if (["localhost", "127.0.0.1", "[::1]"].includes(self.location.hostname)) return;
+  const isAdmin = (pathname) => /^\/(?:api\/)?admin(?:\/|$)/.test(pathname);
+  if (isAdmin(url.pathname)) return;
+  // Keep the admin's scripts/styles/images on the network as well.
+  if (request.referrer && isAdmin(new URL(request.referrer).pathname)) return;
+  if (url.pathname.startsWith("/_next/") && !url.pathname.startsWith("/_next/static/")) return;
 
   if (request.mode === "navigate") {
     event.respondWith(networkFirst(request));

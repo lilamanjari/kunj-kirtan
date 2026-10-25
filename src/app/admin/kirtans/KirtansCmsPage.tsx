@@ -127,6 +127,9 @@ export function KirtansCmsPage({
   >({});
   const [publishingState, setPublishingState] = useState<SaveState>("idle");
   const [typeState, setTypeState] = useState<SaveState>("idle");
+  const [leadSingerSave, setLeadSingerSave] = useState<{
+    kirtanId: string; state: SaveState; error?: string;
+  } | null>(null);
   const [deleteState, setDeleteState] = useState<SaveState>("idle");
   const [leadSingerOptions, setLeadSingerOptions] = useState<
     AdminLeadSingerOption[]
@@ -496,6 +499,40 @@ export function KirtansCmsPage({
           ? deleteError.message
           : "Failed to delete kirtan",
       );
+    }
+  }
+
+  async function changeLeadSinger(leadSingerId: string) {
+    if (!selected || selected.type !== "BHJ" || leadSingerId === selected.lead_singer_id || leadSingerSave?.state === "saving") return;
+    const kirtanId = selected.id;
+    setLeadSingerSave({ kirtanId, state: "saving" });
+    try {
+      const response = await fetch(`/api/admin/kirtans/${kirtanId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ leadSingerId }),
+      });
+      const json = await response.json();
+      if (!response.ok) throw new Error(json.error ?? "Failed to update lead singer");
+      const detail = json.kirtan as AdminKirtanDetail;
+      setSelected((current) => current?.id === kirtanId ? { ...current,
+        lead_singer_id: detail.lead_singer_id,
+        lead_singer: detail.lead_singer,
+        lead_singer_image_url: detail.lead_singer_image_url,
+        lead_singer_image_alt: detail.lead_singer_image_alt,
+        lead_singer_image_focus_x: detail.lead_singer_image_focus_x,
+        lead_singer_image_focus_y: detail.lead_singer_image_focus_y,
+      } : current);
+      setKirtans((current) => current.map((item) => item.id === kirtanId ? { ...item,
+        lead_singer: detail.lead_singer,
+        lead_singer_image_url: detail.lead_singer_image_url,
+        lead_singer_image_alt: detail.lead_singer_image_alt,
+        lead_singer_image_focus_x: detail.lead_singer_image_focus_x,
+        lead_singer_image_focus_y: detail.lead_singer_image_focus_y,
+      } : item));
+      setLeadSingerSave({ kirtanId, state: "saved" });
+    } catch (error) {
+      setLeadSingerSave({ kirtanId, state: "error", error: error instanceof Error ? error.message : "Failed to update lead singer" });
     }
   }
 
@@ -1067,7 +1104,7 @@ export function KirtansCmsPage({
                   audioUrl={selected.audio_url}
                   waveformUrl={
                     selected.audio_url
-                      ? `/api/admin/kirtans/${selected.id}/audio-file`
+                      ? `/api/admin/kirtans/${selected.id}/waveform?version=${encodeURIComponent(selected.audio_url)}`
                       : null
                   }
                   fileName={selected.audio_file_name}
@@ -1104,6 +1141,7 @@ export function KirtansCmsPage({
                           <div className="flex items-center gap-3">
                             <select
                               value={selected.type}
+                              disabled={leadSingerSave?.state === "saving"}
                               onChange={(event) =>
                                 void changeType(
                                   event.target.value as TypeFilter,
@@ -1142,7 +1180,30 @@ export function KirtansCmsPage({
                           Lead singer
                         </dt>
                         <dd className="mt-1 font-medium">
-                          {selected.lead_singer ?? "Unknown"}
+                          {selected.type === "BHJ" ? (
+                            <div className="space-y-1">
+                              <select
+                                aria-label="Lead singer"
+                                value={selected.lead_singer_id ?? ""}
+                                disabled={leadSingerOptions.length === 0 || typeState === "saving" || leadSingerSave?.state === "saving"}
+                                onChange={(event) => void changeLeadSinger(event.target.value)}
+                                className={fieldClassName()}
+                              >
+                                {!selected.lead_singer_id ? <option value="" disabled>Choose a lead singer</option> : null}
+                                {selected.lead_singer_id && !leadSingerOptions.some((singer) => singer.id === selected.lead_singer_id) ? (
+                                  <option value={selected.lead_singer_id}>{selected.lead_singer ?? "Current lead singer"}</option>
+                                ) : null}
+                                {leadSingerOptions.map((singer) => <option key={singer.id} value={singer.id}>{singer.display_name}</option>)}
+                              </select>
+                              <p role="status" className="text-xs text-[#9d786d]">
+                                {leadSingerSave?.kirtanId === selected.id
+                                  ? leadSingerSave.state === "saving" ? "Saving…"
+                                    : leadSingerSave.state === "saved" ? "Saved"
+                                      : leadSingerSave.error ?? ""
+                                  : "Changes save automatically."}
+                              </p>
+                            </div>
+                          ) : selected.lead_singer ?? "Unknown"}
                         </dd>
                       </div>
                       <div>

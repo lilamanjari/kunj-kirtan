@@ -12,7 +12,9 @@ export default function ServiceWorkerRegistrar() {
       return;
     }
 
-    void navigator.serviceWorker.register("/sw.js").catch(() => {
+    if (process.env.NODE_ENV !== "production") return;
+
+    void navigator.serviceWorker.register("/sw.js", { updateViaCache: "none" }).catch(() => {
       // ignore registration failures
     });
   }, []);

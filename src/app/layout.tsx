@@ -4,6 +4,7 @@ import { Cormorant_Garamond, Dancing_Script, Inter } from "next/font/google";
 import "./globals.css";
 import { Analytics } from "@vercel/analytics/react";
 import JsonLd from "@/lib/components/JsonLd";
+import DevelopmentServiceWorkerCleanup from "@/lib/components/DevelopmentServiceWorkerCleanup";
 import {
   buildOrganizationJsonLd,
   buildWebSiteJsonLd,
@@ -69,6 +70,7 @@ export default async function RootLayout({
         className={`${inter.variable} ${cormorantGaramond.variable} ${dancingScript.variable} antialiased`}
       >
         <JsonLd data={[buildWebSiteJsonLd(), buildOrganizationJsonLd()]} />
+        <DevelopmentServiceWorkerCleanup />
         <Suspense fallback={null}>{children}</Suspense>
         <Analytics />
       </body>

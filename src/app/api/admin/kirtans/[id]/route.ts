@@ -62,7 +62,39 @@ export async function PATCH(
     const body = (await req.json()) as {
       published?: boolean;
       type?: KirtanType;
+      leadSingerId?: unknown;
     };
+
+    if ("leadSingerId" in body) {
+      if (typeof body.leadSingerId !== "string" ||
+          !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(body.leadSingerId)) {
+        return NextResponse.json({ error: "Choose a valid lead singer" }, { status: 400 });
+      }
+      if ("type" in body || "published" in body) {
+        return NextResponse.json({ error: "Save the lead singer separately from other changes" }, { status: 400 });
+      }
+      const { data: existing, error: existingError } = await supabaseAdmin
+        .from("kirtans").select("id, type").eq("id", id).maybeSingle();
+      if (existingError) throw new Error(existingError.message);
+      if (!existing) return NextResponse.json({ error: "Kirtan not found" }, { status: 404 });
+      if (existing.type !== "BHJ") {
+        return NextResponse.json({ error: "Lead singer changes are currently supported for bhajans only" }, { status: 400 });
+      }
+      const { data: singer, error: singerError } = await supabaseAdmin
+        .from("lead_singers").select("id").eq("id", body.leadSingerId).maybeSingle();
+      if (singerError) throw new Error(singerError.message);
+      if (!singer) return NextResponse.json({ error: "Lead singer not found" }, { status: 400 });
+      const { data: updated, error: updateError } = await supabaseAdmin
+        .from("kirtans")
+        .update({ lead_singer_id: singer.id, updated_at: new Date().toISOString() })
+        .eq("id", id).eq("type", "BHJ").select("id").maybeSingle();
+      if (updateError) throw new Error(updateError.message);
+      if (!updated) {
+        return NextResponse.json({ error: "This bhajan changed. Reload it and try again." }, { status: 409 });
+      }
+      revalidateCmsAndPublicContent();
+      return NextResponse.json({ ok: true, kirtan: await getAdminKirtanDetail(id) });
+    }
 
     if (typeof body.published === "boolean") {
       const { error } = await supabaseAdmin
@@ -87,7 +119,7 @@ export async function PATCH(
 
     if (!isEditableType(body.type)) {
       return NextResponse.json(
-        { error: "Only published or type updates are supported here" },
+        { error: "Only published, type or bhajan lead singer updates are supported here" },
         { status: 400 },
       );
     }

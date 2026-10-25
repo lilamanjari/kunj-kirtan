@@ -74,51 +74,6 @@ function getWaveformGutterWidth(viewportWidth: number, zoomLevel: ZoomLevel) {
   return Math.max(0, Math.round(viewportWidth / 2));
 }
 
-function buildWaveformPeaks(channelData: Float32Array, barCount: number) {
-  if (channelData.length === 0 || barCount <= 0) {
-    return [];
-  }
-
-  const blockSize = Math.max(1, Math.floor(channelData.length / barCount));
-  const peaks: number[] = [];
-
-  for (let index = 0; index < barCount; index += 1) {
-    const start = index * blockSize;
-    const end =
-      index === barCount - 1
-        ? channelData.length
-        : Math.min(channelData.length, start + blockSize);
-
-    let sumSquares = 0;
-    let sampleCount = 0;
-    let localPeak = 0;
-
-    for (let sampleIndex = start; sampleIndex < end; sampleIndex += 1) {
-      const amplitude = Math.abs(channelData[sampleIndex] ?? 0);
-      sumSquares += amplitude * amplitude;
-      sampleCount += 1;
-
-      if (amplitude > localPeak) {
-        localPeak = amplitude;
-      }
-    }
-
-    const rms = sampleCount > 0 ? Math.sqrt(sumSquares / sampleCount) : 0;
-    peaks.push(rms * 0.7 + localPeak * 0.3);
-  }
-
-  const maxPeak = Math.max(...peaks, 0);
-  if (maxPeak <= 0) {
-    return peaks.map(() => 0.16);
-  }
-
-  return peaks.map((peak) => {
-    const normalized = peak / maxPeak;
-    const eased = Math.pow(normalized, 0.75);
-    return Math.max(0.08, eased);
-  });
-}
-
 function compressPeaks(peaks: number[], targetCount: number) {
   if (peaks.length <= targetCount || targetCount <= 0) {
     return peaks;
@@ -231,6 +186,8 @@ export function AdminKirtanAudioPlayer({
       audio.removeEventListener("pause", handlePause);
       audio.removeEventListener("ended", handleEnded);
       audio.removeEventListener("error", handleError);
+      audio.removeAttribute("src");
+      audio.load();
       audioRef.current = null;
     };
   }, [durationSeconds]);
@@ -293,6 +250,7 @@ export function AdminKirtanAudioPlayer({
     }
 
     const nextWaveformUrl = waveformUrl;
+    const controller = new AbortController();
     let cancelled = false;
     setIsWaveformLoading(true);
     setWaveformError(null);
@@ -300,42 +258,19 @@ export function AdminKirtanAudioPlayer({
     async function loadWaveform() {
       try {
         const response = await fetch(nextWaveformUrl, {
+          signal: controller.signal,
           cache: "no-store",
         });
         if (!response.ok) {
           throw new Error(`Waveform request failed (${response.status})`);
         }
 
-        const arrayBuffer = await response.arrayBuffer();
-        const AudioContextClass =
-          window.AudioContext ||
-          (
-            window as typeof window & {
-              webkitAudioContext?: typeof AudioContext;
-            }
-          ).webkitAudioContext;
-
-        if (!AudioContextClass) {
-          throw new Error("This browser does not support waveform decoding.");
+        const { peaks } = await response.json();
+        if (!Array.isArray(peaks) || peaks.length !== WAVEFORM_BAR_COUNT ||
+            !peaks.every((peak) => typeof peak === "number" && Number.isFinite(peak) && peak >= 0 && peak <= 1)) {
+          throw new Error("Invalid waveform data");
         }
-
-        const audioContext = new AudioContextClass();
-
-        try {
-          const audioBuffer = await audioContext.decodeAudioData(
-            arrayBuffer.slice(0),
-          );
-          const peaks = buildWaveformPeaks(
-            audioBuffer.getChannelData(0),
-            WAVEFORM_BAR_COUNT,
-          );
-
-          if (!cancelled) {
-            setWaveformPeaks(peaks);
-          }
-        } finally {
-          void audioContext.close();
-        }
+        if (!cancelled) setWaveformPeaks(peaks);
       } catch {
         if (!cancelled) {
           setWaveformPeaks([]);
@@ -354,6 +289,7 @@ export function AdminKirtanAudioPlayer({
 
     return () => {
       cancelled = true;
+      controller.abort();
     };
   }, [waveformUrl]);
 
