@@ -136,6 +136,7 @@ export function KirtansCmsPage({
   >([]);
   const [sangaOptions, setSangaOptions] = useState<AdminSangaOption[]>([]);
   const [tagState, setTagState] = useState<SaveState>("idle");
+  const [addingTagId, setAddingTagId] = useState<string | null>(null);
   const [listError, setListError] = useState<string | null>(null);
   const [detailError, setDetailError] = useState<string | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -697,7 +698,8 @@ export function KirtansCmsPage({
   }
 
   async function addTag(tagId: string) {
-    if (!selected) return;
+    if (!selected || tagState === "saving") return;
+    setAddingTagId(tagId);
     setTagState("saving");
 
     try {
@@ -718,11 +720,13 @@ export function KirtansCmsPage({
       setDetailError(
         tagError instanceof Error ? tagError.message : "Failed to add tag",
       );
+    } finally {
+      setAddingTagId(null);
     }
   }
 
   async function removeTag(tagId: string) {
-    if (!selected) return;
+    if (!selected || tagState === "saving") return;
     setTagState("saving");
 
     try {
@@ -1321,17 +1325,11 @@ export function KirtansCmsPage({
 
                 <div className="space-y-4">
                   <div className="rounded-[var(--theme-radius-card)] border border-[#eedbd0] bg-white/75 p-4">
-                    <div className="flex items-center justify-between">
-                      <div>
+                    <div className="flex min-h-5 items-center justify-between gap-3">
                         <h3 className="text-sm font-semibold uppercase tracking-[0.16em] text-[#a47d6d]">
                           Tags
                         </h3>
-                        <p className="mt-1 text-sm text-[#8d6b64]">
-                          Remove directly from the chip, or add from the library
-                          below.
-                        </p>
-                      </div>
-                      <span className="text-xs text-[#9d786d]">
+                      <span role="status" className="shrink-0 text-xs text-[#9d786d]">
                         {tagState === "saving"
                           ? "Saving…"
                           : tagState === "saved"
@@ -1341,6 +1339,9 @@ export function KirtansCmsPage({
                               : ""}
                       </span>
                     </div>
+                    <p className="mt-1 text-sm text-[#8d6b64]">
+                      Remove directly from the chip, or add from the library below.
+                    </p>
                     <div className="mt-4 flex flex-wrap gap-2">
                       {selected.tags.map((tag) => (
                         <span
@@ -1351,7 +1352,8 @@ export function KirtansCmsPage({
                           <button
                             type="button"
                             onClick={() => void removeTag(tag.id)}
-                            className="text-[color:var(--theme-player-green)]"
+                            disabled={tagState === "saving"}
+                            className="text-[color:var(--theme-player-green)] transition-opacity disabled:cursor-wait disabled:opacity-50"
                             aria-label={`Remove ${tag.name}`}
                           >
                             x
@@ -1395,9 +1397,20 @@ export function KirtansCmsPage({
                           <button
                             type="button"
                             onClick={() => void addTag(tag.id)}
-                            className="rounded-[var(--theme-radius-button)] border border-[#d7e6c8] bg-[color:var(--theme-player-green-soft)] px-3 py-1.5 text-sm font-medium text-[color:var(--theme-player-green)]"
+                            disabled={tagState === "saving"}
+                            aria-busy={addingTagId === tag.id}
+                            aria-label={`Add ${tag.name}`}
+                            className={`inline-flex min-w-[5.5rem] shrink-0 items-center justify-center gap-1.5 rounded-[var(--theme-radius-button)] border border-[#d7e6c8] px-3 py-1.5 text-sm font-medium text-[color:var(--theme-player-green)] transition-[background-color,transform,opacity] duration-150 active:scale-95 disabled:cursor-wait motion-reduce:transform-none ${addingTagId === tag.id ? "bg-[#c9ddb6]" : "bg-[color:var(--theme-player-green-soft)] enabled:hover:bg-[#d0e2bf] disabled:opacity-60"}`}
                           >
-                            Add
+                            {addingTagId === tag.id ? (
+                              <>
+                                <svg aria-hidden="true" viewBox="0 0 16 16" className="h-3 w-3 animate-spin motion-reduce:animate-none">
+                                  <circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" strokeWidth="2" opacity="0.25" />
+                                  <path d="M8 2a6 6 0 0 1 6 6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                                </svg>
+                                Adding…
+                              </>
+                            ) : "Add"}
                           </button>
                         </div>
                       ))}
