@@ -1,10 +1,12 @@
 // @vitest-environment jsdom
-import { describe, expect, it, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { cleanup, render, screen } from "@testing-library/react";
 import type { ImgHTMLAttributes, ReactNode } from "react";
 import HomeClient from "./HomeClient";
 import type { HomeData } from "@/types/home";
 import type { KirtanSummary } from "@/types/kirtan";
+
+afterEach(cleanup);
 
 const audioPlayerMock = {
   isPlaying: vi.fn(() => false),
@@ -110,14 +112,14 @@ vi.mock("@/lib/components/HomeRecommendedStrip", () => ({
 vi.mock("@/lib/components/KirtanListItem", () => ({
   default: ({
     kirtan,
-    titleBadge,
+    metadataBadge,
   }: {
     kirtan: KirtanSummary;
-    titleBadge?: ReactNode;
+    metadataBadge?: ReactNode;
   }) => (
     <li>
       {kirtan.title}
-      {titleBadge}
+      {metadataBadge}
     </li>
   ),
 }));
@@ -158,11 +160,13 @@ describe("HomeClient", () => {
     expect(screen.getAllByText("Featured Kirtan").length).toBeGreaterThan(0);
   });
 
-  it("passes this week's kirtans to the rail above listening history", () => {
+  it("shows the New badge in Recently Added even when this week's rail is visible", () => {
     render(
       <HomeClient
         data={{
           ...data,
+          primary_action: null,
+          recently_added: [{ ...featuredKirtan, id: "new-1" }],
           new_this_week: [
             { ...featuredKirtan, id: "new-1" },
             { ...featuredKirtan, id: "new-2" },
@@ -173,6 +177,7 @@ describe("HomeClient", () => {
     );
 
     expect(screen.getByText("New this week strip (3)")).toBeTruthy();
+    expect(screen.getByText("New")).toBeTruthy();
   });
 
   it("marks one or two new tracks in Recently Added instead of showing a sparse rail", () => {

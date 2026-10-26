@@ -1326,9 +1326,9 @@ export function KirtansCmsPage({
                 <div className="space-y-4">
                   <div className="rounded-[var(--theme-radius-card)] border border-[#eedbd0] bg-white/75 p-4">
                     <div className="flex min-h-5 items-center justify-between gap-3">
-                        <h3 className="text-sm font-semibold uppercase tracking-[0.16em] text-[#a47d6d]">
-                          Tags
-                        </h3>
+                      <h3 className="text-sm font-semibold uppercase tracking-[0.16em] text-[#a47d6d]">
+                        Tags
+                      </h3>
                       <span role="status" className="shrink-0 text-xs text-[#9d786d]">
                         {tagState === "saving"
                           ? "Saving…"

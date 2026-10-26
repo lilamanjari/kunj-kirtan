@@ -130,7 +130,6 @@ export default function HomeClient({ data }: { data: HomeData }) {
   const primaryAction = data.primary_action;
   const recentlyAdded = data.recently_added ?? [];
   const newThisWeek = data.new_this_week ?? [];
-  const shouldUseNewPills = newThisWeek.length > 0 && newThisWeek.length < 3;
   const newThisWeekIds = new Set(newThisWeek.map((kirtan) => kirtan.id));
   const entryPointLinks: Record<string, string> = {
     MM: "/explore/maha-mantras",
@@ -409,8 +408,8 @@ export default function HomeClient({ data }: { data: HomeData }) {
                       />
                     }
                     {...getMixedListItemDisplayProps(k)}
-                    titleBadge={
-                      shouldUseNewPills && newThisWeekIds.has(k.id) ? (
+                    metadataBadge={
+                      newThisWeekIds.has(k.id) ? (
                         <span className="rounded-full border border-[#d9bd83]/70 bg-[#fff5d6] px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.08em] text-[#93713c]">
                           {dictionary.common.new}
                         </span>

@@ -132,6 +132,16 @@ describe("GET /api/home", () => {
       {
         data: [
           {
+            id: "new-1",
+            audio_url: "new-1.mp3",
+            type: "MM",
+            title: "New One",
+            lead_singer: "S5",
+            recorded_date: "2020-05-01",
+            sanga: "Kunj",
+            duration_seconds: 120,
+          },
+          {
             id: "k2",
             audio_url: "a2",
             type: "BHJ",
@@ -236,11 +246,11 @@ describe("GET /api/home", () => {
       is_rare_gem: false,
     });
     expect(json.new_this_week).toHaveLength(3);
-    expect(json.recently_added.map((kirtan: { id: string }) => kirtan.id)).not.toContain(
+    expect(json.recently_added.map((kirtan: { id: string }) => kirtan.id)).toContain(
       "new-1",
     );
-    expect(json.recently_added).toHaveLength(1);
-    expect(json.recently_added[0]).toMatchObject({
+    expect(json.recently_added).toHaveLength(2);
+    expect(json.recently_added[1]).toMatchObject({
       id: "k2",
       title: "Bhajan One",
       duration_seconds: 240,

@@ -20,7 +20,6 @@ type PopularPlayableKirtanRow = PlayableKirtanRow & {
 const HOME_RECOMMENDED_LIMIT = 6;
 const HOME_RECENTLY_ADDED_LIMIT = 10;
 const HOME_RECENTLY_ADDED_LOOKUP_LIMIT = 20;
-const HOME_NEW_THIS_WEEK_RAIL_MINIMUM = 3;
 
 export function getStartOfCurrentUtcWeek(date = new Date()) {
   const start = new Date(
@@ -202,12 +201,9 @@ async function buildHomePageData() {
   const newThisWeekRows: PlayableKirtanRow[] = (newThisWeek ?? []).filter(
     (kirtan) => kirtan.id !== featured.kirtan?.id,
   );
-  const shouldShowNewThisWeekRail =
-    newThisWeekRows.length >= HOME_NEW_THIS_WEEK_RAIL_MINIMUM;
-  const newThisWeekIds = new Set(newThisWeekRows.map((kirtan) => kirtan.id));
-  const recentRows: PlayableKirtanRow[] = (recentlyAdded ?? []).filter(
-    (kirtan) => !shouldShowNewThisWeekRail || !newThisWeekIds.has(kirtan.id),
-  ).slice(0, HOME_RECENTLY_ADDED_LIMIT);
+  const recentRows: PlayableKirtanRow[] = (recentlyAdded ?? []).slice(
+    0, HOME_RECENTLY_ADDED_LIMIT,
+  );
   const popularRows: PopularPlayableKirtanRow[] = popularKirtans ?? [];
   const recommendedIds = recommendedRows.map((k) => k.id);
   const newThisWeekKirtanIds = newThisWeekRows.map((k) => k.id);
@@ -356,7 +352,7 @@ async function buildHomePageData() {
 
 const getCachedHomePageData = unstable_cache(
   async () => buildHomePageData(),
-  ["home-page-data"],
+  ["home-page-data-v2"],
   {
     revalidate: 86400,
     tags: ["home", "rare-gems"],

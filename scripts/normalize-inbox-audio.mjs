@@ -34,7 +34,7 @@ const CONVERT_TO_M4A_EXTENSIONS = new Set([".mov", ".qta", ".mp4", ".wav", ".aif
 const args = process.argv.slice(2);
 const DRY_RUN = args.includes("--dry-run");
 const OVERWRITE = args.includes("--overwrite");
-const DELETE_ORIGINALS = args.includes("--delete-originals");
+const KEEP_ORIGINALS = args.includes("--keep-originals");
 const VERBOSE = args.includes("--verbose");
 const folders = args
   .filter((arg) => !arg.startsWith("--"))
@@ -154,7 +154,16 @@ function normalizeFile(inputPath) {
     };
   }
 
-  if (DELETE_ORIGINALS) {
+  if (!fs.existsSync(outputPath) || fs.statSync(outputPath).size === 0) {
+    return {
+      status: "failed",
+      inputPath,
+      outputPath,
+      reason: "ffmpeg did not produce a non-empty output file; original kept",
+    };
+  }
+
+  if (!KEEP_ORIGINALS) {
     fs.unlinkSync(inputPath);
   }
 
@@ -183,13 +192,13 @@ function main() {
     const relativeOutput = path.relative(process.cwd(), result.outputPath);
 
     if (result.status === "normalized") {
-      const deleteNote = DELETE_ORIGINALS ? " and deleted original" : "";
+      const deleteNote = KEEP_ORIGINALS ? " (kept original)" : " and deleted original";
       console.log(`Normalized${deleteNote}: ${relativeInput} -> ${relativeOutput}`);
       continue;
     }
 
     if (result.status === "dry-run") {
-      console.log(`[DRY_RUN] Would normalize: ${relativeInput} -> ${relativeOutput}`);
+      console.log(`[DRY_RUN] Would normalize${KEEP_ORIGINALS ? "" : " and delete original after success"}: ${relativeInput} -> ${relativeOutput}`);
       continue;
     }
 

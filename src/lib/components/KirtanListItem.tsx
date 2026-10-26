@@ -33,7 +33,7 @@ type KirtanListItemProps = {
   leadingVisual?: ReactNode;
   titleOverride?: string;
   subtitleOverride?: string;
-  titleBadge?: ReactNode;
+  metadataBadge?: ReactNode;
   useShortDate?: boolean;
   stackActionsOnMobile?: boolean;
   isActive: boolean;
@@ -54,7 +54,7 @@ export default function KirtanListItem({
   leadingVisual,
   titleOverride,
   subtitleOverride,
-  titleBadge,
+  metadataBadge,
   useShortDate = false,
   stackActionsOnMobile = false,
   isActive,
@@ -150,7 +150,6 @@ export default function KirtanListItem({
               >
                 {titleText}
               </p>
-              {titleBadge ? <span className="shrink-0">{titleBadge}</span> : null}
             </div>
           </div>
           {showCompactMobileMeta ? (
@@ -169,6 +168,7 @@ export default function KirtanListItem({
                   className="shrink-0"
                 />
               ) : null}
+              {metadataBadge ? <span className="shrink-0">{metadataBadge}</span> : null}
               {durationLabel ? (
                 <span
                   className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${durationPillClassName}`}
@@ -225,6 +225,7 @@ export default function KirtanListItem({
                 className="shrink-0"
               />
             ) : null}
+            {!showCompactMobileMeta && metadataBadge ? <span className="shrink-0">{metadataBadge}</span> : null}
             {!showCompactMobileMeta && durationLabel ? (
               <span
                 className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${durationPillClassName}`}
