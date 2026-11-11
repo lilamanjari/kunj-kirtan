@@ -7,6 +7,7 @@ import HomePopularStrip from "@/lib/components/HomePopularStrip";
 import HomeListeningHistoryStrip from "@/lib/components/HomeListeningHistoryStrip";
 import HomeNewThisWeekStrip from "@/lib/components/HomeNewThisWeekStrip";
 import HomeRecommendedStrip from "@/lib/components/HomeRecommendedStrip";
+import UnpublishedKirtansStrip from "@/lib/components/UnpublishedKirtansStrip";
 import KirtanListItem from "@/lib/components/KirtanListItem";
 import {
   getKirtanCardText,
@@ -381,6 +382,7 @@ export default function HomeClient({ data }: { data: HomeData }) {
               favorites={favorites}
               loaded={favoritesLoaded}
             />
+            <UnpublishedKirtansStrip />
             <HomeRecommendedStrip kirtans={data.recommended ?? []} />
             <HomePopularStrip kirtans={data.popular ?? []} />
             <HomeNewThisWeekStrip kirtans={newThisWeek} />

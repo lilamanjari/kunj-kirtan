@@ -182,7 +182,7 @@ export default function FavoritesPageClient() {
                   isQueued={isQueued(kirtan.id)}
                   onToggleFavorite={toggleFavorite}
                   isFavorited={isFavorited(kirtan.id)}
-                  showOfflineToggle={offlineEnabled}
+                  showOfflineToggle={offlineEnabled && !kirtan.private_preview}
                   onToggleOffline={toggleOfflineForKirtan}
                 />
               ))}

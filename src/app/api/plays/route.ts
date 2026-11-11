@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { verifyPlayToken } from "@/lib/server/playTokens";
+import { hasUnpublishedPreviewAccess } from "@/lib/server/unpublishedPreview";
 
 type PlayPayload = {
   kirtan_id?: string;
@@ -68,14 +69,14 @@ export async function POST(req: Request) {
 
   const { data: kirtan, error: kirtanError } = await supabaseAdmin
     .from("kirtans")
-    .select("id")
+    .select("id, published")
     .eq("id", kirtanId)
     .maybeSingle();
 
   if (kirtanError) {
     return NextResponse.json({ error: kirtanError.message }, { status: 500 });
   }
-  if (!kirtan) {
+  if (!kirtan || (!kirtan.published && !(await hasUnpublishedPreviewAccess()))) {
     return NextResponse.json({ error: "Kirtan not found" }, { status: 404 });
   }
 

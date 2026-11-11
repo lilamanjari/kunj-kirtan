@@ -11,27 +11,21 @@ import { compareOccasionKirtans } from "@/lib/server/occasionCurations";
 import type { OccasionResponse } from "@/types/occasions";
 import { fetchPrimaryLeadSingerImages } from "@/lib/server/leadSingerImages";
 
+type OccasionPageResult = {
+  data: OccasionResponse | null;
+  error: string | null;
+  status: number;
+};
+
 const getCachedOccasionPageData = unstable_cache(
-  async (slug: string) => {
-    const { data: tag, error: tagError } = await supabase
-      .from("tags")
-      .select("id, name, slug, description")
-      .eq("slug", slug)
-      .eq("category", "occasion")
-      .eq("published", true)
-      .maybeSingle();
-
-    if (tagError || !tag) {
-      return { data: null, error: "Occasion not found", status: 404 };
-    }
-
+  async (slug: string, tag: OccasionResponse["tag"]): Promise<OccasionPageResult> => {
     const { data: tagLinks, error: linkError } = await supabase
       .from("kirtan_tag_slugs")
       .select("kirtan_id")
       .eq("slug", slug);
 
     if (linkError) {
-      return { data: null, error: linkError.message, status: 500 };
+      throw new Error(linkError.message);
     }
 
     const ids = (tagLinks ?? []).map((row) => row.kirtan_id);
@@ -53,7 +47,7 @@ const getCachedOccasionPageData = unstable_cache(
       rotationScope: `explore-occasion-${slug}-rare-gems`,
     });
     if (featured.error) {
-      return { data: null, error: featured.error, status: 500 };
+      throw new Error(featured.error);
     }
 
     const { data: kirtans, error: kirtanError } = await supabase
@@ -66,7 +60,7 @@ const getCachedOccasionPageData = unstable_cache(
       .order("id", { ascending: false });
 
     if (kirtanError) {
-      return { data: null, error: kirtanError.message, status: 500 };
+      throw new Error(kirtanError.message);
     }
 
     const kirtanIds = (kirtans ?? []).map((k) => k.id);
@@ -94,11 +88,7 @@ const getCachedOccasionPageData = unstable_cache(
       await fetchPrimaryLeadSingerImages(leadSingerIds);
 
     if (flagsError || tagContextError || imageError) {
-      return {
-        data: null,
-        error: flagsError ?? tagContextError ?? imageError ?? "Unknown error",
-        status: 500,
-      };
+      throw new Error(flagsError ?? tagContextError ?? imageError ?? "Unknown error");
     }
 
     const payload: KirtanSummary[] =
@@ -184,5 +174,26 @@ const getCachedOccasionPageData = unstable_cache(
 );
 
 export async function getOccasionPageData(slug: string) {
-  return getCachedOccasionPageData(slug);
+  // Check existence outside unstable_cache so a missing tag or a temporary
+  // Supabase error can never become a cached page result.
+  const { data: tag, error } = await supabase
+    .from("tags")
+    .select("id, name, slug, description")
+    .eq("slug", slug)
+    .eq("category", "occasion")
+    .eq("published", true)
+    .maybeSingle();
+
+  if (error) return { data: null, error: error.message, status: 500 };
+  if (!tag) return { data: null, error: "Occasion not found", status: 404 };
+
+  try {
+    return await getCachedOccasionPageData(slug, tag);
+  } catch (cause) {
+    return {
+      data: null,
+      error: cause instanceof Error ? cause.message : "Failed to load occasion page",
+      status: 500,
+    };
+  }
 }

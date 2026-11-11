@@ -94,7 +94,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
     <div className="min-h-screen bg-[linear-gradient(180deg,#fffaf6_0%,#fff3ec_52%,#f8ede7_100%)] text-[#5e433a]">
       <div className="mx-auto flex h-screen max-h-screen w-full max-w-[1600px] flex-col overflow-hidden px-4 py-5 sm:px-6 lg:px-8">
         <header className="sticky top-0 z-20 mb-5 rounded-[var(--theme-radius-surface)] border border-[color:var(--theme-page-home-discovery-gold)] bg-[linear-gradient(180deg,rgba(255,251,247,0.96)_0%,rgba(255,248,242,0.94)_100%)] px-6 py-4 shadow-[0_20px_48px_rgba(170,118,91,0.13)] backdrop-blur-md">
-          <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-4">
+          <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="flex min-w-0 items-center gap-4">
               <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[var(--theme-radius-surface)] bg-[radial-gradient(circle_at_50%_38%,rgba(255,253,250,0.98)_0%,rgba(251,242,234,0.96)_72%,rgba(245,231,220,0.98)_100%)] shadow-[0_12px_28px_rgba(194,146,104,0.14)]">
                 <Image
@@ -116,8 +116,8 @@ export function AdminShell({ children }: { children: ReactNode }) {
               </div>
             </div>
 
-            <nav className="justify-self-center">
-              <div className="inline-flex items-center">
+            <nav aria-label="Admin" className="max-w-full overflow-x-auto py-1">
+              <div className="inline-flex items-center whitespace-nowrap">
                 <Link
                   href="/admin/kirtans"
                   className={navLinkClassName(
@@ -160,10 +160,13 @@ export function AdminShell({ children }: { children: ReactNode }) {
                   <SangasIcon />
                   <span className="font-display text-[1.14rem]">Sangas</span>
                 </Link>
+                <Link href="/admin/feature" className={navLinkClassName(pathname.startsWith("/admin/feature"))} style={{ marginLeft: "-1px" }}>
+                  <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4.5 w-4.5" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-2.9-5.6 2.9 1.1-6.2L3 9.6l6.2-.9L12 3Z" /></svg>
+                  <span className="font-display text-[1.14rem]">Feature</span>
+                </Link>
               </div>
             </nav>
 
-            <div aria-hidden="true" className="justify-self-end h-14 w-14" />
           </div>
         </header>
         <main className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto">

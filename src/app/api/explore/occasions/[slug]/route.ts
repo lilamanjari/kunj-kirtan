@@ -5,7 +5,11 @@ import { ServerTiming, jsonWithServerTiming } from "@/lib/server/serverTiming";
 import { getDisplayKirtanTitle } from "@/lib/server/bhajanDisplayTitle";
 import { compareOccasionKirtans } from "@/lib/server/occasionCurations";
 
-export const revalidate = 86400;
+// This endpoint can return transient 404s during publication changes. Keep
+// route responses out of the Next.js cache; successful page data is cached in
+// the server data layer where it can be revalidated by tag.
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export async function GET(
   _: Request,
@@ -24,11 +28,19 @@ export async function GET(
       .maybeSingle(),
   );
 
-  if (tagError || !tag) {
+  if (tagError) {
+    return jsonWithServerTiming(
+      { error: tagError.message },
+      timing,
+      { status: 500, headers: { "Cache-Control": "private, no-store, max-age=0" } },
+    );
+  }
+
+  if (!tag) {
     return jsonWithServerTiming(
       { error: "Occasion not found" },
       timing,
-      { status: 404 },
+      { status: 404, headers: { "Cache-Control": "private, no-store, max-age=0" } },
     );
   }
 

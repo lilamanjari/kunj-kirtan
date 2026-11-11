@@ -10,7 +10,10 @@ export function revalidateCmsAndPublicContent() {
   revalidateTag("explore-leads", "max");
   revalidateTag("explore-leads-slugs", "max");
   revalidateTag("explore-occasions", "max");
-  revalidateTag("explore-occasion-slugs", "max");
+  // Occasion detail data and rendered pages must drop a cached miss as soon
+  // as an occasion is published or its slug/content changes.
+  revalidateTag("explore-occasion-slugs", { expire: 0 });
+  revalidatePath("/[locale]/explore/occasions/[slug]", "page");
 
   revalidatePath("/admin", "layout");
   revalidatePath("/admin/kirtans", "page");

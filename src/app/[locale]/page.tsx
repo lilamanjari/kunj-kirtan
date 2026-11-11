@@ -6,6 +6,9 @@ import JsonLd from "@/lib/components/JsonLd";
 import { buildCollectionPageJsonLd } from "@/lib/structuredData";
 import { getSeoCopy } from "@/lib/seoCopy";
 
+// Scheduled homepage features become visible without waiting for the music cache.
+export const revalidate = 60;
+
 export async function generateMetadata({
   params,
 }: {

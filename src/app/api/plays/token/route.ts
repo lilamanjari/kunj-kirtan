@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { createPlayToken } from "@/lib/server/playTokens";
+import { hasUnpublishedPreviewAccess } from "@/lib/server/unpublishedPreview";
 
 export async function GET(req: Request) {
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -20,7 +21,7 @@ export async function GET(req: Request) {
 
   const { data, error } = await supabaseAdmin
     .from("kirtans")
-    .select("id")
+    .select("id, published")
     .eq("id", kirtanId)
     .maybeSingle();
 
@@ -28,7 +29,7 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  if (!data) {
+  if (!data || (!data.published && !(await hasUnpublishedPreviewAccess()))) {
     return NextResponse.json({ error: "Kirtan not found" }, { status: 404 });
   }
 

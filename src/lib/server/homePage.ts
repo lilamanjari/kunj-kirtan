@@ -149,11 +149,6 @@ async function buildHomePageData() {
     return { data: null, error: popularError.message, status: 500 };
   }
 
-  const featuredOccasion = await fetchHomeCurrentOccasion();
-  if (featuredOccasion.error) {
-    return { data: null, error: featuredOccasion.error, status: 500 };
-  }
-
   const [
     mahaMantraCountResult,
     bhajanCountResult,
@@ -316,7 +311,7 @@ async function buildHomePageData() {
           kirtan: featuredKirtan,
         }
       : null,
-    current_occasion: featuredOccasion.data,
+    current_occasion: null,
     entry_points: [
       {
         id: "MM",
@@ -352,7 +347,7 @@ async function buildHomePageData() {
 
 const getCachedHomePageData = unstable_cache(
   async () => buildHomePageData(),
-  ["home-page-data-v2"],
+  ["home-page-data-v3"],
   {
     revalidate: 86400,
     tags: ["home", "rare-gems"],
@@ -360,9 +355,10 @@ const getCachedHomePageData = unstable_cache(
 );
 
 export async function getHomePageData() {
-  if (process.env.NODE_ENV === "test") {
-    return buildHomePageData();
-  }
-
-  return getCachedHomePageData();
+  const result = process.env.NODE_ENV === "test" ? await buildHomePageData() : await getCachedHomePageData();
+  if (result.error || !result.data) return result;
+  // Evaluate feature windows on each render, independently of the 24-hour music cache.
+  const occasion = await fetchHomeCurrentOccasion();
+  if (occasion.error) return { data: null, error: occasion.error, status: 500 };
+  return { ...result, data: { ...result.data, current_occasion: occasion.data } };
 }

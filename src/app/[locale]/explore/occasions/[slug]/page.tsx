@@ -11,7 +11,9 @@ import {
 } from "@/lib/structuredData";
 import { getSeoCopy } from "@/lib/seoCopy";
 
-export const revalidate = 86400;
+// Keep successful data cached in getOccasionPageData, but render the route
+// dynamically so a prior notFound result cannot stick in the Full Route Cache.
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({
   params,

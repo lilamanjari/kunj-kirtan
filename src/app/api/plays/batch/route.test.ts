@@ -1,8 +1,7 @@
 import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { POST } from "./route";
 
-const selectInMock = vi.fn();
-const insertMock = vi.fn();
+const mocks = vi.hoisted(() => ({ selectIn: vi.fn(), insert: vi.fn(), previewAccess: vi.fn() }));
 
 vi.mock("@/lib/supabase-admin", () => ({
   supabaseAdmin: {
@@ -10,14 +9,14 @@ vi.mock("@/lib/supabase-admin", () => ({
       if (table === "kirtans") {
         return {
           select: () => ({
-            in: selectInMock,
+            in: mocks.selectIn,
           }),
         };
       }
 
       if (table === "kirtan_plays") {
         return {
-          insert: insertMock,
+          insert: mocks.insert,
         };
       }
 
@@ -25,19 +24,21 @@ vi.mock("@/lib/supabase-admin", () => ({
     },
   },
 }));
+vi.mock("@/lib/server/unpublishedPreview", () => ({ hasUnpublishedPreviewAccess: mocks.previewAccess }));
 
 describe("POST /api/plays/batch", () => {
   const originalServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   beforeEach(() => {
     process.env.SUPABASE_SERVICE_ROLE_KEY = "test-service-role";
-    selectInMock.mockReset();
-    insertMock.mockReset();
-    selectInMock.mockResolvedValue({
-      data: [{ id: "kirtan-1" }, { id: "kirtan-2" }],
+    mocks.selectIn.mockReset();
+    mocks.insert.mockReset();
+    mocks.previewAccess.mockReset().mockResolvedValue(false);
+    mocks.selectIn.mockResolvedValue({
+      data: [{ id: "kirtan-1", published: true }, { id: "kirtan-2", published: true }],
       error: null,
     });
-    insertMock.mockResolvedValue({ error: null });
+    mocks.insert.mockResolvedValue({ error: null });
   });
 
   it("records a batch of qualified plays", async () => {
@@ -75,7 +76,7 @@ describe("POST /api/plays/batch", () => {
 
     expect(res.status).toBe(200);
     expect(json).toEqual({ ok: true, count: 2 });
-    expect(insertMock).toHaveBeenCalledWith([
+    expect(mocks.insert).toHaveBeenCalledWith([
       {
         kirtan_id: "kirtan-1",
         seconds_played: 19,
@@ -95,6 +96,17 @@ describe("POST /api/plays/batch", () => {
         country: "US",
       },
     ]);
+  });
+
+  it("does not record unpublished plays from a locked browser", async () => {
+    mocks.selectIn.mockResolvedValueOnce({ data: [{ id: "hidden-1", published: false }], error: null });
+    const res = await POST(new Request("http://localhost/api/plays/batch", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ plays: [{ kirtan_id: "hidden-1", seconds_played: 20 }] }),
+    }));
+    expect(res.status).toBe(404);
+    expect(mocks.insert).not.toHaveBeenCalled();
   });
 
   afterAll(() => {

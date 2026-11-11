@@ -39,6 +39,7 @@ export type KirtanSummary = {
   is_rare_gem?: boolean;
   occasion_tags?: string[];
   person_tag?: string | null;
+  private_preview?: boolean;
 };
 
 export type PlayableBhajanTitleRow = {

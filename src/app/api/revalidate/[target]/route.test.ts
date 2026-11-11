@@ -49,8 +49,8 @@ describe("POST /api/revalidate/[target]", () => {
       target: "explore-leads-slugs",
       mode: "tag",
     });
-    expect(revalidateTag).toHaveBeenCalledWith("explore-leads-slugs", "max");
-    expect(revalidatePath).not.toHaveBeenCalled();
+    expect(revalidateTag).toHaveBeenCalledWith("explore-leads-slugs", { expire: 0 });
+    expect(revalidatePath).toHaveBeenCalledWith("/[locale]/explore/leads/[slug]", "page");
   });
 
   it("revalidates grouped explore paths", async () => {
@@ -66,10 +66,11 @@ describe("POST /api/revalidate/[target]", () => {
       revalidated: true,
       target: "explore",
     });
-    expect(revalidateTag).toHaveBeenCalledWith("explore-leads-slugs", "max");
+    expect(revalidateTag).toHaveBeenCalledWith("explore-leads-slugs", { expire: 0 });
     expect(revalidatePath).toHaveBeenCalledWith("/api/explore/bhajans", "page");
     expect(revalidatePath).toHaveBeenCalledWith("/explore/leads", "page");
-    expect(revalidatePath).toHaveBeenCalledTimes(9);
+    expect(revalidatePath).toHaveBeenCalledWith("/en/explore/leads", "page");
+    expect(revalidatePath).toHaveBeenCalledWith("/ru/explore/occasions", "page");
   });
 
   it("revalidates all groups", async () => {
@@ -82,8 +83,8 @@ describe("POST /api/revalidate/[target]", () => {
 
     expect(res.status).toBe(200);
     expect(json.target).toBe("all");
-    expect(revalidateTag).toHaveBeenCalledWith("home", "max");
-    expect(revalidateTag).toHaveBeenCalledWith("rare-gems", "max");
+    expect(revalidateTag).toHaveBeenCalledWith("home", { expire: 0 });
+    expect(revalidateTag).toHaveBeenCalledWith("rare-gems", { expire: 0 });
     expect(revalidatePath).toHaveBeenCalledWith("/", "page");
     expect(revalidatePath).toHaveBeenCalledWith("/api/home", "page");
     expect(revalidatePath).toHaveBeenCalledWith("/api/explore/maha-mantras", "page");

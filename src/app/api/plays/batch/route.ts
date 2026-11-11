@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { hasUnpublishedPreviewAccess } from "@/lib/server/unpublishedPreview";
 
 type BatchPlayPayload = {
   plays?: Array<{
@@ -65,7 +66,7 @@ export async function POST(req: Request) {
   const uniqueIds = Array.from(new Set(normalized.map((play) => play.kirtan_id)));
   const { data: kirtans, error: kirtanError } = await supabaseAdmin
     .from("kirtans")
-    .select("id")
+    .select("id, published")
     .in("id", uniqueIds);
 
   if (kirtanError) {
@@ -74,6 +75,10 @@ export async function POST(req: Request) {
 
   const foundIds = new Set((kirtans ?? []).map((item) => item.id));
   if (uniqueIds.some((id) => !foundIds.has(id))) {
+    return NextResponse.json({ error: "Kirtan not found" }, { status: 404 });
+  }
+
+  if ((kirtans ?? []).some((kirtan) => !kirtan.published) && !(await hasUnpublishedPreviewAccess())) {
     return NextResponse.json({ error: "Kirtan not found" }, { status: 404 });
   }
 

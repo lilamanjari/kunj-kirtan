@@ -2,8 +2,7 @@ import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { POST } from "./route";
 import { createPlayToken } from "@/lib/server/playTokens";
 
-const maybeSingleMock = vi.fn();
-const insertMock = vi.fn();
+const mocks = vi.hoisted(() => ({ maybeSingle: vi.fn(), insert: vi.fn(), previewAccess: vi.fn() }));
 
 vi.mock("@/lib/supabase-admin", () => ({
   supabaseAdmin: {
@@ -12,7 +11,7 @@ vi.mock("@/lib/supabase-admin", () => ({
         return {
           select: () => ({
             eq: () => ({
-              maybeSingle: maybeSingleMock,
+              maybeSingle: mocks.maybeSingle,
             }),
           }),
         };
@@ -20,7 +19,7 @@ vi.mock("@/lib/supabase-admin", () => ({
 
       if (table === "kirtan_plays") {
         return {
-          insert: insertMock,
+          insert: mocks.insert,
         };
       }
 
@@ -28,6 +27,7 @@ vi.mock("@/lib/supabase-admin", () => ({
     },
   },
 }));
+vi.mock("@/lib/server/unpublishedPreview", () => ({ hasUnpublishedPreviewAccess: mocks.previewAccess }));
 
 describe("POST /api/plays", () => {
   const originalServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -36,10 +36,11 @@ describe("POST /api/plays", () => {
   beforeEach(() => {
     process.env.SUPABASE_SERVICE_ROLE_KEY = "test-service-role";
     process.env.PLAYBACK_TOKEN_SECRET = "test-playback-secret";
-    maybeSingleMock.mockReset();
-    insertMock.mockReset();
-    maybeSingleMock.mockResolvedValue({ data: { id: "kirtan-1" }, error: null });
-    insertMock.mockResolvedValue({ error: null });
+    mocks.maybeSingle.mockReset();
+    mocks.insert.mockReset();
+    mocks.previewAccess.mockReset().mockResolvedValue(false);
+    mocks.maybeSingle.mockResolvedValue({ data: { id: "kirtan-1", published: true }, error: null });
+    mocks.insert.mockResolvedValue({ error: null });
   });
 
   it("records a qualified play with inferred headers", async () => {
@@ -64,7 +65,7 @@ describe("POST /api/plays", () => {
 
     expect(res.status).toBe(200);
     expect(json).toEqual({ ok: true });
-    expect(insertMock).toHaveBeenCalledWith({
+    expect(mocks.insert).toHaveBeenCalledWith({
       kirtan_id: "kirtan-1",
       seconds_played: 17,
       qualified: true,
@@ -103,7 +104,18 @@ describe("POST /api/plays", () => {
 
     const res = await POST(req);
     expect(res.status).toBe(401);
-    expect(insertMock).not.toHaveBeenCalled();
+    expect(mocks.insert).not.toHaveBeenCalled();
+  });
+
+  it("does not record an unpublished play without preview access", async () => {
+    mocks.maybeSingle.mockResolvedValueOnce({ data: { id: "hidden-1", published: false }, error: null });
+    const res = await POST(new Request("http://localhost/api/plays", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ kirtan_id: "hidden-1", seconds_played: 20, token: createPlayToken("hidden-1") }),
+    }));
+    expect(res.status).toBe(404);
+    expect(mocks.insert).not.toHaveBeenCalled();
   });
 
   afterAll(() => {

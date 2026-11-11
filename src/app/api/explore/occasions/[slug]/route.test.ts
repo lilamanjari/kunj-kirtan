@@ -75,6 +75,7 @@ describe("GET /api/explore/occasions/[slug]", () => {
 
     expect(res.status).toBe(404);
     expect(json.error).toBe("Occasion not found");
+    expect(res.headers.get("cache-control")).toContain("no-store");
   });
 
   it("returns empty list when no kirtans for occasion", async () => {
@@ -153,8 +154,8 @@ describe("GET /api/explore/occasions/[slug]", () => {
     });
     const json = await res.json();
 
-    expect(res.status).toBe(404);
-    expect(json.error).toBe("Occasion not found");
+    expect(res.status).toBe(500);
+    expect(json.error).toBe("Tag error");
   });
 
   it("returns error when kirtan link lookup fails", async () => {

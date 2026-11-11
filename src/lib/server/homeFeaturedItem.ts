@@ -35,7 +35,7 @@ function isActiveNow(item: FeaturedItemRow, now: Date) {
     return false;
   }
 
-  if (endsAt && endsAt < now) {
+  if (endsAt && endsAt <= now) {
     return false;
   }
 

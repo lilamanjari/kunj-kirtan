@@ -55,6 +55,11 @@ export function usePlayback() {
     setState("paused");
   }
 
+  function stop() {
+    setCurrent(null);
+    setState("paused");
+  }
+
   const onEnded = () => {
     setState("paused");
     setCurrent(null);
@@ -82,6 +87,7 @@ export function usePlayback() {
     play,
     select,
     pause,
+    stop,
     toggle,
     onEnded,
   };

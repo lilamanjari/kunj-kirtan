@@ -61,7 +61,13 @@ export function useFavorites(storage?: Storage): FavoritesApi {
   }, [favorites, loaded]);
 
   function toggleFavorite(kirtan: KirtanSummary) {
-    const existing = favoritesRef.current.some((item) => item.id === kirtan.id);
+    const existingItem = favoritesRef.current.find((item) => item.id === kirtan.id);
+    if (existingItem?.private_preview && !kirtan.private_preview) {
+      setFavorites((prev) => dedupeFavorites([kirtan, ...prev.filter((item) => item.id !== kirtan.id)]));
+      setNotice(`Added "${kirtan.title}" to favorites`);
+      return;
+    }
+    const existing = Boolean(existingItem);
     if (existing) {
       setFavorites((prev) => prev.filter((item) => item.id !== kirtan.id));
       setNotice(`Removed "${kirtan.title}" from favorites`);

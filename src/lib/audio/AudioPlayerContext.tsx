@@ -63,9 +63,20 @@ function useAudioPlayerInternal(locale: string) {
   const playback = usePlayback();
   const queueApi = useQueue();
   const favoritesApi = useFavorites();
+  const [unpublishedPreviewAvailable, setUnpublishedPreviewAvailable] = useState(false);
+  const [unpublishedPreviewUnlocked, setUnpublishedPreviewUnlocked] = useState(false);
+  const [unpublishedPreviewLoading, setUnpublishedPreviewLoading] = useState(true);
+  const [unpublishedPreviewError, setUnpublishedPreviewError] = useState<string | null>(null);
+  const [unpublishedKirtans, setUnpublishedKirtans] = useState<KirtanSummary[]>([]);
+  const visibleFavorites = unpublishedPreviewUnlocked
+    ? favoritesApi.favorites
+    : favoritesApi.favorites.filter((kirtan) => !kirtan.private_preview);
+  const visibleQueue = unpublishedPreviewUnlocked
+    ? queueApi.queue
+    : queueApi.queue.filter((kirtan) => !kirtan.private_preview);
   const listeningHistoryApi = useListeningHistory();
   const offlineApi = useOfflineFavorites({
-    favorites: favoritesApi.favorites,
+    favorites: visibleFavorites.filter((kirtan) => !kirtan.private_preview),
     locale,
   });
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -107,6 +118,78 @@ function useAudioPlayerInternal(locale: string) {
     token: null,
     loading: false,
   });
+
+  const refreshUnpublishedPreview = useCallback(async () => {
+    const response = await fetch("/api/preview/unpublished", { cache: "no-store" });
+    if (response.status === 404) {
+      setUnpublishedPreviewAvailable(false);
+      setUnpublishedPreviewUnlocked(false);
+      setUnpublishedKirtans([]);
+      return false;
+    }
+    setUnpublishedPreviewAvailable(true);
+    if (response.status === 401) {
+      setUnpublishedPreviewUnlocked(false);
+      setUnpublishedKirtans([]);
+      return false;
+    }
+    if (!response.ok) throw new Error("Could not load unpublished kirtans");
+    const json = await response.json();
+    setUnpublishedKirtans(Array.isArray(json.kirtans) ? json.kirtans : []);
+    setUnpublishedPreviewUnlocked(true);
+    setUnpublishedPreviewError(null);
+    return true;
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    void refreshUnpublishedPreview().catch(() => {
+      if (active) setUnpublishedPreviewError("Could not check preview access");
+    }).finally(() => {
+      if (active) setUnpublishedPreviewLoading(false);
+    });
+    return () => { active = false; };
+  }, [refreshUnpublishedPreview]);
+
+  useEffect(() => {
+    if (unpublishedPreviewLoading || unpublishedPreviewUnlocked || !queueApi.loaded) return;
+    for (const item of queueApi.queue) {
+      if (item.private_preview) queueApi.dequeueById(item.id);
+    }
+    historyRef.current = historyRef.current.filter((item) => !item.private_preview);
+    if (playback.current?.private_preview) playback.stop();
+  }, [unpublishedPreviewLoading, unpublishedPreviewUnlocked, queueApi.loaded, queueApi.queue, queueApi.dequeueById, playback.current?.id, playback.current?.private_preview, playback.stop]);
+
+  const unlockUnpublishedPreview = useCallback(async (passphrase: string) => {
+    setUnpublishedPreviewLoading(true);
+    setUnpublishedPreviewError(null);
+    try {
+      const response = await fetch("/api/preview/unpublished", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ passphrase }),
+        cache: "no-store",
+      });
+      const json = await response.json();
+      if (!response.ok) throw new Error(json.error || "Could not unlock preview");
+      await refreshUnpublishedPreview();
+      return true;
+    } catch (error) {
+      setUnpublishedPreviewError(error instanceof Error ? error.message : "Could not unlock preview");
+      return false;
+    } finally {
+      setUnpublishedPreviewLoading(false);
+    }
+  }, [refreshUnpublishedPreview]);
+
+  const lockUnpublishedPreview = useCallback(async () => {
+    void fetch("/api/preview/unpublished", { method: "DELETE", cache: "no-store" }).catch(() => {});
+    for (const kirtan of unpublishedKirtans) queueApi.dequeueById(kirtan.id);
+    if (playback.current?.private_preview) playback.stop();
+    setUnpublishedKirtans([]);
+    setUnpublishedPreviewUnlocked(false);
+    setUnpublishedPreviewError(null);
+  }, [unpublishedKirtans, playback, queueApi]);
 
   useEffect(() => {
     playbackStateRef.current = playback.state;
@@ -320,6 +403,7 @@ function useAudioPlayerInternal(locale: string) {
     if (restoredRef.current) return;
     if (typeof window === "undefined") return;
     if (!queueApi.loaded) return;
+    if (unpublishedPreviewLoading) return;
 
     const raw = window.localStorage.getItem(LAST_PLAYBACK_KEY);
     if (!raw) {
@@ -343,7 +427,7 @@ function useAudioPlayerInternal(locale: string) {
         savedDuration <= 0 ||
         savedDuration - savedTime > 10;
 
-      if (savedKirtan && (hasQueue || (timeOk && remainingOk))) {
+      if (savedKirtan && (!savedKirtan.private_preview || unpublishedPreviewUnlocked) && (hasQueue || (timeOk && remainingOk))) {
         playback.select(savedKirtan);
         if (Number.isFinite(savedTime) && savedTime > 0) {
           pendingSeekRef.current = savedTime;
@@ -355,7 +439,7 @@ function useAudioPlayerInternal(locale: string) {
     } finally {
       restoredRef.current = true;
     }
-  }, [queueApi.queue.length, queueApi.loaded]);
+  }, [queueApi.queue.length, queueApi.loaded, unpublishedPreviewLoading, unpublishedPreviewUnlocked]);
 
   // Persist playback position, throttled, avoiding writes during restore.
   useEffect(() => {
@@ -531,7 +615,15 @@ function useAudioPlayerInternal(locale: string) {
   // Sync the current track source to the underlying audio element.
   useEffect(() => {
     const audio = audioRef.current;
-    if (!audio || !playback.current) return;
+    if (!audio) return;
+    if (!playback.current) {
+      if (audio.hasAttribute("src")) {
+        audio.pause();
+        audio.removeAttribute("src");
+        audio.load();
+      }
+      return;
+    }
 
     if ("mediaSession" in navigator) {
       const origin = window.location.origin;
@@ -564,7 +656,11 @@ function useAudioPlayerInternal(locale: string) {
   // Sync playback state to the underlying audio element.
   useEffect(() => {
     const audio = audioRef.current;
-    if (!audio || !playback.current) return;
+    if (!audio) return;
+    if (!playback.current) {
+      audio.pause();
+      return;
+    }
 
     if (playback.state === "loading") {
       audio
@@ -728,21 +824,23 @@ function useAudioPlayerInternal(locale: string) {
     playNext,
     playPrev,
     playCollection,
-    queue: queueApi.queue,
+    queue: visibleQueue,
     enqueue: queueApi.enqueue,
     setQueue: queueApi.setQueue,
     dequeueById: queueApi.dequeueById,
     clearQueue: queueApi.clearQueue,
     queueNotice: queueApi.notice,
-    isQueued: queueApi.isQueued,
-    favorites: favoritesApi.favorites,
+    isQueued: (id: string) => visibleQueue.some((kirtan) => kirtan.id === id),
+    favorites: visibleFavorites,
     favoritesLoaded: favoritesApi.loaded,
     toggleFavorite: favoritesApi.toggleFavorite,
     removeFavorite: favoritesApi.removeFavorite,
     clearFavorites: favoritesApi.clearFavorites,
-    isFavorited: favoritesApi.isFavorited,
+    isFavorited: (id: string) => visibleFavorites.some((kirtan) => kirtan.id === id),
     favoritesNotice: favoritesApi.notice,
-    listeningHistory: listeningHistoryApi.listeningHistory,
+    listeningHistory: unpublishedPreviewUnlocked
+      ? listeningHistoryApi.listeningHistory
+      : listeningHistoryApi.listeningHistory.filter((item) => !item.private_preview),
     listeningHistoryLoaded: listeningHistoryApi.loaded,
     offlineLoaded: offlineApi.offlineLoaded,
     offlineSupported: offlineApi.offlineSupported,
@@ -756,6 +854,13 @@ function useAudioPlayerInternal(locale: string) {
     isOfflineSelected: offlineApi.isOfflineSelected,
     isOfflineAvailable: offlineApi.isOfflineAvailable,
     isOfflineDownloading: offlineApi.isOfflineDownloading,
+    unpublishedPreviewAvailable,
+    unpublishedPreviewUnlocked,
+    unpublishedPreviewLoading,
+    unpublishedPreviewError,
+    unpublishedKirtans,
+    unlockUnpublishedPreview,
+    lockUnpublishedPreview,
   };
 }
 
