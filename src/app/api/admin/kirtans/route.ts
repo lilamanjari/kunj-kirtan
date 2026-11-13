@@ -69,6 +69,8 @@ export async function GET(req: Request) {
     const status = searchParams.get("status");
     const recordedDate = searchParams.get("recordedDate");
     const selectedId = searchParams.get("selected");
+    const leadSingerId = searchParams.get("leadSingerId");
+    const tagIds = searchParams.getAll("tagId");
 
     const result = await listAdminKirtans({
       search,
@@ -78,6 +80,8 @@ export async function GET(req: Request) {
           ? status
           : "all",
       recordedDate,
+      leadSingerId,
+      tagIds,
       selectedId,
     });
 

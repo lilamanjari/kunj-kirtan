@@ -18,6 +18,7 @@ import type {
 } from "@/lib/admin/types";
 import LeadSingerAvatar from "@/lib/components/LeadSingerAvatar";
 import { AdminKirtanAudioPlayer } from "@/app/admin/kirtans/AdminKirtanAudioPlayer";
+import { AdminKirtanSearch } from "@/app/admin/kirtans/AdminKirtanSearch";
 import {
   ADMIN_AUDIO_ACCEPT,
   MAX_ADMIN_AUDIO_UPLOAD_BYTES,
@@ -109,6 +110,8 @@ export function KirtansCmsPage({
   const [type, setType] = useState<TypeFilter>("all");
   const [status, setStatus] = useState<StatusFilter>("all");
   const [recordedDate, setRecordedDate] = useState("");
+  const [leadSingerFilter, setLeadSingerFilter] = useState("");
+  const [tagFilterIds, setTagFilterIds] = useState<string[]>([]);
   const deferredSearch = useDeferredValue(search);
   const [kirtans, setKirtans] = useState<AdminKirtanListItem[]>([]);
   const [totalCount, setTotalCount] = useState(0);
@@ -177,6 +180,8 @@ export function KirtansCmsPage({
       type?: TypeFilter;
       status?: StatusFilter;
       recordedDate?: string;
+      leadSingerId?: string;
+      tagIds?: string[];
       nextSelectedId?: string | null;
     }) => {
       setListError(null);
@@ -185,6 +190,8 @@ export function KirtansCmsPage({
       const typeValue = options?.type ?? type;
       const statusValue = options?.status ?? status;
       const recordedDateValue = options?.recordedDate ?? recordedDate;
+      const leadSingerIdValue = options?.leadSingerId ?? leadSingerFilter;
+      const tagIdsValue = options?.tagIds ?? tagFilterIds;
       const selectedTarget =
         options?.nextSelectedId ?? selectedId;
 
@@ -192,6 +199,8 @@ export function KirtansCmsPage({
       if (typeValue !== "all") params.set("type", typeValue);
       if (statusValue !== "all") params.set("status", statusValue);
       if (recordedDateValue) params.set("recordedDate", recordedDateValue);
+      if (leadSingerIdValue) params.set("leadSingerId", leadSingerIdValue);
+      for (const tagId of tagIdsValue) params.append("tagId", tagId);
       if (selectedTarget) params.set("selected", selectedTarget);
 
       const response = await fetch(`/api/admin/kirtans?${params.toString()}`, {
@@ -217,7 +226,7 @@ export function KirtansCmsPage({
         return nextKirtans[0]?.id ?? null;
       });
     },
-    [deferredSearch, recordedDate, selectedId, status, type],
+    [deferredSearch, leadSingerFilter, recordedDate, selectedId, status, tagFilterIds, type],
   );
 
   useEffect(() => {
@@ -443,12 +452,16 @@ export function KirtansCmsPage({
     setType("all");
     setStatus("all");
     setRecordedDate("");
+    setLeadSingerFilter("");
+    setTagFilterIds([]);
     setDetailError(null);
     await loadKirtans({
       search: "",
       type: "all",
       status: "all",
       recordedDate: "",
+      leadSingerId: "",
+      tagIds: [],
       nextSelectedId: kirtanId,
     });
     if (sourceKirtan) {
@@ -873,11 +886,15 @@ export function KirtansCmsPage({
       setType("all");
       setStatus("all");
       setRecordedDate("");
+      setLeadSingerFilter("");
+      setTagFilterIds([]);
       await loadKirtans({
         search: "",
         type: "all",
         status: "all",
         recordedDate: "",
+        leadSingerId: "",
+        tagIds: [],
         nextSelectedId: json.id as string,
       });
       setIsCreateModalOpen(false);
@@ -922,42 +939,21 @@ export function KirtansCmsPage({
             </button>
           </div>
           <div className="mt-4 space-y-3">
-            <input
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search title, singer, sanga, or sequence"
-              className={fieldClassName()}
+            <AdminKirtanSearch
+              filters={{ search, leadSingerId: leadSingerFilter, tagIds: tagFilterIds, type, status, recordedDate }}
+              onChange={(filters) => {
+                setSearch(filters.search);
+                setLeadSingerFilter(filters.leadSingerId);
+                setTagFilterIds(filters.tagIds);
+                setType(filters.type);
+                setStatus(filters.status);
+                setRecordedDate(filters.recordedDate);
+              }}
+              leadSingers={leadSingerOptions}
+              tags={availableTags}
+              tagSearch={tagSearch}
+              onTagSearchChange={setTagSearch}
             />
-            <div className="grid grid-cols-2 gap-3">
-              <select
-                value={type}
-                onChange={(event) => setType(event.target.value as TypeFilter)}
-                className={fieldClassName()}
-              >
-                <option value="all">All types</option>
-                <option value="MM">Maha Mantras</option>
-                <option value="BHJ">Bhajans</option>
-                <option value="HK">Hari-katha</option>
-              </select>
-              <select
-                value={status}
-                onChange={(event) =>
-                  setStatus(event.target.value as StatusFilter)
-                }
-                className={fieldClassName()}
-              >
-                <option value="all">All statuses</option>
-                <option value="published">Published</option>
-                <option value="hidden">Hidden</option>
-              </select>
-              <input
-                type="date"
-                value={recordedDate}
-                onChange={(event) => setRecordedDate(event.target.value)}
-                aria-label="Filter by recorded date"
-                className={fieldClassName()}
-              />
-            </div>
             <p className="text-xs text-[#8f6c65]">Count: {statusLabel}</p>
             {listError ? (
               <div className="rounded-[var(--theme-radius-card)] border border-[#efc7c0] bg-[#fff4f3] px-3 py-2 text-sm text-[#a45e5a]">

@@ -2,6 +2,7 @@ import type { KirtanType, RecordedDatePrecision } from "@/types/kirtan";
 
 export type AdminKirtanListItem = {
   id: string;
+  lead_singer_id?: string | null;
   title: string;
   type: KirtanType;
   published: boolean;

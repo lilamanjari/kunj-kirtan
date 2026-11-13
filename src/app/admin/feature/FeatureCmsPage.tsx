@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { featureStatus, oneMonthAfter, toLocalDateTime, type AdminFeature, type FeatureOverview } from "@/lib/admin/features";
 import DateTimePicker from "./DateTimePicker";
 import CacheRefreshPanel from "./CacheRefreshPanel";
+import FeaturedKirtanScheduler from "./FeaturedKirtanScheduler";
 
 const panel = "rounded-[var(--theme-radius-surface)] border border-[#e7d7c8] bg-[rgba(255,253,249,0.94)] p-6 shadow-[0_14px_36px_rgba(130,90,61,0.06)]";
 const field = "w-full rounded-xl border border-[#e5d5c7] bg-white px-4 py-3 text-sm text-[#654d43] outline-none transition focus:border-[#8fa777] focus:ring-2 focus:ring-[#e9efdf] disabled:opacity-50";
@@ -133,8 +134,9 @@ export default function FeatureCmsPage() {
   return (
     <div className="mx-auto max-w-5xl px-1 pb-24 pt-2">
       <div className="mb-6 flex items-start justify-between gap-4">
-        <div><h1 className="font-display text-3xl text-[#6c4a3f]">Feature</h1><p className="mt-2 text-sm text-[#a47d6d]">Give an Occasion a place on the homepage.</p></div>
+        <div><h1 className="font-display text-3xl text-[#6c4a3f]">Feature</h1><p className="mt-2 text-sm text-[#a47d6d]">Schedule homepage features and Occasions.</p></div>
       </div>
+      <FeaturedKirtanScheduler />
       <div role="status" aria-live="polite" className="mb-3 min-h-5 text-sm text-[#819369]">
         {progress === "saving" ? "Saving your feature…" : progress === "revalidate" ? "Saved · Refreshing the homepage…" : progress === "warm" ? "Saved · Preparing the homepage cache…" : progress === "done" ? "Saved · Homepage refreshed and ready." : ""}
       </div>

@@ -1,6 +1,7 @@
 import { supabase } from "@/lib/supabase";
 
 export const HOME_CURRENT_VRATA_SLOT = "home_current_vrata";
+export const HOME_PRIMARY_KIRTAN_SLOT = "home_primary_kirtan";
 
 type FeaturedItemRow = {
   id: string;
@@ -100,4 +101,38 @@ export async function fetchHomeCurrentOccasion() {
     } satisfies HomeCurrentOccasion,
     error: null,
   };
+}
+
+export async function fetchHomePrimaryKirtan() {
+  const now = new Date();
+  const { data: featuredRows, error: featuredError } = await supabase
+    .from("featured_items")
+    .select("id, entity_table, entity_id, starts_at, ends_at")
+    .eq("slot", HOME_PRIMARY_KIRTAN_SLOT)
+    .eq("is_active", true)
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: false });
+
+  if (featuredError) return { data: null, error: featuredError.message };
+
+  const item = ((featuredRows ?? []) as FeaturedItemRow[]).find((feature) =>
+    isActiveNow(feature, now),
+  );
+  if (!item) return { data: null, error: null };
+  if (item.entity_table !== "kirtans") {
+    return {
+      data: null,
+      error: `Featured slot ${HOME_PRIMARY_KIRTAN_SLOT} must reference the kirtans table`,
+    };
+  }
+
+  const { data: kirtan, error } = await supabase
+    .from("playable_kirtans_with_titles")
+    .select("*")
+    .eq("id", item.entity_id)
+    .maybeSingle();
+
+  if (error) return { data: null, error: error.message };
+  // The public view omits unpublished or otherwise unplayable kirtans.
+  return { data: kirtan ?? null, error: null };
 }

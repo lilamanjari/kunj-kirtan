@@ -48,6 +48,7 @@ vi.mock("@/lib/server/featured", () => ({
 }));
 
 vi.mock("@/lib/server/homeFeaturedItem", () => ({
+  fetchHomePrimaryKirtan: vi.fn().mockResolvedValue({ data: null, error: null }),
   fetchHomeCurrentOccasion: vi.fn().mockResolvedValue({
     data: {
       name: "Purushottama Vrata",

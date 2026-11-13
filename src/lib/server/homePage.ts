@@ -6,7 +6,7 @@ import {
 } from "@/lib/server/kirtanTags";
 import { getDailyRareGem, getDailyRareGems } from "@/lib/server/featured";
 import { getDisplayKirtanTitle } from "@/lib/server/bhajanDisplayTitle";
-import { fetchHomeCurrentOccasion } from "@/lib/server/homeFeaturedItem";
+import { fetchHomeCurrentOccasion, fetchHomePrimaryKirtan } from "@/lib/server/homeFeaturedItem";
 import { fetchLeadDirectory } from "@/lib/server/leadDirectory";
 import { fetchPrimaryLeadSingerImages } from "@/lib/server/leadSingerImages";
 import { OTHER_LEAD_ID } from "@/lib/leadConstants";
@@ -357,8 +357,48 @@ const getCachedHomePageData = unstable_cache(
 export async function getHomePageData() {
   const result = process.env.NODE_ENV === "test" ? await buildHomePageData() : await getCachedHomePageData();
   if (result.error || !result.data) return result;
+  let primaryAction = result.data.primary_action;
+  const scheduledFeature = await fetchHomePrimaryKirtan();
+  if (scheduledFeature.error) {
+    // A broken editorial schedule should not take the public homepage down.
+    console.error("Scheduled homepage kirtan lookup failed:", scheduledFeature.error);
+  } else if (scheduledFeature.data) {
+    const kirtan = scheduledFeature.data as PlayableKirtanRow;
+    const [flags, context, images] = await Promise.all([
+      fetchKirtanTagFlags([kirtan.id]),
+      fetchKirtanTagContext([kirtan.id]),
+      fetchPrimaryLeadSingerImages(kirtan.lead_singer_id ? [kirtan.lead_singer_id] : []),
+    ]);
+    if (flags.error || context.error || images.error) {
+      console.error("Scheduled homepage kirtan metadata lookup failed:", flags.error ?? context.error ?? images.error);
+    } else {
+      const summary = toKirtanSummary(
+        kirtan,
+        flags.harmoniumIds,
+        flags.rareGemIds,
+        images.imagesByLeadSingerId,
+      );
+      const tagContext = context.tagContextById.get(kirtan.id);
+      summary.occasion_tags = tagContext?.occasionTags ?? [];
+      summary.person_tag = tagContext?.personTag ?? null;
+      primaryAction = { type: "scheduled_kirtan", kirtan: summary };
+    }
+  }
+
   // Evaluate feature windows on each render, independently of the 24-hour music cache.
   const occasion = await fetchHomeCurrentOccasion();
   if (occasion.error) return { data: null, error: occasion.error, status: 500 };
-  return { ...result, data: { ...result.data, current_occasion: occasion.data } };
+  const featuredId = primaryAction?.kirtan.id;
+  return {
+    ...result,
+    data: {
+      ...result.data,
+      primary_action: primaryAction,
+      current_occasion: occasion.data,
+      popular: result.data.popular.filter((item) => item.id !== featuredId),
+      recommended: result.data.recommended.filter((item) => item.id !== featuredId),
+      new_this_week: result.data.new_this_week.filter((item) => item.id !== featuredId),
+      recently_added: result.data.recently_added.filter((item) => item.id !== featuredId),
+    },
+  };
 }

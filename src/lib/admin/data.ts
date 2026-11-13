@@ -378,12 +378,16 @@ export async function listAdminKirtans({
   type,
   status,
   recordedDate,
+  leadSingerId,
+  tagIds = [],
   selectedId,
 }: {
   search?: string | null;
   type?: KirtanType | "all" | null;
   status?: KirtanStatusFilter | null;
   recordedDate?: string | null;
+  leadSingerId?: string | null;
+  tagIds?: string[];
   selectedId?: string | null;
 }) {
   const normalizedSearch = search?.trim() ?? "";
@@ -392,6 +396,18 @@ export async function listAdminKirtans({
   const hasTypeFilter = Boolean(type && type !== "all");
   const hasStatusFilter = Boolean(status && status !== "all");
   const hasRecordedDateFilter = normalizedRecordedDate.length > 0;
+  const normalizedLeadSingerId = leadSingerId?.trim() ?? "";
+  const normalizedTagIds = Array.from(new Set(tagIds.filter(Boolean)));
+  let matchingTagKirtanIds: string[] | null = null;
+  if (normalizedTagIds.length) {
+    const { data: links, error: linksError } = await supabaseAdmin.from("kirtan_tags")
+      .select("kirtan_id").in("tag_id", normalizedTagIds);
+    if (linksError) throw new Error(linksError.message);
+    matchingTagKirtanIds = Array.from(new Set((links ?? []).map((row) => String(row.kirtan_id))));
+    if (!matchingTagKirtanIds.length) {
+      return { kirtans: [], filteredCount: 0, totalCount: (await supabaseAdmin.from("kirtans").select("id", { count: "exact", head: true })).count ?? 0, hasActiveFilters: true };
+    }
+  }
   const searchTokens = normalizedSearch ? tokenizeSearch(normalizedSearch) : [];
   const searchMatches = searchTokens.length
     ? await collectAdminKirtanSearchMatches(searchTokens)
@@ -426,6 +442,17 @@ export async function listAdminKirtans({
       .select("id", { count: "exact", head: true });
   }
 
+  function applyFilters<T extends { eq: (column: string, value: unknown) => T; in: (column: string, values: unknown[]) => T }>(query: T) {
+    let next = query;
+    if (type && type !== "all") next = next.eq("type", type);
+    if (status === "published") next = next.eq("published", true);
+    else if (status === "hidden") next = next.eq("published", false);
+    if (normalizedRecordedDate) next = next.eq("recorded_date", normalizedRecordedDate);
+    if (normalizedLeadSingerId) next = next.eq("lead_singer_id", normalizedLeadSingerId);
+    if (matchingTagKirtanIds) next = next.in("id", matchingTagKirtanIds);
+    return next;
+  }
+
   let query = buildBaseQuery()
     .order("created_at", { ascending: false })
     .order("recorded_date", { ascending: false, nullsFirst: false })
@@ -433,26 +460,8 @@ export async function listAdminKirtans({
 
   let filteredCountQuery = buildCountQuery();
 
-  if (type && type !== "all") {
-    query = query.eq("type", type);
-    filteredCountQuery = filteredCountQuery.eq("type", type);
-  }
-
-  if (status === "published") {
-    query = query.eq("published", true);
-    filteredCountQuery = filteredCountQuery.eq("published", true);
-  } else if (status === "hidden") {
-    query = query.eq("published", false);
-    filteredCountQuery = filteredCountQuery.eq("published", false);
-  }
-
-  if (normalizedRecordedDate) {
-    query = query.eq("recorded_date", normalizedRecordedDate);
-    filteredCountQuery = filteredCountQuery.eq(
-      "recorded_date",
-      normalizedRecordedDate,
-    );
-  }
+  query = applyFilters(query);
+  filteredCountQuery = applyFilters(filteredCountQuery);
 
   if (normalizedSearch) {
     const matchingKirtanIds = Array.from(searchMatches.keys());
@@ -468,29 +477,8 @@ export async function listAdminKirtans({
       };
     }
 
-    query = buildBaseQuery().in("id", matchingKirtanIds).limit(1000);
-    filteredCountQuery = buildCountQuery().in("id", matchingKirtanIds);
-
-    if (type && type !== "all") {
-      query = query.eq("type", type);
-      filteredCountQuery = filteredCountQuery.eq("type", type);
-    }
-
-    if (status === "published") {
-      query = query.eq("published", true);
-      filteredCountQuery = filteredCountQuery.eq("published", true);
-    } else if (status === "hidden") {
-      query = query.eq("published", false);
-      filteredCountQuery = filteredCountQuery.eq("published", false);
-    }
-
-    if (normalizedRecordedDate) {
-      query = query.eq("recorded_date", normalizedRecordedDate);
-      filteredCountQuery = filteredCountQuery.eq(
-        "recorded_date",
-        normalizedRecordedDate,
-      );
-    }
+    query = applyFilters(buildBaseQuery().in("id", matchingKirtanIds)).limit(1000);
+    filteredCountQuery = applyFilters(buildCountQuery().in("id", matchingKirtanIds));
   }
 
   const [
@@ -548,6 +536,7 @@ export async function listAdminKirtans({
       sequence_num: (row.sequence_num as number | null) ?? null,
       recorded_date_precision:
         (row.recorded_date_precision as RecordedDatePrecision | null) ?? null,
+      lead_singer_id: row.lead_singer_id as string | null,
       lead_singer: mapJoinedName(
         row.lead_singers as
           | { display_name?: string | null }
@@ -643,8 +632,8 @@ export async function listAdminKirtans({
     kirtans,
     filteredCount: filteredCount ?? kirtans.length,
     totalCount: totalCount ?? kirtans.length,
-    hasActiveFilters:
-      hasSearch || hasTypeFilter || hasStatusFilter || hasRecordedDateFilter,
+      hasActiveFilters:
+      hasSearch || hasTypeFilter || hasStatusFilter || hasRecordedDateFilter || Boolean(normalizedLeadSingerId) || normalizedTagIds.length > 0,
   };
 }
 
