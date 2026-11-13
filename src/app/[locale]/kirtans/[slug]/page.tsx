@@ -6,7 +6,7 @@ import {
   buildKirtanDetailRoute,
   extractKirtanIdFromSlugParam,
 } from "@/lib/kirtanDetailHref";
-import { buildPageMetadata } from "@/lib/seo";
+import { buildAbsoluteUrl, buildPageMetadata } from "@/lib/seo";
 import { getSeoCopy } from "@/lib/seoCopy";
 import { getPublicKirtanPageData } from "@/lib/server/kirtanPage";
 
@@ -56,7 +56,7 @@ export async function generateMetadata({
     route: buildKirtanDetailRoute(data.kirtan),
     title,
     description,
-    image: data.kirtan.lead_singer_image_url ?? undefined,
+    image: buildAbsoluteUrl(`/api/og/kirtans/${data.kirtan.id}`),
   });
 }
 
