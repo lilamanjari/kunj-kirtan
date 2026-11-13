@@ -84,12 +84,25 @@ const getCachedOccasionPageData = unstable_cache(
         featured.kirtan?.id ? [featured.kirtan.id] : [],
       ),
     ]);
-    const { imagesByLeadSingerId, error: imageError } =
-      await fetchPrimaryLeadSingerImages(leadSingerIds);
+    const [
+      { imagesByLeadSingerId, error: imageError },
+      { data: leadSingerRows, error: priorityError },
+    ] = await Promise.all([
+      fetchPrimaryLeadSingerImages(leadSingerIds),
+      leadSingerIds.length
+        ? supabase.from("lead_singers").select("id, priority").in("id", leadSingerIds)
+        : Promise.resolve({ data: [], error: null }),
+    ]);
 
-    if (flagsError || tagContextError || imageError) {
-      throw new Error(flagsError ?? tagContextError ?? imageError ?? "Unknown error");
+    if (flagsError || tagContextError || imageError || priorityError) {
+      throw new Error(flagsError ?? tagContextError ?? imageError ?? priorityError?.message ?? "Unknown error");
     }
+
+    const leadSingerPriorities = new Map<string, number>(
+      (leadSingerRows ?? []).map(
+        (row) => [row.id, row.priority ?? 100] as [string, number],
+      ),
+    );
 
     const payload: KirtanSummary[] =
       kirtans?.map((k) => ({
@@ -118,7 +131,9 @@ const getCachedOccasionPageData = unstable_cache(
         sequence_num: k.sequence_num ?? null,
         has_harmonium: harmoniumIds.has(k.id),
         is_rare_gem: rareGemIds.has(k.id),
-      })).sort(compareOccasionKirtans) ?? [];
+      })).sort((left, right) =>
+        compareOccasionKirtans(left, right, leadSingerPriorities),
+      ) ?? [];
 
     const featuredKirtan: KirtanSummary | null = featured.kirtan
       ? {

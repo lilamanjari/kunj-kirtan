@@ -9,6 +9,7 @@ type LeadListItem = {
 export function compareOccasionKirtans(
   left: KirtanSummary,
   right: KirtanSummary,
+  leadSingerPriorities?: ReadonlyMap<string, number>,
 ) {
   if (left.type !== right.type) {
     if (left.type === "BHJ") return -1;
@@ -22,6 +23,16 @@ export function compareOccasionKirtans(
   });
   if (titleDiff !== 0) {
     return titleDiff;
+  }
+
+  const leftPriority = left.lead_singer_id
+    ? leadSingerPriorities?.get(left.lead_singer_id) ?? 100
+    : 100;
+  const rightPriority = right.lead_singer_id
+    ? leadSingerPriorities?.get(right.lead_singer_id) ?? 100
+    : 100;
+  if (leftPriority !== rightPriority) {
+    return leftPriority - rightPriority;
   }
 
   const singerDiff = (left.lead_singer ?? "").localeCompare(
