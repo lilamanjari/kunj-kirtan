@@ -6,7 +6,7 @@ import {
   buildKirtanDetailRoute,
   extractKirtanIdFromSlugParam,
 } from "@/lib/kirtanDetailHref";
-import { buildAbsoluteUrl, buildPageMetadata } from "@/lib/seo";
+import { buildPageMetadata } from "@/lib/seo";
 import { getSeoCopy } from "@/lib/seoCopy";
 import { getPublicKirtanPageData } from "@/lib/server/kirtanPage";
 
@@ -56,7 +56,9 @@ export async function generateMetadata({
     route: buildKirtanDetailRoute(data.kirtan),
     title,
     description,
-    image: buildAbsoluteUrl(`/api/og/kirtans/${data.kirtan.id}`),
+    image: data.kirtan.lead_singer_image_url ?? undefined,
+    // Let Facebook inspect the actual source dimensions; singer artwork is usually square.
+    imageDimensions: null,
   });
 }
 

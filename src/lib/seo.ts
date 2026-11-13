@@ -34,6 +34,7 @@ type SeoOptions = {
   title: string;
   description: string;
   image?: string;
+  imageDimensions?: { width: number; height: number } | null;
   noIndex?: boolean;
 };
 
@@ -43,6 +44,7 @@ export function buildPageMetadata({
   title,
   description,
   image = DEFAULT_OG_IMAGE,
+  imageDimensions = { width: 1200, height: 630 },
   noIndex = false,
 }: SeoOptions): Metadata {
   const localizedPath = buildLocalizedPath(locale, route);
@@ -63,8 +65,7 @@ export function buildPageMetadata({
       images: [
         {
           url: image,
-          width: 1200,
-          height: 630,
+          ...(imageDimensions ?? {}),
           alt: title,
         },
       ],
