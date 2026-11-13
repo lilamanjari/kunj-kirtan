@@ -442,17 +442,6 @@ export async function listAdminKirtans({
       .select("id", { count: "exact", head: true });
   }
 
-  function applyFilters<T extends { eq: (column: string, value: unknown) => T; in: (column: string, values: unknown[]) => T }>(query: T) {
-    let next = query;
-    if (type && type !== "all") next = next.eq("type", type);
-    if (status === "published") next = next.eq("published", true);
-    else if (status === "hidden") next = next.eq("published", false);
-    if (normalizedRecordedDate) next = next.eq("recorded_date", normalizedRecordedDate);
-    if (normalizedLeadSingerId) next = next.eq("lead_singer_id", normalizedLeadSingerId);
-    if (matchingTagKirtanIds) next = next.in("id", matchingTagKirtanIds);
-    return next;
-  }
-
   let query = buildBaseQuery()
     .order("created_at", { ascending: false })
     .order("recorded_date", { ascending: false, nullsFirst: false })
@@ -460,8 +449,29 @@ export async function listAdminKirtans({
 
   let filteredCountQuery = buildCountQuery();
 
-  query = applyFilters(query);
-  filteredCountQuery = applyFilters(filteredCountQuery);
+  if (type && type !== "all") {
+    query = query.eq("type", type);
+    filteredCountQuery = filteredCountQuery.eq("type", type);
+  }
+  if (status === "published") {
+    query = query.eq("published", true);
+    filteredCountQuery = filteredCountQuery.eq("published", true);
+  } else if (status === "hidden") {
+    query = query.eq("published", false);
+    filteredCountQuery = filteredCountQuery.eq("published", false);
+  }
+  if (normalizedRecordedDate) {
+    query = query.eq("recorded_date", normalizedRecordedDate);
+    filteredCountQuery = filteredCountQuery.eq("recorded_date", normalizedRecordedDate);
+  }
+  if (normalizedLeadSingerId) {
+    query = query.eq("lead_singer_id", normalizedLeadSingerId);
+    filteredCountQuery = filteredCountQuery.eq("lead_singer_id", normalizedLeadSingerId);
+  }
+  if (matchingTagKirtanIds) {
+    query = query.in("id", matchingTagKirtanIds);
+    filteredCountQuery = filteredCountQuery.in("id", matchingTagKirtanIds);
+  }
 
   if (normalizedSearch) {
     const matchingKirtanIds = Array.from(searchMatches.keys());
@@ -477,8 +487,31 @@ export async function listAdminKirtans({
       };
     }
 
-    query = applyFilters(buildBaseQuery().in("id", matchingKirtanIds)).limit(1000);
-    filteredCountQuery = applyFilters(buildCountQuery().in("id", matchingKirtanIds));
+    query = buildBaseQuery().in("id", matchingKirtanIds).limit(1000);
+    filteredCountQuery = buildCountQuery().in("id", matchingKirtanIds);
+    if (type && type !== "all") {
+      query = query.eq("type", type);
+      filteredCountQuery = filteredCountQuery.eq("type", type);
+    }
+    if (status === "published") {
+      query = query.eq("published", true);
+      filteredCountQuery = filteredCountQuery.eq("published", true);
+    } else if (status === "hidden") {
+      query = query.eq("published", false);
+      filteredCountQuery = filteredCountQuery.eq("published", false);
+    }
+    if (normalizedRecordedDate) {
+      query = query.eq("recorded_date", normalizedRecordedDate);
+      filteredCountQuery = filteredCountQuery.eq("recorded_date", normalizedRecordedDate);
+    }
+    if (normalizedLeadSingerId) {
+      query = query.eq("lead_singer_id", normalizedLeadSingerId);
+      filteredCountQuery = filteredCountQuery.eq("lead_singer_id", normalizedLeadSingerId);
+    }
+    if (matchingTagKirtanIds) {
+      query = query.in("id", matchingTagKirtanIds);
+      filteredCountQuery = filteredCountQuery.in("id", matchingTagKirtanIds);
+    }
   }
 
   const [
@@ -593,6 +626,7 @@ export async function listAdminKirtans({
 
       kirtans.unshift({
         id: String(typedSelectedRow.id),
+        lead_singer_id: selectedLeadSingerId ?? null,
         title: getAdminListDisplayTitle(typedSelectedRow),
         type: typedSelectedRow.type as KirtanType,
         published: Boolean(typedSelectedRow.published),
